@@ -1,0 +1,138 @@
+.directory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.team-card {
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid hsl(var(--color-border));
+    background-color: hsl(var(--color-surface));
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.team-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.team-avatar-large {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white;
+}
+
+.team-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.icon-btn-small {
+    padding: 0.4rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid hsl(var(--color-border));
+    background-color: transparent;
+    cursor: pointer;
+    color: hsl(var(--color-text-muted));
+}
+
+.icon-btn-small:hover {
+    background-color: hsl(var(--color-border));
+}
+
+.icon-btn-small.danger:hover {
+    color: hsl(350, 80%, 50%);
+    border-color: hsl(350, 80%, 50%);
+}
+
+.team-card-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: hsl(var(--color-text-muted));
+}
+
+.team-card-footer {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid hsl(var(--color-border));
+}
+
+.login-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.has-login {
+    color: hsl(140, 70%, 40%);
+}
+
+.no-login {
+    color: hsl(var(--color-text-muted));
+}
+
+/* List View */
+.team-list-view {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.team-card.list-item {
+    flex-direction: row;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    gap: 1.5rem;
+}
+
+.team-card.list-item .team-card-header {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 1.5rem;
+}
+
+.team-avatar-small {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: white;
+}
+
+.team-list-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+@media (max-width: 600px) {
+    .hide-mobile {
+        display: none;
+    }
+}

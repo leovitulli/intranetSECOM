@@ -1,0 +1,150 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Color Palette - Premium corporate dark/light scheme */
+  --color-primary: 220 80% 50%;
+  --color-primary-light: 220 80% 65%;
+  --color-primary-dark: 220 80% 35%;
+  --color-accent: 280 70% 55%;
+
+  --color-background: 220 20% 97%;
+  --color-surface: 0 0% 100%;
+  --color-text: 220 30% 15%;
+  --color-text-muted: 220 20% 45%;
+  --color-border: 220 20% 90%;
+
+  /* Status Colors - SECOM Brand Progression (Blue to Purple) */
+  --status-solicitado: 225 75% 55%;
+  --status-producao: 250 70% 60%;
+  --status-correcao: 270 70% 60%;
+  --status-publicado: 290 70% 55%;
+  --status-inauguracao: 310 75% 55%;
+
+  /* Typography */
+  --font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-glow: 0 0 15px hsl(var(--color-primary) / 0.3);
+
+  /* Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark-theme {
+  --color-background: 220 30% 8%;
+  --color-surface: 220 30% 12%;
+  --color-text: 220 20% 95%;
+  --color-text-muted: 220 20% 65%;
+  --color-border: 220 30% 20%;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: hsl(var(--color-background));
+  color: hsl(var(--color-text));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+}
+
+a {
+  color: hsl(var(--color-primary));
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: hsl(var(--color-primary-light));
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Glassmorphism helpers */
+.glass {
+  background: hsl(var(--color-surface) / 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--color-border) / 0.5);
+}
+
+/* Typography Helpers */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: hsl(var(--color-text));
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 2.5rem;
+}
+
+h2 {
+  font-size: 2rem;
+}
+
+h3 {
+  font-size: 1.75rem;
+}
+
+h4 {
+  font-size: 1.5rem;
+}
+
+h5 {
+  font-size: 1.25rem;
+}
+
+h6 {
+  font-size: 1rem;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, hsl(var(--color-primary)), hsl(var(--color-accent)));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--color-border));
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--color-text-muted));
+}
