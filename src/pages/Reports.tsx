@@ -53,10 +53,20 @@ export default function Reports() {
         });
     }, [period, customStart, customEnd, tasks]);
 
+    // Helper to check if an inauguration is finished by checklist
+    const isInaugurationFinished = (t: Task) => {
+        if (t.status !== 'inauguracao') return false;
+        if (!t.inauguracao_checklist || t.inauguracao_checklist.length === 0) return false;
+        return t.inauguracao_checklist.every(item => item.done);
+    };
+
     // Top Level Metrics (General Overview)
     const totalAbertas = filteredTasks.length;
-    const totalConcluidas = filteredTasks.filter(t => t.status === 'publicado').length;
-    const totalAndamento = filteredTasks.filter(t => ['solicitado', 'producao', 'correcao'].includes(t.status)).length;
+    const totalConcluidas = filteredTasks.filter(t => t.status === 'publicado' || isInaugurationFinished(t)).length;
+    const totalAndamento = filteredTasks.filter(t => 
+        ['solicitado', 'producao', 'correcao'].includes(t.status) || 
+        (t.status === 'inauguracao' && !isInaugurationFinished(t))
+    ).length;
     const totalInauguracoes = filteredTasks.filter(t => t.type.includes('inauguracao') || t.status === 'inauguracao').length;
 
     // Chart Data: Tipos de Material
@@ -110,8 +120,13 @@ export default function Reports() {
 
         return filteredTasks.filter(t => {
             if (activeFilter.type === 'status') {
-                if (activeFilter.value === 'andamento') return ['solicitado', 'producao', 'correcao'].includes(t.status);
-                if (activeFilter.value === 'concluida') return t.status === 'publicado';
+                if (activeFilter.value === 'andamento') {
+                    return ['solicitado', 'producao', 'correcao'].includes(t.status) || 
+                           (t.status === 'inauguracao' && !isInaugurationFinished(t));
+                }
+                if (activeFilter.value === 'concluida') {
+                    return t.status === 'publicado' || isInaugurationFinished(t);
+                }
             }
             if (activeFilter.type === 'type') {
                 return t.type.includes(activeFilter.value as any) || (activeFilter.value === 'inauguracao' && t.status === 'inauguracao');
