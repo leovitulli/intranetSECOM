@@ -1,43 +1,18 @@
 import { useState } from 'react';
-import { MapPin, Users, Clock } from 'lucide-react';
+import { MapPin, Users, Clock, ExternalLink } from 'lucide-react';
 import { format, addDays, startOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import EventModal from '../components/EventModal';
-import type { AgendaEvent } from '../components/EventModal';
+import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
+import TaskModal from '../components/TaskModal';
+import type { Task } from '../types/kanban';
 import './Agenda.css';
 
 export default function Agenda() {
-    const { events: globalEvents, team, loading, addEvent, updateEvent, deleteEvent } = useData();
+    const { tasks, team, loading, updateTask } = useData();
     const [currentDate] = useState(new Date());
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingEvent, setEditingEvent] = useState<AgendaEvent | null>(null);
-
-    const handleSaveEvent = async (savedEvent: AgendaEvent) => {
-        try {
-            if (editingEvent) {
-                await updateEvent(savedEvent);
-            } else {
-                await addEvent(savedEvent);
-            }
-            setIsModalOpen(false);
-            setEditingEvent(null);
-        } catch (error) {
-            alert("Erro ao salvar agenda");
-        }
-    };
-
-    const handleDeleteEvent = async (id: string) => {
-        if (confirm("Tem certeza que deseja excluir esta agenda?")) {
-            try {
-                await deleteEvent(id);
-                setIsModalOpen(false);
-                setEditingEvent(null);
-            } catch (error) {
-                alert("Erro ao excluir agenda");
-            }
-        }
-    };
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+    const navigate = useNavigate();
 
     const startOfCurrentWeek = startOfWeek(currentDate, { weekStartsOn: 1 }); // Monday
     const days = [0, 1, 2, 3, 4, 5, 6].map(i => addDays(startOfCurrentWeek, i)); // Mon to Sun
@@ -52,21 +27,18 @@ export default function Agenda() {
                 <div className="header-actions" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     <button
                         className="btn-primary"
-                        onClick={() => {
-                            setEditingEvent(null);
-                            setIsModalOpen(true);
-                        }}
+                        onClick={() => navigate('/pautas')}
                     >
-                        Nova Agenda
+                        Criar Agenda (Via Pautas)
                     </button>
                 </div>
             </div>
 
             <div className="agenda-grid">
                 {days.map(day => {
-                    const dayEvents = globalEvents.filter(
-                        e => e.date.toDateString() === day.toDateString()
-                    ).sort((a, b) => a.time.localeCompare(b.time)); // Simple sort by time string
+                    const dayString = format(day, "yyyy-MM-dd");
+                    const dayTasks = tasks.filter(t => t.pauta_data === dayString && t.is_pauta_externa && !t.archived)
+                        .sort((a, b) => (a.pauta_horario || '').localeCompare(b.pauta_horario || ''));
 
                     return (
                         <div key={day.toISOString()} className={`agenda-day`}>
@@ -76,66 +48,72 @@ export default function Agenda() {
 
                             <div className="day-events">
                                 {loading && <p className="empty-state">Carregando...</p>}
-                                {!loading && dayEvents.length === 0 ? (
+                                {!loading && dayTasks.length === 0 ? (
                                     <div className="no-events text-muted">Agenda livre</div>
                                 ) : (
-                                    !loading && dayEvents.map(event => (
+                                    !loading && dayTasks.map(task => (
                                         <div
-                                            key={event.id}
+                                            key={task.id}
                                             className="event-card clickable"
-                                            onClick={() => {
-                                                setEditingEvent(event);
-                                                setIsModalOpen(true);
-                                            }}
+                                            onClick={() => setSelectedTask(task)}
+                                            style={{ borderLeft: `4px solid var(--status-${task.status})` }}
                                         >
                                             <div className="event-time">
-                                                <Clock size={14} /> {event.time}
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    <Clock size={14} /> {task.pauta_horario || 'Horário a definir'}
+                                                </div>
+                                                <ExternalLink size={14} style={{ opacity: 0.5 }} />
                                             </div>
-                                            <h4 className="event-title">{event.title}</h4>
-                                            {event.mayor_attending && (
-                                                <div className="event-mayor-badge">
-                                                    <span className="mayor-dot"></span> Prefeito Participa
+
+                                            <h4 className="event-title">{task.title}</h4>
+
+                                            {task.description && (
+                                                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                                    {task.description}
+                                                </div>
+                                            )}
+
+                                            {task.type?.includes('inauguracao' as any) && (
+                                                <div className="event-mayor-badge" style={{ marginBottom: '0.75rem' }}>
+                                                    <span className="mayor-dot" style={{ background: 'var(--color-status-inauguracao)' }}></span> Inauguração
                                                 </div>
                                             )}
 
                                             <div className="event-details">
-                                                <div className="event-location" title="Localização">
-                                                    <MapPin size={14} /> {event.location}
-                                                </div>
-                                                {event.departure_time && (
+                                                {task.pauta_endereco && (
+                                                    <div className="event-location" title="Localização">
+                                                        <MapPin size={14} /> {task.pauta_endereco}
+                                                    </div>
+                                                )}
+                                                {task.pauta_saida && (
                                                     <div className="event-departure" title="Horário de Saída do Paço">
-                                                        <span>🚗</span> Saída: {event.departure_time}
+                                                        <span>🚗</span> Saída: {task.pauta_saida}
                                                     </div>
                                                 )}
                                             </div>
 
-                                            <div className="event-team">
+                                            <div className="event-team" style={{ marginTop: '0.75rem' }}>
                                                 <Users size={14} />
-                                                <div className="team-avatars">
-                                                    {event.teamIds.map(tid => {
-                                                        const teamMember = team.find(m => m.id === tid);
-                                                        if (!teamMember) return null;
-                                                        return teamMember.avatar_url ? (
-                                                            <img
-                                                                key={tid}
-                                                                src={teamMember.avatar_url}
-                                                                alt={teamMember.name}
-                                                                className="team-avatar-medium"
-                                                                style={{ border: `2px solid ${teamMember.color}`, objectFit: 'cover' }}
-                                                                title={teamMember.name}
-                                                            />
-                                                        ) : (
-                                                            <div
-                                                                key={tid}
-                                                                className="team-avatar-medium"
-                                                                style={{ backgroundColor: teamMember.color }}
-                                                                title={teamMember.name}
-                                                            >
-                                                                {teamMember.name.charAt(0)}
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
+                                                {task.assignees && task.assignees.length > 0 ? (
+                                                    <div className="team-avatars">
+                                                        {task.assignees.map(assigneeName => {
+                                                            const teamMember = team.find(m => m.name === assigneeName);
+                                                            const avatarSrc = teamMember?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(assigneeName)}&background=random`;
+                                                            return (
+                                                                <img
+                                                                    key={assigneeName}
+                                                                    src={avatarSrc}
+                                                                    alt={assigneeName}
+                                                                    className="team-avatar-medium"
+                                                                    style={{ border: `2px solid ${teamMember?.color || '#fff'}`, objectFit: 'cover' }}
+                                                                    title={assigneeName}
+                                                                />
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ) : (
+                                                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Equipe não definida</span>
+                                                )}
                                             </div>
                                         </div>
                                     ))
@@ -146,13 +124,11 @@ export default function Agenda() {
                 })}
             </div>
 
-            {isModalOpen && (
-                <EventModal
-                    event={editingEvent}
-                    teamMembers={team as any}
-                    onClose={() => setIsModalOpen(false)}
-                    onSave={handleSaveEvent}
-                    onDelete={editingEvent ? handleDeleteEvent : undefined}
+            {selectedTask && (
+                <TaskModal
+                    task={selectedTask}
+                    onClose={() => setSelectedTask(null)}
+                    onUpdateTask={(updatedTask) => updateTask(updatedTask)}
                 />
             )}
         </div>

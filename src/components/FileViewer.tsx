@@ -24,9 +24,16 @@ export default function FileViewer({ attachment, onClose }: FileViewerProps) {
                     </div>
 
                     <div className="file-actions">
-                        <button className="icon-btn-light" title="Fazer Download (Simulado)">
+                        <a 
+                            href={attachment.url} 
+                            download={attachment.name} 
+                            className="icon-btn-light" 
+                            title="Fazer Download"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
                             <Download size={20} />
-                        </button>
+                        </a>
                         <div className="divider"></div>
                         <button className="icon-btn-light" onClick={onClose} title="Fechar">
                             <X size={24} />
@@ -38,31 +45,44 @@ export default function FileViewer({ attachment, onClose }: FileViewerProps) {
                 <div className="file-viewer-content">
                     {isImage && (
                         <img
-                            src="https://images.unsplash.com/photo-1542204165-65bf26472b9b?q=80&w=1000&auto=format&fit=crop"
+                            src={attachment.url}
                             alt={attachment.name}
                             className="preview-image"
                         />
                     )}
 
                     {isVideo && (
-                        <div className="video-placeholder">
-                            <div className="play-circle">▶</div>
-                            <p>Preview de Vídeo (Mock)</p>
-                        </div>
+                        <video 
+                            src={attachment.url} 
+                            controls 
+                            autoPlay 
+                            className="preview-video"
+                            style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: 'var(--radius-md)' }}
+                        />
                     )}
 
                     {isPDF && (
-                        <div className="pdf-placeholder">
-                            <p>📄 Preview de Arquivo PDF (Mock)</p>
-                        </div>
+                        <iframe
+                            src={`${attachment.url}#toolbar=0`}
+                            title={attachment.name}
+                            className="preview-pdf"
+                            style={{ width: '100%', height: '70vh', border: 'none', borderRadius: 'var(--radius-md)' }}
+                        />
                     )}
 
                     {(!isImage && !isVideo && !isPDF) && (
                         <div className="unsupported-placeholder">
-                            <p>Formato não suportado para visualização no navegador.</p>
-                            <button className="btn-primary" style={{ marginTop: '1rem' }}>
-                                Baixar Arquivo
-                            </button>
+                            <p>Formato não suportado para visualização direta.</p>
+                            <a 
+                                href={attachment.url} 
+                                download 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="btn-primary" 
+                                style={{ marginTop: '1rem', textDecoration: 'none' }}
+                            >
+                                <Download size={18} /> Baixar Arquivo
+                            </a>
                         </div>
                     )}
                 </div>

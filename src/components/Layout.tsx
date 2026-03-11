@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, Newspaper, LogOut, Bell, BellPlus, Search, CalendarDays, CalendarClock, MessageSquarePlus, BarChart3, Check } from 'lucide-react';
+import { LayoutDashboard, Newspaper, LogOut, Bell, BellPlus, Search, CalendarDays, CalendarClock, MessageSquarePlus, BarChart3, Check, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useData } from '../contexts/DataContext';
@@ -68,7 +68,7 @@ export default function Layout() {
                         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                     >
                         <CalendarDays size={20} />
-                        <span>Calendário Editorial</span>
+                        <span>Calendário</span>
                     </NavLink>
 
 
@@ -128,6 +128,15 @@ export default function Layout() {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
+                        {searchTerm && (
+                            <button
+                                className="icon-btn-small clear-search"
+                                onClick={() => setSearchTerm('')}
+                                title="Limpar"
+                            >
+                                <X size={16} />
+                            </button>
+                        )}
                     </div>
                     <div className="topbar-actions" ref={notifRef} style={{ position: 'relative' }}>
                         <button className="icon-btn" onClick={() => setIsNotifOpen(!isNotifOpen)}>

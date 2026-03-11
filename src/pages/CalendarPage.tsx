@@ -35,6 +35,10 @@ export default function CalendarPage() {
 
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [selectedAgendaEvent, setSelectedAgendaEvent] = useState<AgendaEvent | null>(null);
+
+    // Filter State
+    const [selectedFilters, setSelectedFilters] = useState<string[]>(['release', 'arte', 'video', 'foto', 'inauguracao', 'sistema']);
+
     const [comemorativas, setComemorativas] = useState<CalendarEvent[]>([
         { id: '1', title: 'Confraternização Universal (Feriado)', type: 'feriado', date: parseISO('2026-01-01') },
         { id: '2', title: 'Carnaval (Feriado)', type: 'feriado', date: parseISO('2026-02-17') },
@@ -44,6 +48,12 @@ export default function CalendarPage() {
     const events = useMemo(() => {
         const mappedTasks: CalendarEvent[] = tasks
             .filter(t => t.dueDate)
+            .filter(t => {
+                // If "inauguracao" is selected, show tasks with 'inauguracao' type or status
+                if (selectedFilters.includes('inauguracao') && (t.status === 'inauguracao' || t.type.includes('inauguracao'))) return true;
+                // Otherwise check if any of the task types are in selected filters
+                return t.type.some(type => selectedFilters.includes(type));
+            })
             .map(t => ({
                 id: `task-${t.id}`,
                 title: t.status === 'inauguracao' ? (t.inauguracao_nome || t.title) : t.title,
@@ -51,15 +61,19 @@ export default function CalendarPage() {
                 date: t.dueDate!
             }));
 
-        const mappedAgenda: CalendarEvent[] = agendaEvents.map(e => ({
-            id: `agenda-${e.id}`,
-            title: `Externa: ${e.title}`,
-            type: 'pauta',
-            date: e.date
-        }));
+        const mappedAgenda: CalendarEvent[] = agendaEvents
+            .filter(() => selectedFilters.includes('release') || selectedFilters.includes('video') || selectedFilters.includes('foto')) // Agenda usually falls under general pauta
+            .map(e => ({
+                id: `agenda-${e.id}`,
+                title: `Externa: ${e.title}`,
+                type: 'pauta',
+                date: e.date
+            }));
 
-        return [...mappedTasks, ...mappedAgenda, ...comemorativas];
-    }, [tasks, agendaEvents, comemorativas]);
+        const mappedSystem = comemorativas.filter(() => selectedFilters.includes('sistema'));
+
+        return [...mappedTasks, ...mappedAgenda, ...mappedSystem];
+    }, [tasks, agendaEvents, comemorativas, selectedFilters]);
 
     // New Event Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -182,13 +196,39 @@ export default function CalendarPage() {
         <div className="page-container calendar-page">
             <div className="page-header">
                 <div>
-                    <h1>Calendário Editorial</h1>
+                    <h1>Calendário</h1>
                     <p className="subtitle">Planejamento mensal de pautas, feriados e datas comemorativas.</p>
                 </div>
-                <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
-                    <Plus size={18} />
-                    Adicionar Data/Evento
-                </button>
+                <div className="header-actions-group">
+                    <div className="calendar-filter-chips">
+                        {[
+                            { id: 'video', label: '🎬 Vídeos', color: 'hsl(330, 70%, 50%)' },
+                            { id: 'foto', label: '📸 Fotos', color: 'hsl(170, 60%, 40%)' },
+                            { id: 'inauguracao', label: '🏛️ Inauguração', color: 'hsl(330, 50%, 40%)' },
+                            { id: 'release', label: '📝 Release', color: 'hsl(200, 70%, 45%)' },
+                            { id: 'arte', label: '🎨 Arte', color: 'hsl(260, 60%, 60%)' },
+                            { id: 'sistema', label: '⚙️ Sistema', color: 'hsl(0, 0%, 50%)' },
+                        ].map(f => (
+                            <button
+                                key={f.id}
+                                className={`filter-chip ${selectedFilters.includes(f.id) ? 'active' : ''}`}
+                                onClick={() => {
+                                    setSelectedFilters(prev =>
+                                        prev.includes(f.id)
+                                            ? prev.filter(x => x !== f.id)
+                                            : [...prev, f.id]
+                                    );
+                                }}
+                            >
+                                {f.label}
+                            </button>
+                        ))}
+                    </div>
+                    <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
+                        <Plus size={18} />
+                        Adicionar Data/Evento
+                    </button>
+                </div>
             </div>
 
             <div className="calendar-full-wrapper glass">

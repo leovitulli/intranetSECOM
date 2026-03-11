@@ -38,6 +38,7 @@ export interface Task {
     dueDate: Date | null;
     comments: Comment[];
     attachments: Attachment[];
+    createdAt: Date; // Added for Productivity filtering
     archived?: boolean;
     archived_at?: Date | null;
     // Inauguration-specific fields
@@ -47,4 +48,10 @@ export interface Task {
     inauguracao_tipo?: InaugurationTipo;
     inauguracao_checklist?: InaugurationChecklistItem[];
     inauguracao_data?: Date | null; // Date of the inauguration event
+    // General Pauta fields
+    pauta_data?: string;
+    pauta_horario?: string;
+    pauta_endereco?: string;
+    pauta_saida?: string;
+    is_pauta_externa?: boolean;
 }

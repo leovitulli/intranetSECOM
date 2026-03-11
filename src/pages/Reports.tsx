@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
-import { BarChart3, CalendarRange, CheckCircle2, Clock } from 'lucide-react';
+import { CalendarRange, CheckCircle2, Clock, MapPin, BarChart3, PieChart as PieChartIcon, Target, Users } from 'lucide-react';
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { useData } from '../contexts/DataContext';
-import type { TaskType } from '../types/kanban';
+import type { Task } from '../types/kanban';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
+import TaskModal from '../components/TaskModal';
 import './Reports.css';
 
 type FilterPeriod = 'today' | 'week' | 'month' | 'custom';
@@ -13,15 +14,9 @@ export default function Reports() {
     const [period, setPeriod] = useState<FilterPeriod>('month');
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
-    const [filterType, setFilterType] = useState<TaskType | 'todos'>('todos');
 
-    // For clicking on charts
-    const [activeFilter, setActiveFilter] = useState<{ type: 'type' | 'status', value: string } | null>(null);
-
-    // Ensure mock dates fall within current scopes for testing
-    // In a real app, we'd use task creation dates or completion dates.
-    // For this mock, we'll pretend `dueDate` or just use all tasks filtering against a wide net.
-    // Let's assume we are filtering by `dueDate` since it's the date we have on tasks.
+    const [activeFilter, setActiveFilter] = useState<{ type: 'type' | 'status' | 'secretaria', value: string } | null>(null);
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
     const filteredTasks = useMemo(() => {
         const now = new Date();
@@ -34,7 +29,7 @@ export default function Reports() {
                 end = endOfDay(now);
                 break;
             case 'week':
-                start = startOfWeek(now, { weekStartsOn: 1 }); // Monday start
+                start = startOfWeek(now, { weekStartsOn: 1 });
                 end = endOfWeek(now, { weekStartsOn: 1 });
                 break;
             case 'month':
@@ -51,399 +46,368 @@ export default function Reports() {
         }
 
         return tasks.filter(task => {
-            if (!task.dueDate) return true; // Include tasks without dates? Or exclude? Let's include for general stats if date is missing.
-            // For true productivity, we'd look at creation or completion date. We'll use dueDate for mock filtering.
-            const withinPeriod = isWithinInterval(task.dueDate, { start, end });
+            if ((task.status as string) === 'deleted' || (task as any).deleted === true) return false;
+            if (task.archived === true) return false;
+            if (!task.createdAt) return true;
+            return isWithinInterval(task.createdAt, { start, end });
+        });
+    }, [period, customStart, customEnd, tasks]);
 
-            if (filterType === 'todos') return withinPeriod;
-            return withinPeriod && task.type.includes(filterType as any);
+    // Top Level Metrics (General Overview)
+    const totalAbertas = filteredTasks.length;
+    const totalConcluidas = filteredTasks.filter(t => t.status === 'publicado').length;
+    const totalAndamento = filteredTasks.filter(t => ['solicitado', 'producao', 'correcao'].includes(t.status)).length;
+    const totalInauguracoes = filteredTasks.filter(t => t.type.includes('inauguracao') || t.status === 'inauguracao').length;
+
+    // Chart Data: Tipos de Material
+    const materialData = useMemo(() => {
+        const counts = { texto: 0, video: 0, foto: 0, inauguracao: 0, arte: 0 };
+        filteredTasks.forEach(task => {
+            if (task.type.includes('release')) counts.texto++;
+            if (task.type.includes('video')) counts.video++;
+            if (task.type.includes('foto')) counts.foto++;
+            if (task.type.includes('arte')) counts.arte++;
+            if (task.type.includes('inauguracao')) counts.inauguracao++;
         });
 
-    }, [period, customStart, customEnd, filterType, tasks]); // Re-calculate when these change
+        return [
+            { name: 'Texto', value: counts.texto, color: '#4F46E5', filter: 'release' },
+            { name: 'Vídeo', value: counts.video, color: '#EC4899', filter: 'video' },
+            { name: 'Foto', value: counts.foto, color: '#10B981', filter: 'foto' },
+            { name: 'Arte', value: counts.arte, color: '#8B5CF6', filter: 'arte' },
+            { name: 'Inauguração', value: counts.inauguracao, color: '#F59E0B', filter: 'inauguracao' },
+        ].filter(d => d.value > 0);
+    }, [filteredTasks]);
 
-    // Clear active filter when period changes
-    useMemo(() => {
-        setActiveFilter(null);
-    }, [period, customStart, customEnd]);
+    // Chart Data: Status Geral
+    const statusData = useMemo(() => [
+        { name: 'Em Fila/Produção', value: totalAndamento, color: '#3B82F6', filter: 'andamento' },
+        { name: 'Concluídas', value: totalConcluidas, color: '#10B981', filter: 'concluida' },
+    ].filter(d => d.value > 0), [totalConcluidas, totalAndamento]);
 
-    // Calculate Stats
-    const totalDemands = filteredTasks.length;
+    // Chart Data: Ranking de Secretarias
+    const rankingSecretarias = useMemo(() => {
+        const counts: Record<string, number> = {};
+        filteredTasks.forEach(task => {
+            const secretarias = (task.inauguracao_secretarias && task.inauguracao_secretarias.length > 0)
+                ? task.inauguracao_secretarias
+                : ['Gerais / Não Classificado'];
 
-    // By Type
-    const totalReleases = filteredTasks.filter(t => t.type.includes('release')).length;
-    const totalArtes = filteredTasks.filter(t => t.type.includes('arte')).length;
-    const totalVideos = filteredTasks.filter(t => t.type.includes('video')).length;
-    const totalFotos = filteredTasks.filter(t => t.type.includes('foto')).length;
-    const totalInauguracoes = filteredTasks.filter(t => t.type.includes('inauguracao')).length;
+            secretarias.forEach(sec => {
+                counts[sec] = (counts[sec] || 0) + 1;
+            });
+        });
 
-    // By Status
-    const totalBacklog = filteredTasks.filter(t => ['solicitado', 'escrita', 'producao-arte', 'edicao-video'].includes(t.status)).length;
-    const totalInProgress = filteredTasks.filter(t => ['correcao', 'aprovacao-final', 'producao'].includes(t.status)).length;
-    const totalCompleted = filteredTasks.filter(t => t.status === 'publicado').length;
+        return Object.entries(counts)
+            .map(([name, Demandas]) => ({ name, Demandas }))
+            .sort((a, b) => b.Demandas - a.Demandas)
+            .slice(0, 8); // Top 8 secretarias
+    }, [filteredTasks]);
 
-    // Inauguration-specific metrics (all tasks, regardless of period, since it's a dedicated column)
-    const allInaugTasks = tasks.filter(t => t.status === 'inauguracao');
-    const inaugTotal = allInaugTasks.length;
-    const inaugComplete = allInaugTasks.filter(t =>
-        t.inauguracao_checklist && t.inauguracao_checklist.length > 0 && t.inauguracao_checklist.every(i => i.done)
-    ).length;
-    const inaugInProgress = inaugTotal - inaugComplete;
-
-    // Inauguration by secretaria
-    const inaugBySecretaria = allInaugTasks.reduce((acc, task) => {
-        const secs = (task.inauguracao_secretarias && task.inauguracao_secretarias.length > 0)
-            ? task.inauguracao_secretarias
-            : ['Não informado'];
-        secs.forEach(s => { acc[s] = (acc[s] || 0) + 1; });
-        return acc;
-    }, {} as Record<string, number>);
-    const inaugSecretariaList = Object.entries(inaugBySecretaria)
-        .sort(([, a], [, b]) => b - a);
-    const inaugSecMax = inaugSecretariaList[0]?.[1] || 1;
-
-    // --- NEW METRICS ---
-
-    // 1. Secretarias que mais pedem
-    const departmentsCount = filteredTasks.reduce((acc, task) => {
-        const dep = task.creator || 'Não informado';
-        acc[dep] = (acc[dep] || 0) + 1;
-        return acc;
-    }, {} as Record<string, number>);
-
-    // Sort and get top 5
-    const topDepartments = Object.entries(departmentsCount)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 5)
-        .map(([name, value]) => ({ name, value }));
-
-    // 2. Eficiência: Tempo e Entregas (Mock logic based on dueDate vs current date for now, as we don't track start/end dates yet)
-    let totalDays = 0;
-    let completedWithDates = 0;
-    let deliveredOnTime = 0;
-
-    filteredTasks.forEach(task => {
-        if (task.status === 'publicado' && task.dueDate) {
-            completedWithDates++;
-            // Mock SLA: Assuming it took 3 days averagely before dueDate
-            totalDays += 3;
-            // Delivery rate
-            if (new Date() <= task.dueDate) {
-                deliveredOnTime++;
-            }
-        }
-    });
-
-    const averageSLA = completedWithDates > 0 ? (totalDays / completedWithDates).toFixed(1) : '—';
-    const onTimeRate = completedWithDates > 0 ? Math.round((deliveredOnTime / completedWithDates) * 100) : 0;
-
-
-    // Chart Data
-    const typeData = [
-        { name: 'Textos', value: totalReleases, color: 'hsl(200, 90%, 45%)', filterValue: 'release' },
-        { name: 'Artes', value: totalArtes, color: 'hsl(280, 80%, 60%)', filterValue: 'arte' },
-        { name: 'Vídeos', value: totalVideos, color: 'hsl(320, 80%, 55%)', filterValue: 'video' },
-        { name: 'Fotos', value: totalFotos, color: 'hsl(175, 70%, 40%)', filterValue: 'foto' },
-        { name: 'Inaugurações', value: totalInauguracoes, color: 'hsl(350, 85%, 45%)', filterValue: 'inauguracao' }
-    ].filter(d => d.value > 0); // Only show types that have tasks
-
-    const statusData = [
-        { name: 'Pendentes', value: totalBacklog, color: 'hsl(225, 75%, 55%)', filterValue: 'backlog' },
-        { name: 'Em Andamento', value: totalInProgress, color: 'hsl(250, 70%, 60%)', filterValue: 'inprogress' },
-        { name: 'Publicados', value: totalCompleted, color: 'hsl(290, 70%, 55%)', filterValue: 'completed' }
-    ];
-
-    // Filtered tasks for the bottom list based on chart click
+    // Table mapping
     const displayedTasks = useMemo(() => {
-        if (!activeFilter) return [];
+        if (!activeFilter) return filteredTasks;
+
         return filteredTasks.filter(t => {
-            if (activeFilter.type === 'type') {
-                return t.type.includes(activeFilter.value as TaskType);
-            } else if (activeFilter.type === 'status') {
-                if (activeFilter.value === 'backlog') return ['solicitado'].includes(t.status);
-                if (activeFilter.value === 'inprogress') return ['producao', 'correcao'].includes(t.status);
-                if (activeFilter.value === 'completed') return t.status === 'publicado';
+            if (activeFilter.type === 'status') {
+                if (activeFilter.value === 'andamento') return ['solicitado', 'producao', 'correcao'].includes(t.status);
+                if (activeFilter.value === 'concluida') return t.status === 'publicado';
             }
-            return false;
+            if (activeFilter.type === 'type') {
+                return t.type.includes(activeFilter.value as any) || (activeFilter.value === 'inauguracao' && t.status === 'inauguracao');
+            }
+            if (activeFilter.type === 'secretaria') {
+                return t.inauguracao_secretarias?.includes(activeFilter.value) ||
+                    (activeFilter.value === 'Gerais / Não Classificado' && (!t.inauguracao_secretarias || t.inauguracao_secretarias.length === 0));
+            }
+            return true;
         });
     }, [filteredTasks, activeFilter]);
 
-    return (
-        <div className="page-container reports-page">
-            <div className="page-header">
-                <div>
-                    <h1>Dashboard de Produtividade</h1>
-                    <p className="subtitle">Acompanhe o volume geral do que foi demandado, em andamento e concluído.</p>
-                </div>
+
+    if (loading) {
+        return (
+            <div className="reports-page loading">
+                <p>Carregando métricas executivas...</p>
             </div>
+        );
+    }
 
-            <div className="reports-filters glass">
-                <div className="filter-row" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                    <div className="filter-buttons">
-                        <button className={`btn-filter ${period === 'today' ? 'active' : ''}`} onClick={() => setPeriod('today')}>Hoje</button>
-                        <button className={`btn-filter ${period === 'week' ? 'active' : ''}`} onClick={() => setPeriod('week')}>Esta Semana</button>
-                        <button className={`btn-filter ${period === 'month' ? 'active' : ''}`} onClick={() => setPeriod('month')}>Mês Mês</button>
-                        <button className={`btn-filter ${period === 'custom' ? 'active' : ''}`} onClick={() => setPeriod('custom')}>
-                            <CalendarRange size={16} /> Personalizado
-                        </button>
-                    </div>
-
-                    <div className="type-filter">
-                        <select
-                            value={filterType}
-                            onChange={e => setFilterType(e.target.value as any)}
-                            className="btn-filter"
-                            style={{ padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', fontSize: '0.9rem', cursor: 'pointer' }}
-                        >
-                            <option value="todos">Todos os Tipos</option>
-                            <option value="release">Textos / Releases</option>
-                            <option value="arte">Artes Gráficas</option>
-                            <option value="video">Vídeos</option>
-                            <option value="foto">Fotos</option>
-                            <option value="inauguracao">Inaugurações</option>
-                        </select>
-                    </div>
+    return (
+        <div className="reports-page">
+            <header className="page-header reports-header">
+                <div className="header-left">
+                    <h1 className="page-title">
+                        <BarChart3 className="title-icon" />
+                        Visão Executiva
+                    </h1>
+                    <p className="page-subtitle">Monitoramento de diretoria: Produtividade e demandas ativas.</p>
                 </div>
 
-                {period === 'custom' && (
-                    <div className="custom-date-range">
+                <div className="period-filters">
+                    <button
+                        className={`filter-btn ${period === 'today' ? 'active' : ''}`}
+                        onClick={() => setPeriod('today')}
+                    >Hoje</button>
+                    <button
+                        className={`filter-btn ${period === 'week' ? 'active' : ''}`}
+                        onClick={() => setPeriod('week')}
+                    >Nesta Semana</button>
+                    <button
+                        className={`filter-btn ${period === 'month' ? 'active' : ''}`}
+                        onClick={() => setPeriod('month')}
+                    >Neste Mês</button>
+                    <button
+                        className={`filter-btn ${period === 'custom' ? 'active' : ''}`}
+                        onClick={() => setPeriod('custom')}
+                    >
+                        <CalendarRange size={16} /> Personalizado
+                    </button>
+                </div>
+            </header>
+
+            {period === 'custom' && (
+                <div className="custom-date-row glass-panel">
+                    <div className="date-field">
+                        <label>Data Inicial</label>
                         <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} />
-                        <span>até</span>
+                    </div>
+                    <div className="date-field">
+                        <label>Data Final</label>
                         <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
                     </div>
-                )}
+                </div>
+            )}
+
+            {/* Top KPI Cards */}
+            <div className="kpi-grid">
+                <div
+                    className={`kpi-card kpi-total ${activeFilter === null ? 'active-kpi' : ''}`}
+                    onClick={() => setActiveFilter(null)}
+                    style={{ cursor: 'pointer' }}
+                >
+                    <div className="kpi-icon-wrapper">
+                        <Target size={24} />
+                    </div>
+                    <div className="kpi-content">
+                        <h3>Total de Demandas</h3>
+                        <div className="kpi-value">{totalAbertas}</div>
+                        <p className="kpi-label">Pautas geradas no período</p>
+                    </div>
+                </div>
+
+                <div
+                    className={`kpi-card kpi-success ${activeFilter?.value === 'concluida' ? 'active-kpi' : ''}`}
+                    onClick={() => setActiveFilter({ type: 'status', value: 'concluida' })}
+                    style={{ cursor: 'pointer' }}
+                >
+                    <div className="kpi-icon-wrapper">
+                        <CheckCircle2 size={24} />
+                    </div>
+                    <div className="kpi-content">
+                        <h3>Concluídas</h3>
+                        <div className="kpi-value">{totalConcluidas}</div>
+                        <p className="kpi-label">Pautas publicadas/finalizadas</p>
+                    </div>
+                </div>
+
+                <div
+                    className={`kpi-card kpi-warning ${activeFilter?.value === 'andamento' ? 'active-kpi' : ''}`}
+                    onClick={() => setActiveFilter({ type: 'status', value: 'andamento' })}
+                    style={{ cursor: 'pointer' }}
+                >
+                    <div className="kpi-icon-wrapper">
+                        <Clock size={24} />
+                    </div>
+                    <div className="kpi-content">
+                        <h3>Em Andamento</h3>
+                        <div className="kpi-value">{totalAndamento}</div>
+                        <p className="kpi-label">No funil de produção</p>
+                    </div>
+                </div>
+
+                <div
+                    className={`kpi-card kpi-inaug ${activeFilter?.value === 'inauguracao' ? 'active-kpi' : ''}`}
+                    onClick={() => setActiveFilter({ type: 'type', value: 'inauguracao' })}
+                    style={{ cursor: 'pointer' }}
+                >
+                    <div className="kpi-icon-wrapper">
+                        <MapPin size={24} />
+                    </div>
+                    <div className="kpi-content">
+                        <h3>Inaugurações</h3>
+                        <div className="kpi-value">{totalInauguracoes}</div>
+                        <p className="kpi-label">Eventos mapeados no período</p>
+                    </div>
+                </div>
             </div>
 
-            {loading && <div style={{ padding: '2rem', textAlign: 'center' }}>Carregando dados...</div>}
-
-            {!loading && (
-                <>
-                    {/* Main KPIs / Resumo de Eficiência */}
-                    <div className="metrics-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: '2rem' }}>
-                        <div className="metric-card highlight-total" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'linear-gradient(135deg, hsl(var(--color-primary)), hsl(var(--color-accent)))' }}>
-                            <div className="metric-header text-white">Total em Fluxo</div>
-                            <div className="metric-value text-white">{totalBacklog + totalInProgress + totalCompleted}</div>
-                            <p className="metric-desc" style={{ color: 'rgba(255,255,255,0.8)' }}>Volume total de pautas no período.</p>
-                        </div>
-                        <div className="metric-card glass">
-                            <div className="metric-header text-primary"><Clock size={18} /> Tempo Médio (SLA)</div>
-                            <div className="metric-value">{averageSLA} <span style={{ fontSize: '1.2rem', fontWeight: 500, color: 'var(--color-text-muted)' }}>dias</span></div>
-                            <p className="metric-desc">Da solicitação até a publicação.</p>
-                        </div>
-                        <div className="metric-card glass border-status-publicado">
-                            <div className="metric-header text-status-publicado"><CheckCircle2 size={18} /> Entregas no Prazo</div>
-                            <div className="metric-value text-status-publicado">{onTimeRate}%</div>
-                            <p className="metric-desc">Das pautas com data limite cadastrada.</p>
-                        </div>
-                        <div className="metric-card glass">
-                            <div className="metric-header text-purple"><CheckCircle2 size={18} /> Publicadas</div>
-                            <div className="metric-value text-purple">{totalCompleted}</div>
-                            <p className="metric-desc">Pautas finalizadas e arquivadas.</p>
-                        </div>
+            {/* Main Charts Area */}
+            <div className="charts-grid-main">
+                {/* Ranking de Secretarias */}
+                <div className="chart-card ranking-card glass-panel">
+                    <div className="chart-card-header">
+                        <h3><Users size={18} /> Ranking de Secretarias</h3>
+                        <p>Secretarias que mais demandaram pautas no período</p>
                     </div>
-
-                    {/* Inauguration Cards */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-
-                        {/* Card 1: Total de Inaugurações */}
-                        <div className="metric-card glass" style={{
-                            border: '1px solid hsla(330, 40%, 85%, 1)',
-                            background: 'linear-gradient(135deg, hsla(330, 60%, 97%, 1), hsla(350, 60%, 97%, 1))'
-                        }}>
-                            <div className="metric-header" style={{ color: 'hsl(330, 50%, 40%)', gap: '0.4rem', display: 'flex', alignItems: 'center' }}>
-                                Inaugurações Solicitadas
-                            </div>
-                            <div className="metric-value" style={{ color: 'hsl(330, 55%, 40%)', fontSize: '3rem' }}>{inaugTotal}</div>
-                            <p className="metric-desc">Total de solicitações de inauguração registradas.</p>
-
-                            {/* Progress bar */}
-                            <div style={{ marginTop: '1rem' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 600, marginBottom: '0.4rem' }}>
-                                    <span style={{ color: 'hsl(140, 55%, 38%)' }}>{inaugComplete} com checklist completo</span>
-                                    <span style={{ color: 'hsl(var(--color-text-muted))' }}>{inaugInProgress} em preparação</span>
-                                </div>
-                                <div style={{ height: 8, borderRadius: 99, background: 'hsla(330, 30%, 88%, 1)', overflow: 'hidden' }}>
-                                    <div style={{
-                                        height: '100%',
-                                        width: inaugTotal > 0 ? `${Math.round((inaugComplete / inaugTotal) * 100)}%` : '0%',
-                                        borderRadius: 99,
-                                        background: 'linear-gradient(90deg, hsl(140, 55%, 48%), hsl(160, 55%, 45%))'
-                                    }} />
-                                </div>
-                                {inaugTotal > 0 && (
-                                    <div style={{ fontSize: '0.72rem', color: 'hsl(var(--color-text-muted))', marginTop: '0.3rem', textAlign: 'right' }}>
-                                        {Math.round((inaugComplete / inaugTotal) * 100)}% prontos
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Card 2: Por Secretaria */}
-                        <div className="metric-card glass" style={{
-                            border: '1px solid hsla(330, 40%, 85%, 1)',
-                            background: 'linear-gradient(135deg, hsla(330, 60%, 97%, 1), hsla(350, 60%, 97%, 1))'
-                        }}>
-                            <div className="metric-header" style={{ color: 'hsl(330, 50%, 40%)', display: 'flex', alignItems: 'center' }}>
-                                Inaugurações por Secretaria
-                            </div>
-                            {inaugSecretariaList.length === 0 ? (
-                                <p className="metric-desc" style={{ marginTop: '1rem' }}>Nenhuma inauguração registrada ainda.</p>
-                            ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.75rem' }}>
-                                    {inaugSecretariaList.map(([name, count]) => (
-                                        <div key={name}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 600, marginBottom: '0.25rem' }}>
-                                                <span style={{ color: 'hsl(330, 40%, 35%)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80%' }}>{name}</span>
-                                                <span style={{ color: 'hsl(330, 50%, 50%)', flexShrink: 0, marginLeft: '0.5rem' }}>{count}</span>
-                                            </div>
-                                            <div style={{ height: 6, borderRadius: 99, background: 'hsla(330, 30%, 88%, 1)', overflow: 'hidden' }}>
-                                                <div style={{
-                                                    height: '100%',
-                                                    width: `${Math.round((count / inaugSecMax) * 100)}%`,
-                                                    borderRadius: 99,
-                                                    background: 'linear-gradient(90deg, hsl(330, 60%, 60%), hsl(350, 65%, 60%))'
-                                                }} />
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
+                    <div className="chart-body" style={{ height: 320 }}>
+                        {rankingSecretarias.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={rankingSecretarias} layout="vertical" margin={{ top: 10, right: 30, left: 40, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="var(--color-border)" />
+                                    <XAxis type="number" fontSize={12} stroke="var(--color-text-muted)" allowDecimals={false} />
+                                    <YAxis dataKey="name" type="category" width={140} fontSize={12} stroke="var(--color-text-muted)" />
+                                    <Tooltip
+                                        cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+                                        contentStyle={{ backgroundColor: 'hsl(var(--color-surface))', color: 'hsl(var(--color-text))', borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                        itemStyle={{ color: 'hsl(var(--color-text))' }}
+                                    />
+                                    <Bar
+                                        dataKey="Demandas"
+                                        fill="#4F46E5"
+                                        radius={[0, 4, 4, 0]}
+                                        barSize={24}
+                                        onClick={(data) => setActiveFilter({ type: 'secretaria', value: data.name || '' })}
+                                        style={{ cursor: 'pointer' }}
+                                    />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="empty-chart">Nenhuma demanda registrada no período.</div>
+                        )}
                     </div>
+                </div>
 
-                    <h2 className="section-title" style={{ marginTop: '3rem' }}>Visão Gráfica Interativa</h2>
-                    <p className="metric-desc" style={{ marginBottom: '1.5rem' }}>Abaixo estão os detalhamentos por Secretaria, Tipo de Material e Status Operacional.</p>
-
-                    <div className="charts-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '2rem' }}>
-
-                        {/* Top Secretarias - Ocupa linha inteira */}
-                        <div className="chart-container glass" style={{ gridColumn: 'span 2' }}>
-                            <div style={{ padding: '1.5rem 1.5rem 0' }}>
-                                <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>Top Secretarias Solicitantes</h3>
-                                <p className="metric-desc">As 5 secretarias que mais geraram demandas no período.</p>
-                            </div>
-                            <div className="chart-wrapper" style={{ height: '350px' }}>
+                <div className="charts-grid-secondary">
+                    {/* Tipos de Material */}
+                    <div className="chart-card glass-panel">
+                        <div className="chart-card-header">
+                            <h3><PieChartIcon size={18} /> Tipos de Material</h3>
+                            <p>Clique no gráfico para filtrar a tabela</p>
+                        </div>
+                        <div className="chart-body" style={{ height: 260 }}>
+                            {materialData.length > 0 ? (
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={topDepartments} layout="vertical" margin={{ top: 20, right: 30, left: 150, bottom: 5 }}>
-                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--color-border))" />
-                                        <XAxis type="number" hide />
-                                        <YAxis dataKey="name" type="category" tick={{ fill: 'hsl(var(--color-text))', fontSize: 12, fontWeight: 500 }} axisLine={false} tickLine={false} width={140} />
-                                        <Tooltip
-                                            cursor={{ fill: 'hsl(220, 20%, 94%)' }}
-                                            contentStyle={{ backgroundColor: 'hsl(var(--color-surface))', borderColor: 'hsl(var(--color-border))', borderRadius: '8px', color: 'hsl(var(--color-text))' }}
-                                        />
-                                        <Bar dataKey="value" radius={[0, 4, 4, 0]} fill="hsl(var(--color-primary))" barSize={32}>
-                                            {topDepartments.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={`hsl(220, 80%, ${45 + index * 8}%)`} />
-                                            ))}
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-
-                        {/* Volume por Tipo */}
-                        <div className="chart-container glass" style={{ display: 'flex', flexDirection: 'column' }}>
-                            <div style={{ padding: '1.5rem 1.5rem 0' }}>
-                                <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>Volume por Tipo</h3>
-                                <p className="metric-desc">Distribuição de formatos solicitados.</p>
-                            </div>
-                            <div className="chart-wrapper" style={{ flex: 1, minHeight: '300px' }}>
-                                <ResponsiveContainer width="100%" height={300}>
-                                    <BarChart data={typeData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }} onClick={(data: any) => {
-                                        if (data?.activePayload?.length) {
-                                            setActiveFilter({ type: 'type', value: data.activePayload[0].payload.filterValue });
-                                        }
-                                    }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--color-border))" />
-                                        <XAxis dataKey="name" tick={{ fill: 'hsl(var(--color-text-muted))' }} axisLine={false} tickLine={false} />
-                                        <YAxis tick={{ fill: 'hsl(var(--color-text-muted))' }} axisLine={false} tickLine={false} />
-                                        <Tooltip
-                                            cursor={{ fill: 'hsl(220, 20%, 94%)' }}
-                                            contentStyle={{ backgroundColor: 'hsl(var(--color-surface))', borderColor: 'hsl(var(--color-border))', borderRadius: '8px', color: 'hsl(var(--color-text))' }}
-                                            itemStyle={{ color: 'hsl(var(--color-text))' }}
-                                        />
-                                        <Bar dataKey="value" radius={[4, 4, 0, 0]} cursor="pointer">
-                                            {typeData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={entry.color} />
-                                            ))}
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-
-                        {/* Status do Fluxo */}
-                        <div className="chart-container glass" style={{ display: 'flex', flexDirection: 'column' }}>
-                            <div style={{ padding: '1.5rem 1.5rem 0' }}>
-                                <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>Status do Fluxo</h3>
-                                <p className="metric-desc">Distribuição atual das pautas.</p>
-                            </div>
-                            <div className="chart-wrapper" style={{ flex: 1, minHeight: '300px' }}>
-                                <ResponsiveContainer width="100%" height={300}>
                                     <PieChart>
                                         <Pie
-                                            data={statusData}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={70}
-                                            outerRadius={100}
+                                            data={materialData}
+                                            innerRadius={60}
+                                            outerRadius={80}
                                             paddingAngle={5}
                                             dataKey="value"
-                                            onClick={(entry: any) => {
-                                                if (entry && entry.filterValue) {
-                                                    setActiveFilter({ type: 'status', value: entry.filterValue });
-                                                }
-                                            }}
+                                            onClick={(data) => setActiveFilter({ type: 'type', value: data.filter || '' })}
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            {materialData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip
+                                            contentStyle={{ backgroundColor: 'hsl(var(--color-surface))', color: 'hsl(var(--color-text))', borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                            itemStyle={{ color: 'hsl(var(--color-text))' }}
+                                        />
+                                        <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="empty-chart">Sem dados no período</div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Status Geral */}
+                    <div className="chart-card glass-panel">
+                        <div className="chart-card-header">
+                            <h3><Target size={18} /> Status Geral</h3>
+                            <p>Clique no gráfico para filtrar a tabela</p>
+                        </div>
+                        <div className="chart-body" style={{ height: 260 }}>
+                            {statusData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={statusData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                                        <XAxis dataKey="name" fontSize={12} stroke="var(--color-text-muted)" />
+                                        <YAxis fontSize={12} stroke="var(--color-text-muted)" allowDecimals={false} />
+                                        <Tooltip
+                                            cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+                                            contentStyle={{ backgroundColor: 'hsl(var(--color-surface))', color: 'hsl(var(--color-text))', borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                            itemStyle={{ color: 'hsl(var(--color-text))' }}
+                                        />
+                                        <Bar
+                                            dataKey="value"
+                                            radius={[4, 4, 0, 0]}
+                                            barSize={50}
+                                            onClick={(data) => setActiveFilter({ type: 'status', value: data.filter || '' })}
                                             style={{ cursor: 'pointer' }}
                                         >
                                             {statusData.map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={entry.color} />
                                             ))}
-                                        </Pie>
-                                        <Tooltip
-                                            contentStyle={{ backgroundColor: 'hsl(var(--color-surface))', borderColor: 'hsl(var(--color-border))', borderRadius: '8px', color: 'hsl(var(--color-text))' }}
-                                            itemStyle={{ color: 'hsl(var(--color-text))' }}
-                                        />
-                                        <Legend />
-                                    </PieChart>
+                                        </Bar>
+                                    </BarChart>
                                 </ResponsiveContainer>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    {/* Clicked Tasks Details */}
-                    {activeFilter && (
-                        <div className="filtered-tasks-section glass">
-                            <div className="filtered-tasks-header">
-                                <h3>Detalhamento: {activeFilter.type === 'type' ? 'Por Tipo' : 'Por Status'}</h3>
-                                <button className="btn-secondary small" onClick={() => setActiveFilter(null)}>Limpar Filtro</button>
-                            </div>
-
-                            {displayedTasks.length > 0 ? (
-                                <div className="filtered-task-list">
-                                    {displayedTasks.map(task => (
-                                        <div key={task.id} className="filtered-task-item">
-                                            <div className="task-info">
-                                                <strong>{task.title}</strong>
-                                                <span className={`status-badge stat-${task.status}`}>{task.status}</span>
-                                            </div>
-                                            <span className="task-creator">Por: {task.creator}</span>
-                                        </div>
-                                    ))}
-                                </div>
                             ) : (
-                                <p className="empty-state">Nenhuma pauta encontrada para este filtro no período selecionado.</p>
+                                <div className="empty-chart">Sem dados no período</div>
                             )}
                         </div>
-                    )}
-
-                    <div className="empty-state" style={{ marginTop: '3rem' }}>
-                        <p>Os gráficos acima são baseados nas pautas ativas no Canvas e nas datas de prazo cadastradas.</p>
                     </div>
-                </>
+                </div>
+            </div>
+
+            {/* Filtered Tasks Table */}
+            <div className="table-card glass-panel">
+                <div className="table-header">
+                    <h3>Detalhamento das Pautas do Período {activeFilter && `(Filtro Ativo: ${activeFilter.type === 'secretaria' ? 'Secretaria' : activeFilter.type === 'type' ? 'Tipo' : 'Status'})`}</h3>
+                    {activeFilter && (
+                        <button className="clear-filter-btn" onClick={() => setActiveFilter(null)}>
+                            Limpar Filtro de Gráfico
+                        </button>
+                    )}
+                </div>
+                <div className="table-responsive">
+                    <table className="rep-table">
+                        <thead>
+                            <tr>
+                                <th>Título</th>
+                                <th>Status</th>
+                                <th>Secretarias</th>
+                                <th>Criação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {displayedTasks.map(t => (
+                                <tr key={t.id} onClick={() => setSelectedTask(t)} className="clickable-row">
+                                    <td className="t-title">{t.title}</td>
+                                    <td>
+                                        <span className={`status-badge stat-${t.status}`}>
+                                            {t.status.toUpperCase()}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {t.inauguracao_secretarias && t.inauguracao_secretarias.length > 0
+                                            ? t.inauguracao_secretarias.join(', ')
+                                            : 'Gerais'}
+                                    </td>
+                                    <td>{t.createdAt ? t.createdAt.toLocaleDateString('pt-BR') : '-'}</td>
+                                </tr>
+                            ))}
+                            {displayedTasks.length === 0 && (
+                                <tr>
+                                    <td colSpan={4} className="empty-table">Nenhuma pauta encontrada.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {selectedTask && (
+                <TaskModal
+                    task={selectedTask}
+                    onClose={() => setSelectedTask(null)}
+                    onUpdateTask={() => { }}
+                />
             )}
-        </div >
+        </div>
     );
 }

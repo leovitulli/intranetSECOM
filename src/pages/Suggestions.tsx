@@ -1,11 +1,13 @@
 import { useState, useRef } from 'react';
-import { Send, Clock, User, Building, CheckCircle2, XCircle, Eye, Paperclip, X, FileText, Image, Video } from 'lucide-react';
+import { Send, Clock, User, Building, CheckCircle2, XCircle, Eye, Paperclip, X, FileText, Image, Video, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import './Suggestions.css';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
+import FileViewer from '../components/FileViewer';
+import type { Attachment } from '../types/kanban';
 
 const ACCEPTED_TYPES = 'image/*,video/*,.pdf,.doc,.docx,.txt';
 const MAX_FILE_SIZE_MB = 50;
@@ -17,7 +19,7 @@ function getFileIcon(file: File) {
 }
 
 export default function Suggestions() {
-    const { suggestions, loading, addSuggestion, addTask } = useData();
+    const { suggestions, loading, addSuggestion, addTask, deleteSuggestion } = useData();
     const { user } = useAuth();
     const isAdmin = user?.role === 'admin' || user?.role === 'desenvolvedor';
 
@@ -28,6 +30,7 @@ export default function Suggestions() {
     const [attachments, setAttachments] = useState<File[]>([]);
     const [uploading, setUploading] = useState(false);
     const [localStatuses, setLocalStatuses] = useState<Record<string, string>>({});
+    const [viewingFile, setViewingFile] = useState<Attachment | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,11 +110,18 @@ export default function Suggestions() {
                     creator: suggestion.author || suggestion.department,
                     priority: 'media',
                     assignees: [],
-                    dueDate: null
+                    dueDate: null,
+                    createdAt: new Date()
                 });
             } catch (e) {
                 console.warn('Não foi possível criar pauta a partir da sugestão', e);
             }
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (window.confirm("Você tem certeza que deseja EXCLUIR DEFINITIVAMENTE esta sugestão? Ela não poderá ser recuperada.")) {
+            await deleteSuggestion(id);
         }
     };
 
@@ -127,6 +137,23 @@ export default function Suggestions() {
 
     const isImage = (url: string) => /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
     const isVideo = (url: string) => /\.(mp4|mov|webm|avi|mkv)$/i.test(url);
+    const isPDF = (url: string) => /\.pdf$/i.test(url);
+
+    const openAttachment = (url: string) => {
+        const name = url.split('/').pop() || 'Arquivo';
+        let type = 'file';
+        if (isImage(url)) type = 'image';
+        else if (isVideo(url)) type = 'video';
+        else if (isPDF(url)) type = 'pdf';
+
+        setViewingFile({
+            id: url,
+            name,
+            url,
+            type,
+            size: '—'
+        });
+    };
 
     return (
         <div className="page-container suggestions-page">
@@ -342,19 +369,33 @@ export default function Suggestions() {
                                         <div style={{ marginTop: '0.75rem', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                                             {urls.map((url, i) => (
                                                 isImage(url) ? (
-                                                    <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                                                    <div 
+                                                        key={i} 
+                                                        onClick={() => openAttachment(url)}
+                                                        style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
+                                                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                                                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                                                    >
                                                         <img src={url} alt={`anexo-${i}`} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 6, border: '1px solid hsl(var(--color-border))' }} />
-                                                    </a>
+                                                    </div>
                                                 ) : isVideo(url) ? (
-                                                    <a key={i} href={url} target="_blank" rel="noopener noreferrer"
-                                                        style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.78rem', padding: '4px 8px', borderRadius: 6, border: '1px solid hsl(var(--color-border))', background: 'hsl(var(--color-background))', color: 'hsl(var(--color-primary))' }}>
+                                                    <button 
+                                                        key={i} 
+                                                        onClick={() => openAttachment(url)}
+                                                        className="btn-secondary small"
+                                                        style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.78rem', padding: '4px 10px', borderRadius: 6 }}
+                                                    >
                                                         <Video size={13} /> Ver vídeo
-                                                    </a>
+                                                    </button>
                                                 ) : (
-                                                    <a key={i} href={url} target="_blank" rel="noopener noreferrer"
-                                                        style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.78rem', padding: '4px 8px', borderRadius: 6, border: '1px solid hsl(var(--color-border))', background: 'hsl(var(--color-background))', color: 'hsl(var(--color-text))' }}>
-                                                        <FileText size={13} /> Documento
-                                                    </a>
+                                                    <button 
+                                                        key={i} 
+                                                        onClick={() => openAttachment(url)}
+                                                        className="btn-secondary small"
+                                                        style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.78rem', padding: '4px 10px', borderRadius: 6 }}
+                                                    >
+                                                        <FileText size={13} /> {isPDF(url) ? 'PDF' : 'Documento'}
+                                                    </button>
                                                 )
                                             ))}
                                         </div>
@@ -399,12 +440,37 @@ export default function Suggestions() {
                                             </button>
                                         </div>
                                     )}
+
+                                    {user?.role === 'desenvolvedor' && (
+                                        <div style={{ display: 'flex', marginTop: currentStatus === 'pending' || currentStatus === 'reviewed' ? '0.5rem' : '0.75rem', paddingTop: currentStatus === 'pending' || currentStatus === 'reviewed' ? '0' : '0.75rem', borderTop: currentStatus === 'pending' || currentStatus === 'reviewed' ? 'none' : '1px solid hsl(var(--color-border))' }}>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDelete(suggestion.id)}
+                                                style={{
+                                                    background: 'none', border: 'none', color: 'hsl(var(--color-text-muted))',
+                                                    fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px',
+                                                    cursor: 'pointer', padding: '4px', marginLeft: 'auto', opacity: 0.7
+                                                }}
+                                                onMouseEnter={(e) => { e.currentTarget.style.color = 'hsl(350, 80%, 50%)'; e.currentTarget.style.opacity = '1'; }}
+                                                onMouseLeave={(e) => { e.currentTarget.style.color = 'hsl(var(--color-text-muted))'; e.currentTarget.style.opacity = '0.7'; }}
+                                            >
+                                                <Trash2 size={13} /> Excluir Definitivamente
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}
                     </div>
                 </div>
             </div>
+
+            {viewingFile && (
+                <FileViewer
+                    attachment={viewingFile}
+                    onClose={() => setViewingFile(null)}
+                />
+            )}
         </div>
     );
 }

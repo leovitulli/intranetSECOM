@@ -14,11 +14,13 @@ interface DataContextType {
     updateTaskStatus: (taskId: string, newStatus: Task['status']) => Promise<void>;
     updateTask: (updatedTask: Task) => Promise<void>;
     addTask: (task: Omit<Task, 'id' | 'comments' | 'attachments'>) => Promise<void>;
+    deleteTask: (taskId: string) => Promise<void>;
     archiveTask: (taskId: string) => Promise<void>;
     unarchiveTask: (taskId: string) => Promise<void>;
     addSuggestion: (title: string, description: string, department: string, author: string, attachmentUrls?: string[]) => Promise<void>;
     addJobFunction: (title: string) => Promise<void>;
     removeJobFunction: (id: string) => Promise<void>;
+    deleteSuggestion: (suggestionId: string) => Promise<void>;
     addEvent: (eventData: any) => Promise<void>;
     updateEvent: (eventData: any) => Promise<void>;
     deleteEvent: (id: string) => Promise<void>;
@@ -45,7 +47,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             // Fetch Team
             const { data: teamData } = await supabase.from('users').select('*');
             if (teamData) {
-                const formattedTeam: TeamMember[] = teamData.map(u => ({
+                const formattedTeam: TeamMember[] = teamData.map((u: any) => ({
                     id: u.id,
                     name: u.name,
                     role: u.role,
@@ -71,8 +73,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 .select(`
                     id, title, description, status, type, creator, priority, due_date, archived, archived_at,
                     inauguracao_nome, inauguracao_endereco, inauguracao_secretarias, inauguracao_tipo, inauguracao_checklist, inauguracao_data,
+                    pauta_data, pauta_horario, pauta_endereco, pauta_saida, is_pauta_externa,
+                    attachments, comments,
                     task_assignees ( users ( name ) )
-                `);
+                `)
+                .order('created_at', { ascending: false });
 
             if (tasksError) {
                 console.error("Primary tasks query failed, using fallback:", tasksError);
@@ -82,8 +87,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                     .select(`
                         id, title, description, status, type, creator, priority, due_date,
                         inauguracao_nome, inauguracao_endereco, inauguracao_secretarias, inauguracao_tipo, inauguracao_checklist, inauguracao_data,
+                        pauta_data, pauta_horario, pauta_endereco, pauta_saida, is_pauta_externa,
+                        attachments, comments,
                         task_assignees ( users ( name ) )
-                    `);
+                    `)
+                    .order('created_at', { ascending: false });
                 tasksData = fallback.data as any;
             }
 
@@ -97,9 +105,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                     creator: t.creator,
                     priority: t.priority as Task['priority'],
                     dueDate: t.due_date ? new Date(t.due_date) : null,
+                    createdAt: t.created_at ? new Date(t.created_at) : new Date(),
                     assignees: t.task_assignees?.map((ta: any) => ta.users?.name).filter(Boolean) || [],
-                    comments: [],
-                    attachments: [],
+                    comments: t.comments || [],
+                    attachments: t.attachments || [],
                     archived: t.archived || false,
                     archived_at: t.archived_at ? new Date(t.archived_at) : null,
                     inauguracao_nome: t.inauguracao_nome || undefined,
@@ -116,15 +125,19 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                         return undefined;
                     })(),
                     inauguracao_tipo: t.inauguracao_tipo || undefined,
+                    pauta_data: t.pauta_data || undefined,
+                    pauta_horario: t.pauta_horario || undefined,
+                    pauta_endereco: t.pauta_endereco || undefined,
+                    pauta_saida: t.pauta_saida || undefined,
+                    is_pauta_externa: t.is_pauta_externa || false,
                     inauguracao_checklist: (() => {
-                        console.log("Raw checklist from DB for task", t.id, ":", t.inauguracao_checklist);
                         if (!t.inauguracao_checklist) return undefined;
                         if (typeof t.inauguracao_checklist === 'string') {
                             try { return JSON.parse(t.inauguracao_checklist); } catch { return undefined; }
                         }
                         return t.inauguracao_checklist;
                     })(),
-                    inauguracao_data: t.inauguracao_data ? new Date(t.inauguracao_data + 'T12:00:00') : undefined,
+                    inauguracao_data: t.inauguracao_data ? new Date(t.inauguracao_data.includes('T') ? t.inauguracao_data : t.inauguracao_data + 'T12:00:00') : undefined,
                 });
                 setTasks(tasksData.filter((t: any) => !t.archived).map(formatTask));
                 setArchivedTasks(tasksData.filter((t: any) => t.archived).map(formatTask));
@@ -138,7 +151,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             `);
 
             if (eventsData) {
-                const formattedEvents = eventsData.map(e => ({
+                const formattedEvents = eventsData.map((e: any) => ({
                     id: e.id,
                     title: e.title,
                     date: new Date(e.date + 'T12:00:00'),
@@ -159,7 +172,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 .order('created_at', { ascending: false });
 
             if (suggestionsData) {
-                const formattedSuggestions = suggestionsData.map(s => ({
+                const formattedSuggestions = suggestionsData.map((s: any) => ({
                     ...s,
                     date: new Date(s.created_at)
                 }));
@@ -231,6 +244,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 inauguracao_tipo: updatedTask.inauguracao_tipo || null,
                 inauguracao_checklist: updatedTask.inauguracao_checklist || null,
                 inauguracao_data: updatedTask.inauguracao_data?.toISOString().split('T')[0] || null,
+                pauta_data: updatedTask.pauta_data || null,
+                pauta_horario: updatedTask.pauta_horario || null,
+                pauta_endereco: updatedTask.pauta_endereco || null,
+                pauta_saida: updatedTask.pauta_saida || null,
+                is_pauta_externa: updatedTask.is_pauta_externa || false,
+                comments: updatedTask.comments || [],
+                attachments: updatedTask.attachments || [],
             })
             .eq('id', updatedTask.id);
 
@@ -279,25 +299,81 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     };
 
     const addTask = async (taskData: Omit<Task, 'id' | 'comments' | 'attachments'>) => {
-        const { data } = await supabase
-            .from('tasks')
-            .insert([{
-                title: taskData.title,
-                description: taskData.description,
-                status: taskData.status,
-                type: taskData.type,
-                creator: taskData.creator,
-                priority: taskData.priority,
-                due_date: taskData.dueDate?.toISOString() || null,
-                inauguracao_nome: taskData.inauguracao_nome || null,
-                inauguracao_endereco: taskData.inauguracao_endereco || null,
-                inauguracao_secretarias: taskData.inauguracao_secretarias || null,
-                inauguracao_tipo: taskData.inauguracao_tipo || null,
-                inauguracao_checklist: taskData.inauguracao_checklist || null,
-                inauguracao_data: taskData.inauguracao_data?.toISOString().split('T')[0] || null,
-            }])
-            .select()
-            .single();
+        try {
+            const { data, error } = await supabase
+                .from('tasks')
+                .insert([{
+                    title: taskData.title,
+                    description: taskData.description,
+                    status: taskData.status,
+                    type: taskData.type,
+                    creator: taskData.creator,
+                    priority: taskData.priority,
+                    due_date: taskData.dueDate?.toISOString() || null,
+                    inauguracao_nome: taskData.inauguracao_nome || null,
+                    inauguracao_endereco: taskData.inauguracao_endereco || null,
+                    inauguracao_secretarias: taskData.inauguracao_secretarias || null,
+                    inauguracao_tipo: taskData.inauguracao_tipo || null,
+                    inauguracao_checklist: taskData.inauguracao_checklist || null,
+                    inauguracao_data: taskData.inauguracao_data?.toISOString().split('T')[0] || null,
+                    pauta_data: (taskData as any).pauta_data || null,
+                    pauta_horario: (taskData as any).pauta_horario || null,
+                    pauta_endereco: (taskData as any).pauta_endereco || null,
+                    pauta_saida: (taskData as any).pauta_saida || null,
+                    is_pauta_externa: (taskData as any).is_pauta_externa || false,
+                }])
+                .select()
+                .single();
+
+            if (error) {
+                console.error("Supabase Add Task Error:", error);
+
+                // Temporary workaround: If it's a missing column error for the new fields
+                if (error.message.includes('column "pauta_data" of relation "tasks" does not exist') || error.code === '42703') {
+                    console.log("⚠️ Missing new columns. Retrying without them...");
+                    const fallbackTaskData = {
+                        title: taskData.title,
+                        description: taskData.description,
+                        status: taskData.status,
+                        type: taskData.type,
+                        creator: taskData.creator,
+                        priority: taskData.priority,
+                        due_date: taskData.dueDate?.toISOString() || null,
+                        inauguracao_nome: taskData.inauguracao_nome || null,
+                        inauguracao_endereco: taskData.inauguracao_endereco || null,
+                        inauguracao_secretarias: taskData.inauguracao_secretarias || null,
+                        inauguracao_tipo: taskData.inauguracao_tipo || null,
+                        inauguracao_checklist: taskData.inauguracao_checklist || null,
+                        inauguracao_data: taskData.inauguracao_data?.toISOString().split('T')[0] || null,
+                        pauta_saida: (taskData as any).pauta_saida || null,
+                        is_pauta_externa: (taskData as any).is_pauta_externa || false,
+                        created_at: new Date().toISOString(),
+                    };
+
+                    const retry = await supabase.from('tasks').insert([fallbackTaskData]).select().single();
+                    if (retry.error) {
+                        alert("Erro ao criar pauta (fallback): " + retry.error.message);
+                        return;
+                    }
+
+                    // If retry succeeds, proceed to handle it below by re-assigning data and error
+                    return processNewTaskData(retry.data, taskData);
+                }
+
+                alert("Erro ao criar pauta: " + error.message);
+                return;
+            }
+
+            if (data) {
+                await processNewTaskData(data, taskData);
+            }
+        } catch (err: any) {
+            console.error("Unexpected error in addTask:", err);
+            alert("Erro inesperado ao criar pauta: " + err.message);
+        }
+    };
+
+    const processNewTaskData = async (data: any, taskData: Omit<Task, 'id' | 'comments' | 'attachments'>) => {
 
         if (data) {
             const newTask: Task = {
@@ -318,8 +394,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 inauguracao_tipo: taskData.inauguracao_tipo,
                 inauguracao_checklist: taskData.inauguracao_checklist,
                 inauguracao_data: taskData.inauguracao_data,
+                createdAt: new Date(),
+                pauta_saida: (taskData as any).pauta_saida,
             };
-            setTasks(prev => [...prev, newTask]);
+            setTasks(prev => [newTask, ...prev]);
 
             // Handle Assignees
             if (taskData.assignees.length > 0 && team.length > 0) {
@@ -365,7 +443,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                     .in('role', ['admin', 'desenvolvedor']);
 
                 if (adminUsers && adminUsers.length > 0) {
-                    const notificationsToInsert = adminUsers.map(u => ({
+                    const notificationsToInsert = adminUsers.map((u: any) => ({
                         user_id: u.id,
                         title: '💡 Nova Sugestão de Pauta',
                         message: `${data.department}: ${data.title}`,
@@ -380,6 +458,25 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const deleteSuggestion = async (suggestionId: string) => {
+        try {
+            const { error } = await supabase
+                .from('suggestions')
+                .delete()
+                .eq('id', suggestionId);
+
+            if (error) {
+                console.error("Error deleting suggestion:", error);
+                alert("Erro ao excluir sugestão.");
+                return;
+            }
+
+            setSuggestions(prev => prev.filter(s => s.id !== suggestionId));
+        } catch (error) {
+            console.error("Unexpected error deleting suggestion:", error);
+        }
+    };
+
     const archiveTask = async (taskId: string) => {
         setTasks(prev => {
             const taskToArchive = prev.find(t => t.id === taskId);
@@ -391,6 +488,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             .from('tasks')
             .update({ archived: true, archived_at: new Date().toISOString() })
             .eq('id', taskId);
+
+        await logActivity(taskId, 'archive', 'Arquivou a pauta.');
     };
 
     const unarchiveTask = async (taskId: string) => {
@@ -404,6 +503,33 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             .from('tasks')
             .update({ archived: false, archived_at: null })
             .eq('id', taskId);
+
+        await logActivity(taskId, 'unarchive', 'Desarquivou a pauta.');
+    };
+
+    const deleteTask = async (taskId: string) => {
+        try {
+            // Manual cascade deletion for related tables
+            await supabase.from('task_assignees').delete().eq('task_id', taskId);
+            await supabase.from('task_logs').delete().eq('task_id', taskId);
+            await supabase.from('notifications').delete().eq('message', `Escalado(a) na pauta: "${tasks.find(t => t.id === taskId)?.title}"`);
+
+            const { error } = await supabase
+                .from('tasks')
+                .delete()
+                .eq('id', taskId);
+
+            if (error) {
+                console.error("Error deleting task:", error);
+                alert("Erro ao excluir pauta definitivamente: " + error.message);
+                return;
+            }
+
+            setTasks(prev => prev.filter(t => t.id !== taskId));
+            setArchivedTasks(prev => prev.filter(t => t.id !== taskId));
+        } catch (error) {
+            console.error("Unexpected error deleting task:", error);
+        }
     };
 
     const addJobFunction = async (title: string) => {
@@ -548,8 +674,55 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'tasks' },
-                () => {
-                    fetchData(); // Simplest approach: refetch on any change
+                async () => {
+                    // Only refetch tasks data — not team/events/suggestions
+                    const { data: tasksData, error: tasksError } = await supabase
+                        .from('tasks')
+                        .select(`
+                            *,
+                            task_assignees ( users ( name ) )
+                        `);
+                    if (tasksError) {
+                        console.error('Realtime tasks refetch error:', tasksError);
+                        return;
+                    }
+                    if (tasksData) {
+                        const formatTask = (t: any) => ({
+                            id: t.id,
+                            title: t.title,
+                            description: t.description || '',
+                            status: t.status as Task['status'],
+                            type: t.type as Task['type'],
+                            creator: t.creator,
+                            priority: t.priority as Task['priority'],
+                            dueDate: t.due_date ? new Date(t.due_date) : null,
+                            createdAt: t.created_at ? new Date(t.created_at) : new Date(),
+                            assignees: t.task_assignees?.map((ta: any) => ta.users?.name).filter(Boolean) || [],
+                            comments: t.comments || [],
+                            attachments: t.attachments || [],
+                            archived: t.archived || false,
+                            archived_at: t.archived_at ? new Date(t.archived_at) : null,
+                            inauguracao_nome: t.inauguracao_nome || undefined,
+                            inauguracao_endereco: t.inauguracao_endereco || undefined,
+                            inauguracao_secretarias: t.inauguracao_secretarias || undefined,
+                            inauguracao_tipo: t.inauguracao_tipo || undefined,
+                            inauguracao_checklist: (() => {
+                                if (!t.inauguracao_checklist) return undefined;
+                                if (typeof t.inauguracao_checklist === 'string') {
+                                    try { return JSON.parse(t.inauguracao_checklist); } catch { return undefined; }
+                                }
+                                return t.inauguracao_checklist;
+                            })(),
+                            inauguracao_data: t.inauguracao_data ? new Date(t.inauguracao_data.includes('T') ? t.inauguracao_data : t.inauguracao_data + 'T12:00:00') : undefined,
+                            pauta_data: t.pauta_data || undefined,
+                            pauta_horario: t.pauta_horario || undefined,
+                            pauta_endereco: t.pauta_endereco || undefined,
+                            pauta_saida: t.pauta_saida || undefined,
+                            is_pauta_externa: t.is_pauta_externa || false,
+                        });
+                        setTasks(tasksData.filter((t: any) => !t.archived).map(formatTask));
+                        setArchivedTasks(tasksData.filter((t: any) => t.archived).map(formatTask));
+                    }
                 }
             )
             .subscribe();
@@ -558,7 +731,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             .on(
                 'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'suggestions' },
-                (payload) => {
+                (payload: any) => {
                     const newSug = payload.new;
                     const formatted = { ...newSug, date: new Date(newSug.created_at) };
                     setSuggestions(prev => [formatted, ...prev]);
@@ -590,8 +763,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     return (
         <DataContext.Provider value={{
             tasks, archivedTasks, team, events, suggestions, jobFunctions,
-            loading, updateTaskStatus, updateTask, addTask, archiveTask,
-            unarchiveTask, addSuggestion, addJobFunction, removeJobFunction,
+            loading, updateTaskStatus, updateTask, addTask, deleteTask, archiveTask,
+            unarchiveTask, addSuggestion, deleteSuggestion, addJobFunction, removeJobFunction,
             addEvent, updateEvent, deleteEvent,
             searchTerm, setSearchTerm
         }}>

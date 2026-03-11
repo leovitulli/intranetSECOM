@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X, MapPin, Building2, Award, CheckSquare, Calendar, Users } from 'lucide-react';
 import type { Task, InaugurationTipo, InaugurationChecklistItem } from '../types/kanban';
 import { useAuth } from '../contexts/AuthContext';
-import { INITIAL_TEAM } from '../utils/mockTeam';
+import { useData } from '../contexts/DataContext';
 import SecretariasMultiSelect from './SecretariasMultiSelect';
 import './CreateInaugurationModal.css';
 
@@ -30,6 +30,7 @@ function buildChecklist(tipo: InaugurationTipo): InaugurationChecklistItem[] {
 
 export default function CreateInaugurationModal({ onClose, onCreate }: CreateInaugurationModalProps) {
     const { user } = useAuth();
+    const { team } = useData();
     const [nome, setNome] = useState('');
     const [endereco, setEndereco] = useState('');
     const [secretarias, setSecretarias] = useState<string[]>([]);
@@ -82,6 +83,7 @@ export default function CreateInaugurationModal({ onClose, onCreate }: CreateIna
             inauguracao_tipo: tipo,
             inauguracao_checklist: checklist,
             inauguracao_data: inaugDate,
+            createdAt: new Date(),
         };
 
         onCreate(newTask);
@@ -167,7 +169,7 @@ export default function CreateInaugurationModal({ onClose, onCreate }: CreateIna
                             <small style={{ fontWeight: 400, marginLeft: '6px', color: 'hsl(var(--color-text-muted))' }}>— você é incluído automaticamente</small>
                         </label>
                         <div className="team-grid">
-                            {INITIAL_TEAM.filter(m => m.name !== user?.name).map(member => (
+                        {team.filter(m => m.name !== user?.name).map(member => (
                                 <label key={member.id} className="type-checkbox" style={{ fontSize: '0.85rem' }}>
                                     <input
                                         type="checkbox"

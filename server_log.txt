@@ -1,0 +1,14 @@
+
+> intranet-secom@0.0.0 dev
+> vite --host
+
+
+  VITE v7.3.1  ready in 222 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://172.16.41.113:5173/
+  ➜  press h + enter to show help
+10:19:46 AM [vite] (client) hmr update /src/components/FileViewer.tsx
+10:20:09 AM [vite] (client) hmr update /src/pages/Suggestions.tsx
+10:26:07 AM [vite] (client) hmr update /src/components/FileViewer.css
+10:26:24 AM [vite] (client) hmr update /src/components/FileViewer.tsx

@@ -217,7 +217,7 @@ export default function Dashboard() {
                                         <h3 className="card-title">{task.title}</h3>
 
                                         {/* Secretaria badge — only for non-inauguration cards */}
-                                        {task.creator && task.status !== 'inauguracao' && (
+                                        {task.inauguracao_secretarias && task.inauguracao_secretarias.length > 0 && task.status !== 'inauguracao' && (
                                             <span style={{
                                                 display: 'inline-flex', alignItems: 'center', gap: 3,
                                                 fontSize: '0.72rem', fontWeight: 600,
@@ -227,7 +227,7 @@ export default function Dashboard() {
                                                 border: '1px solid hsl(var(--color-primary) / 0.2)',
                                                 marginBottom: '2px'
                                             }}>
-                                                🏛️ {task.creator}
+                                                🏛️ {task.inauguracao_secretarias.join(', ')}
                                             </span>
                                         )}
 
@@ -365,17 +365,24 @@ export default function Dashboard() {
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                             {archivedTasks.map(task => (
-                                <div key={task.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 1.2rem', background: 'hsl(var(--color-background))', borderRadius: 'var(--radius-md)', border: '1px solid hsl(var(--color-border))' }}>
-                                    <div>
-                                        <p style={{ fontWeight: 500, fontSize: '0.9rem', margin: 0 }}>{task.title}</p>
-                                        <span style={{ fontSize: '0.75rem', color: 'hsl(var(--color-text-muted))' }}>
+                                <div
+                                    key={task.id}
+                                    className="archived-task-item-premium"
+                                    onClick={() => setSelectedTask(task)}
+                                >
+                                    <div className="archived-task-info-premium">
+                                        <p className="archived-task-title-premium">{task.title}</p>
+                                        <span className="archived-task-date-premium">
                                             Arquivada em: {task.archived_at ? task.archived_at.toLocaleDateString('pt-BR') : '—'}
                                         </span>
                                     </div>
                                     <button
                                         className="btn-secondary small"
                                         style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                                        onClick={() => unarchiveTask(task.id)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            unarchiveTask(task.id);
+                                        }}
                                     >
                                         <RotateCcw size={14} /> Desarquivar
                                     </button>

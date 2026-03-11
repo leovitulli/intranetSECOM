@@ -39,7 +39,7 @@ export default function Profile() {
             setJobTitles(user.job_titles || []);
 
             // Fetch the email directly from the auth session since it isn't in public.users by default
-            supabase.auth.getSession().then(({ data }) => {
+            supabase.auth.getSession().then(({ data }: any) => {
                 if (data.session?.user) {
                     setEmail(data.session.user.email || '');
                 }

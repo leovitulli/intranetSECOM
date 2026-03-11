@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Task, Comment } from '../types/kanban';
-import { X, Send, Paperclip, FileText, Image as ImageIcon, Video, File, Activity, Archive, MapPin, Award, Building2, CheckSquare, Calendar } from 'lucide-react';
+import { X, Send, Paperclip, FileText, Image as ImageIcon, Video, File, Activity, Archive, MapPin, Award, Building2, CheckSquare, Calendar, RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '../lib/supabaseClient';
@@ -10,6 +10,7 @@ import type { Attachment } from '../types/kanban';
 import { useData } from '../contexts/DataContext';
 import './TaskModal.css';
 import SecretariasMultiSelect from './SecretariasMultiSelect';
+import TeamMultiSelect from './TeamMultiSelect';
 
 interface TaskModalProps {
     task: Task;
@@ -20,10 +21,23 @@ interface TaskModalProps {
 
 export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: TaskModalProps) {
     const { user } = useAuth();
-    const { team, archiveTask } = useData();
+    const { team, archiveTask, unarchiveTask, tasks, deleteTask } = useData();
+    const uniqueAddresses = Array.from(new Set(tasks?.map((t: Task) => t.pauta_endereco).filter(Boolean)));
     const [newComment, setNewComment] = useState('');
     const [viewingFile, setViewingFile] = useState<Attachment | null>(null);
+    const [uploadingAttachments, setUploadingAttachments] = useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    // Buffer edits locally
+    const [editedTask, setEditedTask] = useState<Task>(task);
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+    useEffect(() => {
+        setEditedTask(task);
+        setEditTitleContent(task.title);
+        setEditDescContent(task.description);
+        setHasUnsavedChanges(false);
+    }, [task]);
 
     // Editable states
     const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -32,8 +46,25 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
     const [isEditingDesc, setIsEditingDesc] = useState(false);
     const [editDescContent, setEditDescContent] = useState(task.description);
 
-    const [newAssigneeName, setNewAssigneeName] = useState('');
     const [activityLogs, setActivityLogs] = useState<any[]>([]);
+
+    const handleTypeToggleInModal = (typeKey: any) => {
+        const newTypes = editedTask.type.includes(typeKey)
+            ? editedTask.type.filter(t => t !== typeKey)
+            : [...editedTask.type, typeKey];
+        handleFieldChange('type', newTypes.length > 0 ? newTypes : editedTask.type);
+    };
+
+    const handleFieldChange = (field: keyof Task, value: any) => {
+        setEditedTask(prev => ({ ...prev, [field]: value }));
+        setHasUnsavedChanges(true);
+    };
+
+    const handleSave = async () => {
+        await onUpdateTask(editedTask);
+        setHasUnsavedChanges(false);
+        onClose();
+    };
 
     useEffect(() => {
         const fetchLogs = async () => {
@@ -53,7 +84,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                 .on(
                     'postgres_changes',
                     { event: 'INSERT', schema: 'public', table: 'task_logs', filter: `task_id=eq.${task.id}` },
-                    (payload) => {
+                    (payload: any) => {
                         setActivityLogs(prev => [payload.new, ...prev]);
                     }
                 )
@@ -77,10 +108,12 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
             date: new Date()
         };
 
+        // Instantly save comments
         onUpdateTask({
             ...task,
             comments: [...task.comments, comment]
         });
+        setEditedTask(prev => ({ ...prev, comments: [...prev.comments, comment] }));
         setNewComment('');
     };
 
@@ -93,40 +126,60 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
         }
     };
 
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
-        if (!files) return;
+        if (!files || files.length === 0) return;
 
+        setUploadingAttachments(true);
         const newAttachments: Attachment[] = [];
-        Array.from(files).forEach((file) => {
-            let fileType = 'file';
-            if (file.type.startsWith('image/')) fileType = 'image';
-            if (file.type.startsWith('video/')) fileType = 'video';
-            if (file.type === 'application/pdf') fileType = 'pdf';
 
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const url = event.target?.result as string;
+        try {
+            for (const file of Array.from(files)) {
+                let fileType = 'file';
+                if (file.type.startsWith('image/')) fileType = 'image';
+                if (file.type.startsWith('video/')) fileType = 'video';
+                if (file.type === 'application/pdf') fileType = 'pdf';
+
+                const ext = file.name.split('.').pop();
+                const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+                const { error } = await supabase.storage
+                    .from('task-attachments')
+                    .upload(path, file, { upsert: false });
+
+                if (error) {
+                    console.error('Upload Error:', error);
+                    alert(`Erro ao anexar ${file.name}: ${error.message}. Você precisa rodar o script SQL de anexos de tarefas.`);
+                    continue;
+                }
+
+                const { data } = supabase.storage
+                    .from('task-attachments')
+                    .getPublicUrl(path);
+
                 newAttachments.push({
                     id: Date.now().toString() + Math.random(),
                     name: file.name,
                     size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
                     type: fileType as any,
-                    url: url
+                    url: data.publicUrl
                 });
+            }
 
-                // If this is the last file, update the state
-                if (newAttachments.length === files.length) {
-                    onUpdateTask({
-                        ...task,
-                        attachments: [...task.attachments, ...newAttachments]
-                    });
-                }
-            };
-            reader.readAsDataURL(file);
-        });
-
-        if (fileInputRef.current) fileInputRef.current.value = '';
+            if (newAttachments.length > 0) {
+                // Instantly save attachments
+                onUpdateTask({
+                    ...task,
+                    attachments: [...(task.attachments || []), ...newAttachments]
+                });
+                setEditedTask(prev => ({
+                    ...prev,
+                    attachments: [...(prev.attachments || []), ...newAttachments]
+                }));
+            }
+        } finally {
+            setUploadingAttachments(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
     };
 
     // --- Inauguration data fallback: parse from description for old cards ---
@@ -137,13 +190,18 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
         const match = task.description.match(regex);
         return match ? match[1].trim() : null;
     };
-    const inaugNome = task.inauguracao_nome || (isInauguracao ? parseInaugField('Nome') : null);
-    const inaugEndereco = task.inauguracao_endereco || (isInauguracao ? parseInaugField('Endereço') : null);
-    const inaugSecretariasStr = task.inauguracao_secretarias?.join(', ') || (isInauguracao ? parseInaugField('Secretarias') : null);
-    const inaugTipo = task.inauguracao_tipo || (isInauguracao ? parseInaugField('Tipo') : null);
-    const inaugData = task.inauguracao_data
-        ? format(task.inauguracao_data, "dd/MM/yyyy", { locale: ptBR })
+    const inaugNome = editedTask.inauguracao_nome || (isInauguracao ? parseInaugField('Nome') : null);
+    const inaugEndereco = editedTask.inauguracao_endereco || (isInauguracao ? parseInaugField('Endereço') : null);
+
+    const inaugTipo = editedTask.inauguracao_tipo || (isInauguracao ? parseInaugField('Tipo') : null);
+    const inaugData = editedTask.inauguracao_data
+        ? format(editedTask.inauguracao_data, "dd/MM/yyyy", { locale: ptBR })
         : (isInauguracao ? parseInaugField('Data') : null);
+
+    // --- Pauta data ---
+    const pautaDataStr = editedTask.pauta_data ? format(new Date(editedTask.pauta_data + 'T12:00:00'), "dd/MM/yyyy (EEEE)", { locale: ptBR }) : null;
+    const pautaHorario = editedTask.pauta_horario;
+    const pautaEndereco = editedTask.pauta_endereco;
 
     // Fallback checklist for old cards that have tipo but no saved checklist
     const DEFAULT_CHECKLIST_SIMPLES = [
@@ -166,19 +224,19 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
     const isAutoInaugDesc = isInauguracao && task.description?.startsWith('**Nome:**');
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-overlay">
             <div className="modal-content" onClick={e => e.stopPropagation()}>
                 <button className="modal-close" onClick={onClose}>
                     <X size={20} />
                 </button>
 
                 <div className="modal-header">
-                    <div className="modal-badges">
+                    <div className="modal-header-actions">
                         <div className="task-badges-container">
-                            {task.type.map(t => (
-                                <span key={t} className={`badge type-${t}`}>
+                            {editedTask.type.map(t => (
+                                <span key={t} className={`badge-premium type-${t}`}>
                                     {t === 'release' && '📝 Release'}
-                                    {t === 'arte' && '🎨 Arte Gráfica'}
+                                    {t === 'arte' && '🎨 Arte'}
                                     {t === 'video' && '🎬 Vídeo'}
                                     {t === 'foto' && '📸 Fotos'}
                                     {t === 'inauguracao' && 'Inauguração'}
@@ -188,9 +246,9 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
 
                         <div className="priority-selector">
                             <select
-                                className={`badge priority-${task.priority}`}
-                                value={task.priority}
-                                onChange={(e) => onUpdateTask({ ...task, priority: e.target.value as any })}
+                                className={`priority-select priority-${editedTask.priority}`}
+                                value={editedTask.priority}
+                                onChange={(e) => handleFieldChange('priority', e.target.value as any)}
                             >
                                 <option value="baixa">Prioridade: Baixa</option>
                                 <option value="media">Prioridade: Média</option>
@@ -198,12 +256,13 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                             </select>
                         </div>
 
-                        <span className={`badge status-${task.status}`}>
-                            Status: {task.status.toUpperCase()}
-                        </span>
+                        <div className="status-indicator">
+                            <span className="label">Status:</span>
+                            <span className="value">{editedTask.status.toUpperCase()}</span>
+                        </div>
 
                         <button
-                            title="Arquivar pauta"
+                            className="btn-archive-header"
                             onClick={async () => {
                                 if (confirm('Arquivar esta pauta? Ela ficará visível na aba de Histórico.')) {
                                     await archiveTask(task.id);
@@ -211,7 +270,6 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                     onClose();
                                 }
                             }}
-                            style={{ background: 'none', border: '1px solid hsl(var(--color-border))', borderRadius: 'var(--radius-md)', padding: '4px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', color: 'hsl(var(--color-text-muted))', fontSize: '0.8rem' }}
                         >
                             <Archive size={14} /> Arquivar
                         </button>
@@ -226,10 +284,10 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                 onChange={e => setEditTitleContent(e.target.value)}
                                 onBlur={() => {
                                     setIsEditingTitle(false);
-                                    if (editTitleContent.trim() && editTitleContent !== task.title) {
-                                        onUpdateTask({ ...task, title: editTitleContent.trim() });
+                                    if (editTitleContent.trim() && editTitleContent !== editedTask.title) {
+                                        handleFieldChange('title', editTitleContent.trim());
                                     } else {
-                                        setEditTitleContent(task.title);
+                                        setEditTitleContent(editedTask.title);
                                     }
                                 }}
                                 onKeyDown={e => {
@@ -240,18 +298,19 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                         </div>
                     ) : (
                         <h2 className="modal-title" onClick={() => setIsEditingTitle(true)} style={{ cursor: 'pointer', outline: 'none' }} title="Clique para editar">
-                            {task.title}
+                            {editedTask.title}
                         </h2>
                     )}
                 </div>
 
                 <div className="modal-body">
-                    <div className="modal-main-col">
-                        <div className="modal-section">
-                            <div className="section-header">
+                    <div className="modal-main-col-premium">
+                        <div className="modal-section-group-premium">
+                            <div className="section-header-premium">
+                                <span className="section-number-premium">01</span>
                                 <h3>Descrição</h3>
                                 {!isEditingDesc && !isAutoInaugDesc && (
-                                    <button className="btn-secondary small" onClick={() => setIsEditingDesc(true)}>Editar</button>
+                                    <button className="btn-edit-premium" onClick={() => setIsEditingDesc(true)}>Editar</button>
                                 )}
                             </div>
 
@@ -268,30 +327,26 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                     <div className="edit-actions">
                                         <button className="btn-secondary small" onClick={() => {
                                             setIsEditingDesc(false);
-                                            setEditDescContent(task.description);
+                                            setEditDescContent(editedTask.description);
                                         }}>Cancelar</button>
                                         <button className="btn-primary small" onClick={() => {
-                                            onUpdateTask({ ...task, description: editDescContent });
+                                            handleFieldChange('description', editDescContent);
                                             setIsEditingDesc(false);
-                                        }}>Salvar</button>
+                                        }}>Concluir Edição</button>
                                     </div>
                                 </div>
                             ) : (
-                                <p className="task-description">{task.description}</p>
+                                <p className="task-description">{editedTask.description}</p>
                             )}
                         </div>
 
                         {/* Inauguration-specific section */}
                         {task.status === 'inauguracao' && (
-                            <div className="modal-section" style={{
-                                background: 'hsla(330, 60%, 97%, 1)',
-                                border: '1px solid hsla(330, 40%, 85%, 1)',
-                                borderRadius: 'var(--radius-md)',
-                                padding: '1.25rem'
-                            }}>
-                                <h3 style={{ color: 'hsl(330, 50%, 40%)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                    Dados da Inauguração
-                                </h3>
+                            <div className="modal-section-group-premium inuag-premium-bg">
+                                <div className="section-header-premium">
+                                    <span className="section-number-premium">02</span>
+                                    <h3>Dados da Inauguração</h3>
+                                </div>
 
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
                                     {inaugNome && (
@@ -317,9 +372,9 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                         <div style={{ flex: 1 }}>
                                             <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'hsl(330, 40%, 55%)', letterSpacing: '0.05em', marginBottom: '0.35rem' }}>Secretaria(s)</div>
                                             <SecretariasMultiSelect
-                                                selected={task.inauguracao_secretarias || []}
+                                                selected={editedTask.inauguracao_secretarias || []}
                                                 onChange={(newSecs) => {
-                                                    onUpdateTask({ ...task, inauguracao_secretarias: newSecs });
+                                                    handleFieldChange('inauguracao_secretarias', newSecs);
                                                 }}
                                             />
                                         </div>
@@ -365,7 +420,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                                             const updated = effectiveChecklist.map(i =>
                                                                 i.id === item.id ? { ...i, done: !i.done } : i
                                                             );
-                                                            onUpdateTask({ ...task, inauguracao_checklist: updated });
+                                                            handleFieldChange('inauguracao_checklist', updated);
                                                         }}
                                                     />
                                                     <span style={{ textDecoration: item.done ? 'line-through' : 'none', color: item.done ? 'hsl(var(--color-text-muted))' : 'inherit' }}>
@@ -380,8 +435,49 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                             </div>
                         )}
 
-                        <div className="modal-section attachments-section">
-                            <div className="section-header">
+                        {/* Pauta-specific section (Non-inauguration) */}
+                        {!isInauguracao && (editedTask.pauta_data || editedTask.pauta_horario || editedTask.pauta_endereco) && (
+                            <div className="modal-section-group-premium alternate-bg-premium">
+                                <div className="section-header-premium">
+                                    <span className="section-number-premium">02</span>
+                                    <h3>Dados da Cobertura</h3>
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+                                    {pautaDataStr && (
+                                        <div>
+                                            <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', letterSpacing: '0.05em' }}>Data</div>
+                                            <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{pautaDataStr}</div>
+                                        </div>
+                                    )}
+                                    {pautaHorario && (
+                                        <div>
+                                            <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', letterSpacing: '0.05em' }}>Horário</div>
+                                            <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{pautaHorario}</div>
+                                        </div>
+                                    )}
+                                </div>
+                                {pautaEndereco && (
+                                    <div style={{ marginTop: '1rem' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                                            <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', letterSpacing: '0.05em' }}>Endereço</div>
+                                            <a
+                                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pautaEndereco)}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                style={{ fontSize: '0.7rem', color: 'hsl(var(--color-primary))', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                            >
+                                                <MapPin size={12} /> Ver no Google Maps
+                                            </a>
+                                        </div>
+                                        <div style={{ fontSize: '0.9rem' }}>{pautaEndereco}</div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="modal-section-group-premium">
+                            <div className="section-header-premium">
+                                <span className="section-number-premium">03</span>
                                 <h3>Anexos ({task.attachments.length})</h3>
                                 <input
                                     type="file"
@@ -390,14 +486,24 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                     style={{ display: 'none' }}
                                     onChange={handleFileUpload}
                                 />
-                                <button className="btn-secondary small" onClick={() => fileInputRef.current?.click()}>
-                                    <Paperclip size={14} /> Adicionar
+                                <button className="btn-edit-premium" onClick={() => fileInputRef.current?.click()} disabled={uploadingAttachments}>
+                                    {uploadingAttachments ? (
+                                        <><span style={{ display: 'inline-block', width: 12, height: 12, border: '2px solid rgba(0,0,0,0.2)', borderTopColor: 'inherit', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} /> Enviando...</>
+                                    ) : (
+                                        <><Paperclip size={14} /> Adicionar</>
+                                    )}
                                 </button>
                             </div>
 
-                            {task.attachments.length > 0 ? (
+                            {uploadingAttachments && (
+                                <div style={{ fontSize: '0.8rem', color: 'hsl(var(--color-primary))', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    Gravando arquivo no servidor...
+                                </div>
+                            )}
+
+                            {(editedTask.attachments || []).length > 0 ? (
                                 <div className="attachments-list">
-                                    {task.attachments.map(att => (
+                                    {editedTask.attachments.map(att => (
                                         <div
                                             key={att.id}
                                             className="attachment-item clickable"
@@ -412,16 +518,16 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                     ))}
                                 </div>
                             ) : (
-                                <p className="empty-state">Nenhum anexo adicionado nesta pauta.</p>
+                                <p className="empty-state">Nenhum anexo adicionado.</p>
                             )}
                         </div>
 
-                        <div className="modal-section comments-section">
+                        <div className="modal-section-group-premium alternate-bg-premium">
                             <h3>Comentários e Atualizações</h3>
 
                             <div className="comments-list">
-                                {task.comments.length > 0 ? (
-                                    task.comments.map(comment => (
+                                {editedTask.comments.length > 0 ? (
+                                    editedTask.comments.map(comment => (
                                         <div key={comment.id} className="comment">
                                             <img src={comment.avatar} alt={comment.author} className="comment-avatar" />
                                             <div className="comment-bubble">
@@ -494,156 +600,234 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                         </div>
                     </div>
 
-                    <div className="modal-side-col">
-                        <div className="side-card">
-                            <h3>Detalhes</h3>
+                    <div className="modal-side-col-premium">
+                        <div className="side-section-premium">
+                            <h3 className="side-title-premium">Detalhes da Cobertura</h3>
 
-                            {/* Secretaria — full width */}
-                            <div className="detail-item">
-                                <span className="detail-label">Secretaria</span>
+                            {/* Secretaria */}
+                            <div className="detail-item-premium">
+                                <label className="detail-label-premium">Departamentos / Secretarias</label>
                                 <SecretariasMultiSelect
-                                    selected={
-                                        isInauguracao
-                                            ? (task.inauguracao_secretarias || (inaugSecretariasStr ? inaugSecretariasStr.split(',').map(s => s.trim()) : []))
-                                            : (task.creator ? task.creator.split(',').map(s => s.trim()) : [])
-                                    }
-                                    onChange={(newSecs) => {
-                                        if (isInauguracao) {
-                                            onUpdateTask({ ...task, inauguracao_secretarias: newSecs });
-                                        } else {
-                                            onUpdateTask({ ...task, creator: newSecs.join(', ') });
-                                        }
-                                    }}
+                                    selected={editedTask.inauguracao_secretarias || []}
+                                    onChange={(newSecs) => handleFieldChange('inauguracao_secretarias', newSecs)}
                                 />
                             </div>
 
-                            {/* Prazo — full width compact */}
-                            <div className="detail-item">
-                                <span className="detail-label">Prazo de Entrega</span>
-                                <input
-                                    type="date"
-                                    className="edit-input-small"
-                                    value={task.dueDate ? format(task.dueDate, "yyyy-MM-dd") : ''}
-                                    onChange={e => {
-                                        const dateVal = e.target.value;
-                                        if (dateVal) {
-                                            const [year, month, day] = dateVal.split('-');
-                                            onUpdateTask({ ...task, dueDate: new Date(parseInt(year), parseInt(month) - 1, parseInt(day)) });
-                                        } else {
-                                            onUpdateTask({ ...task, dueDate: null });
-                                        }
-                                    }}
-                                />
-                            </div>
-
-
-                            {/* Row 2: Responsáveis — full width */}
-                            <div className="detail-item">
-                                <span className="detail-label">Responsáveis</span>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.25rem' }}>
-                                    {task.assignees && task.assignees.length > 0 ? (
-                                        task.assignees.map(assignee => {
-                                            const member = team.find(m => m.name === assignee);
-                                            const avatarSrc = member?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(assignee)}&background=random`;
-                                            return (
-                                                <div key={assignee} className="assignee-tag">
-                                                    <img src={avatarSrc} alt={assignee} />
-                                                    <span>{assignee}</span>
-                                                    <button
-                                                        className="remove-assignee"
-                                                        onClick={() => {
-                                                            onUpdateTask({
-                                                                ...task,
-                                                                assignees: task.assignees.filter(a => a !== assignee)
-                                                            });
-                                                        }}
-                                                        title="Remover"
-                                                    >
-                                                        <X size={12} />
-                                                    </button>
-                                                </div>
-                                            );
-                                        })
-                                    ) : (
-                                        <span className="unassigned-text">Ninguém atribuído</span>
-                                    )}
-                                </div>
+                            {/* Responsável pela Pauta */}
+                            <div className="detail-item-premium">
+                                <label className="detail-label-premium">Responsável pela Pauta</label>
                                 <select
-                                    value={newAssigneeName}
-                                    onChange={async (e) => {
-                                        const selectedId = e.target.value;
-                                        const member = team.find(m => m.id === selectedId);
-                                        if (member && !task.assignees.includes(member.name)) {
-                                            onUpdateTask({
-                                                ...task,
-                                                assignees: [...task.assignees, member.name]
-                                            });
-                                            await supabase.from('notifications').insert({
-                                                user_id: member.id,
-                                                title: 'Nova Atribuição',
-                                                message: `Você foi escalado(a) na pauta: "${task.title}"`,
-                                                module: 'kanban'
-                                            });
-                                        }
-                                        setNewAssigneeName('');
-                                    }}
-                                    className="edit-input-small"
-                                    style={{ marginTop: '0.5rem', fontSize: '0.8rem' }}
+                                    className="select-premium"
+                                    value={editedTask.creator || ''}
+                                    onChange={e => handleFieldChange('creator', e.target.value)}
                                 >
-                                    <option value="" disabled>+ Adicionar responsável</option>
-                                    {team.filter(m => !task.assignees.includes(m.name)).map(m => (
-                                        <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
+                                    <option value="">Selecione...</option>
+                                    {team.map(m => (
+                                        <option key={m.id} value={m.name}>{m.name}</option>
                                     ))}
                                 </select>
                             </div>
 
-                            {/* Row 3: Tipos de Material — 2 cols */}
-                            <div className="detail-item">
-                                <span className="detail-label">Tipos de Material</span>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.3rem', marginTop: '0.4rem' }}>
-                                    {(['release', 'arte', 'video', 'foto', 'inauguracao'] as const).map(typeKey => (
-                                        <label key={typeKey} className="type-checkbox" style={{ fontSize: '0.75rem', padding: '0.2rem 0.4rem' }}>
-                                            <input
-                                                type="checkbox"
-                                                checked={task.type.includes(typeKey)}
-                                                onChange={() => {
-                                                    const newTypes = task.type.includes(typeKey)
-                                                        ? task.type.filter(t => t !== typeKey)
-                                                        : [...task.type, typeKey];
-                                                    onUpdateTask({ ...task, type: newTypes.length > 0 ? newTypes : task.type });
-                                                }}
-                                            />
-                                            {typeKey === 'release' && '📝 Texto'}
-                                            {typeKey === 'arte' && '🎨 Arte'}
-                                            {typeKey === 'video' && '🎬 Vídeo'}
-                                            {typeKey === 'foto' && '📸 Fotos'}
-                                            {typeKey === 'inauguracao' && 'Inauguração'}
-                                        </label>
+                            {/* Pauta Externa Toggle */}
+                            <div
+                                className={`pauta-externa-side-toggle-premium ${editedTask.is_pauta_externa ? 'active' : ''}`}
+                                onClick={() => handleFieldChange('is_pauta_externa', !editedTask.is_pauta_externa)}
+                            >
+                                <div className="toggle-info-premium">
+                                    <span style={{ fontSize: '0.8rem', fontWeight: 800 }}>Agenda Externa</span>
+                                    <span style={{ fontSize: '0.65rem', opacity: 0.8 }}>Visível na agenda geral</span>
+                                </div>
+                                <div className={`toggle-switch-premium mini ${editedTask.is_pauta_externa ? 'on' : ''}`}>
+                                    <div className="toggle-knob-premium" />
+                                </div>
+                            </div>
+
+                            {/* Equipe Externa */}
+                            <div className="detail-item-premium">
+                                <label className="detail-label-premium">Equipe Externa (Agenda)</label>
+                                <TeamMultiSelect
+                                    selected={editedTask.assignees || []}
+                                    onChange={(newAssignees) => handleFieldChange('assignees', newAssignees)}
+                                />
+                            </div>
+
+                            {/* Data da Pauta */}
+                            <div className="detail-item-premium">
+                                <div className="label-with-hint-premium">
+                                    <label className="detail-label-premium">Data da Pauta</label>
+                                    {editedTask.pauta_data && (
+                                        <span className="side-day-hint-premium">
+                                            {format(new Date(editedTask.pauta_data + 'T12:00:00'), "EEEE", { locale: ptBR })}
+                                        </span>
+                                    )}
+                                </div>
+                                <input
+                                    type="date"
+                                    className="input-premium"
+                                    value={editedTask.pauta_data || ''}
+                                    onChange={e => handleFieldChange('pauta_data', e.target.value)}
+                                />
+                            </div>
+
+                            {/* Horários */}
+                            <div className="detail-item-premium">
+                                <label className="detail-label-premium">Horário da Cobertura</label>
+                                <div className="time-range-group-premium">
+                                    <input
+                                        type="time"
+                                        className="time-input-premium"
+                                        value={(editedTask.pauta_horario || '').split(' às ')[0] || ''}
+                                        onChange={e => {
+                                            const end = (editedTask.pauta_horario || '').split(' às ')[1] || '';
+                                            handleFieldChange('pauta_horario', end ? `${e.target.value} às ${end}` : e.target.value);
+                                        }}
+                                    />
+                                    <span className="time-separator-premium">às</span>
+                                    <input
+                                        type="time"
+                                        className="time-input-premium"
+                                        value={(editedTask.pauta_horario || '').split(' às ')[1] || ''}
+                                        onChange={e => {
+                                            const start = (editedTask.pauta_horario || '').split(' às ')[0] || '';
+                                            handleFieldChange('pauta_horario', start ? `${start} às ${e.target.value}` : e.target.value);
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="detail-item-premium">
+                                <label className="detail-label-premium">Saída do Paço</label>
+                                <input
+                                    type="time"
+                                    className="input-premium"
+                                    value={editedTask.pauta_saida || ''}
+                                    onChange={e => handleFieldChange('pauta_saida', e.target.value)}
+                                />
+                            </div>
+
+                            {/* Endereço */}
+                            <div className="detail-item-premium">
+                                <label className="detail-label-premium">Endereço</label>
+                                <div className="address-input-wrapper-premium">
+                                    <input
+                                        type="text"
+                                        className="input-premium address-input-premium"
+                                        placeholder="Endereço da pauta..."
+                                        value={editedTask.pauta_endereco || ''}
+                                        onChange={e => handleFieldChange('pauta_endereco', e.target.value)}
+                                        list="enderecos-salvos-edit"
+                                    />
+                                    <a
+                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(editedTask.pauta_endereco || '')}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="maps-button-premium"
+                                        title="Ver no Google Maps"
+                                    >
+                                        <MapPin size={16} />
+                                    </a>
+                                </div>
+                                <datalist id="enderecos-salvos-edit">
+                                    {(uniqueAddresses || []).map((addr, idx) => (
+                                        <option key={idx} value={addr as string} />
+                                    ))}
+                                </datalist>
+                            </div>
+
+                            {/* Material */}
+                            <div className="detail-item-premium">
+                                <label className="detail-label-premium">Tipos de Material</label>
+                                <div className="material-pills-premium side">
+                                    {[
+                                        { id: 'release', label: 'Texto' },
+                                        { id: 'video', label: 'Vídeo' },
+                                        { id: 'foto', label: 'Foto' },
+                                        { id: 'arte', label: 'Arte' },
+                                        { id: 'inauguracao', label: 'Inauguração' }
+                                    ].map(m => (
+                                        <button
+                                            key={m.id}
+                                            type="button"
+                                            className={`material-pill-premium ${editedTask.type.includes(m.id as any) ? 'active' : ''}`}
+                                            onClick={() => handleTypeToggleInModal(m.id)}
+                                        >
+                                            {m.label}
+                                        </button>
                                     ))}
                                 </div>
                             </div>
                         </div>
 
+                        <div className="side-section-premium alternate">
+                            <h3 className="side-title-premium">Ações</h3>
+                            <div className="side-footer-actions-premium">
+                                <button className="btn-side-action-premium" onClick={() => {
+                                    const newStatus = prompt('Digite o novo status (solicitado, andamento, aprovacao, publicado):');
+                                    if (newStatus && ['solicitado', 'andamento', 'aprovacao', 'publicado'].includes(newStatus.toLowerCase())) {
+                                        handleFieldChange('status', newStatus.toLowerCase());
+                                    }
+                                }}>Mover Cartão</button>
 
-                        <div className="side-actions">
-                            <button className="action-btn" onClick={() => {
-                                const newStatus = prompt('Digite o novo status (solicitado, andamento, aprovacao, publicado):');
-                                if (newStatus && ['solicitado', 'andamento', 'aprovacao', 'publicado'].includes(newStatus.toLowerCase())) {
-                                    onUpdateTask({ ...task, status: newStatus.toLowerCase() as any });
-                                }
-                            }}>Mover Cartão</button>
-                            {(user?.role === 'admin' || user?.role === 'desenvolvedor') && (
-                                <button
-                                    className="action-btn danger"
-                                    onClick={() => {
-                                        if (confirm('Tem certeza que deseja arquivar esta pauta? Ela sairá do Painel Kanban.')) {
-                                            onUpdateTask({ ...task, status: 'arquivado' as any });
+                                {editedTask.archived ? (
+                                    <button
+                                        className="btn-side-action-premium"
+                                        style={{ background: 'hsl(140, 50%, 95%)', color: 'hsl(140, 50%, 25%)', borderColor: 'hsl(140, 50%, 80%)' }}
+                                        onClick={async () => {
+                                            await unarchiveTask(task.id);
                                             onClose();
-                                        }
-                                    }}
-                                >Arquivar Pauta</button>
-                            )}
+                                        }}
+                                    >
+                                        <RotateCcw size={16} /> Desarquivar Pauta
+                                    </button>
+                                ) : (
+                                    <button
+                                        className="btn-side-action-premium"
+                                        onClick={async () => {
+                                            if (confirm('Deseja arquivar esta pauta?')) {
+                                                await archiveTask(task.id);
+                                                onClose();
+                                            }
+                                        }}
+                                    >
+                                        <Archive size={16} /> Arquivar Pauta
+                                    </button>
+                                )}
+
+                                {(user?.role === 'admin' || user?.role === 'desenvolvedor') && (
+                                    <>
+                                        <button
+                                            className="btn-side-action-premium danger"
+                                            onClick={async () => {
+                                                if (confirm('EXCLUSÃO DEFINITIVA: Tem certeza absoluta? Essa ação NÃO pode ser desfeita.')) {
+                                                    await deleteTask(task.id);
+                                                    onClose();
+                                                }
+                                            }}
+                                        >Excluir Definitivamente</button>
+                                    </>
+                                )}
+                            </div>
                         </div>
+
+                        {/* Save Actions Banner */}
+                        {hasUnsavedChanges && (
+                            <div className="save-banner-premium">
+                                <span className="save-banner-text-premium">Alterações pendentes</span>
+                                <div className="save-banner-buttons-premium">
+                                    <button
+                                        className="btn-save-banner-cancel-premium"
+                                        onClick={() => {
+                                            setEditedTask(task);
+                                            setHasUnsavedChanges(false);
+                                        }}
+                                    >Descartar</button>
+                                    <button
+                                        className="btn-save-banner-confirm-premium"
+                                        onClick={handleSave}
+                                    >Salvar tudo</button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

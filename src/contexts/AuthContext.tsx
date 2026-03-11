@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import type { User } from '@supabase/supabase-js';
+import LoadingScreen from '../components/LoadingScreen';
 
 export interface UserProfile {
     id: string;
@@ -26,23 +27,52 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     useEffect(() => {
-        // Only one auth listener needed. It handles initial session and all changes.
+        let isActive = true;
+
+        const checkSession = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+
+                if (!isActive) return;
+
+                if (session?.user) {
+                    await fetchProfile(session.user);
+                } else {
+                    setIsLoading(false);
+                }
+            } catch (err) {
+                console.error('🏁 Auth: checkSession failed:', err);
+                if (isActive) setIsLoading(false);
+            } finally {
+                if (isActive) {
+                    setIsInitialLoad(false);
+                }
+            }
+        };
+
+        checkSession();
+
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            async (event, session) => {
-                console.log('🔔 Auth Event:', event);
+            async (_event: any, session: any) => {
+                if (!isActive) return;
 
                 if (session?.user) {
                     await fetchProfile(session.user);
                 } else {
                     setUser(null);
                     setIsLoading(false);
+                    setIsInitialLoad(false); // Ensure we don't stick on loading
                 }
             }
         );
 
-        return () => subscription.unsubscribe();
+        return () => {
+            isActive = false;
+            subscription.unsubscribe();
+        };
     }, []);
 
     // Realtime listener for security stamp
@@ -59,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     table: 'users',
                     filter: `id=eq.${user.id}`
                 },
-                (payload) => {
+                (payload: any) => {
                     const newStamp = payload.new.security_stamp;
                     if (newStamp !== undefined && newStamp > (user.security_stamp || 0)) {
                         console.log('🛡️ Security stamp changed. Forcing logout...');
@@ -76,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [user?.id, user?.security_stamp]);
 
     const fetchProfile = async (authUser: User) => {
-        setIsLoading(true);
+        // Only set global isLoading on first fetch to prevent unmounting app shell on refresh
         try {
             const { data, error } = await supabase
                 .from('users')
@@ -85,18 +115,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 .single();
 
             if (data) {
+                const profile = data as any;
                 setUser({
-                    id: data.id,
-                    name: data.name,
-                    avatar: data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=random`,
-                    role: data.role,
-                    job_titles: data.job_titles || [],
-                    security_stamp: data.security_stamp || 0,
-                    email: data.email || authUser.email || ''
+                    id: profile.id,
+                    name: profile.name,
+                    avatar: profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&background=random`,
+                    role: profile.role,
+                    job_titles: profile.job_titles || [],
+                    security_stamp: profile.security_stamp || 0,
+                    email: profile.email || authUser.email || ''
                 });
             } else if (error) {
                 console.error("Error fetching profile:", error);
-                // Fallback if profile not found yet
                 setUser({
                     id: authUser.id,
                     name: authUser.email || 'Usuário',
@@ -106,6 +136,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     email: authUser.email || ''
                 });
             }
+        } catch (e) {
+            console.error("Critical error in fetchProfile:", e);
         } finally {
             setIsLoading(false);
         }
@@ -118,7 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return (
         <AuthContext.Provider value={{ isAuthenticated: !!user, user, isLoading, logout, fetchProfile }}>
-            {!isLoading && children}
+            {isInitialLoad && isLoading ? <LoadingScreen /> : children}
         </AuthContext.Provider>
     );
 }

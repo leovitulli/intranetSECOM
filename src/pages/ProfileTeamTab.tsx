@@ -3,16 +3,9 @@ import { UserPlus, Pencil, Trash2, Mail, Phone, KeySquare, Slash, LayoutGrid, Li
 import type { TeamMember } from '../types/team';
 import { useData } from '../contexts/DataContext';
 import TeamMemberModal from '../components/TeamMemberModal';
-import { supabase } from '../lib/supabaseClient';
-import '../pages/Team.css';
+import { supabase, getSupabaseAdmin } from '../lib/supabaseClient';
+import '../pages/Profile.css';
 
-const roleLabels: Record<string, string> = {
-    admin: 'Administrador',
-    desenvolvedor: 'Desenvolvedor',
-    user: 'Usuário Comum',
-    viewer: 'Somente Visualização',
-    motorista: 'Motorista',
-};
 
 export default function ProfileTeamTab() {
     const { team, loading } = useData();
@@ -36,7 +29,8 @@ export default function ProfileTeamTab() {
 
             if (member.hasLogin && member.email && password) {
                 // signUp sends a confirmation email to the user automatically
-                const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                // Using supabaseAdmin (persistSession: false) to prevent auto-login
+                const { data: signUpData, error: signUpError } = await getSupabaseAdmin().auth.signUp({
                     email: member.email,
                     password,
                     options: { data: { name: member.name } }
@@ -240,7 +234,9 @@ export default function ProfileTeamTab() {
                                     <div className="team-list-info">
                                         <h3 className="team-card-name" style={{ margin: 0 }}>{member.name}</h3>
                                         <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
-                                            {member.job_titles?.join(', ') || roleLabels[member.role] || member.role}
+                                            {member.job_titles && member.job_titles.length > 0
+                                                ? member.job_titles.join(', ')
+                                                : (member.role === 'motorista' ? 'Motorista' : 'Colaborador')}
                                         </span>
                                     </div>
                                 )}
@@ -282,7 +278,7 @@ export default function ProfileTeamTab() {
 
                                     {/* Job tags */}
                                     <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: 10 }}>
-                                        {member.job_titles?.map(jb => (
+                                        {member.job_titles?.map((jb: string) => (
                                             <span key={jb} className="badge type-release" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)', fontSize: '0.72rem' }}>{jb}</span>
                                         ))}
                                     </div>
@@ -291,7 +287,9 @@ export default function ProfileTeamTab() {
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                                             <ShieldCheck size={13} style={{ color: 'hsl(var(--color-primary))' }} />
                                             <span style={{ fontSize: '0.78rem', color: 'hsl(var(--color-text-muted))' }}>
-                                                {roleLabels[member.role] || member.role}
+                                                {member.job_titles && member.job_titles.length > 0
+                                                    ? member.job_titles[0]
+                                                    : (member.role === 'motorista' ? 'Motorista' : 'Colaborador')}
                                             </span>
                                         </div>
 

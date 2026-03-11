@@ -175,6 +175,14 @@
 }
 
 /* Type Badges */
+.task-badges-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    flex: 1;
+    padding-right: 0.5rem;
+}
+
 .badge {
     font-size: 0.7rem;
     padding: 0.25rem 0.5rem;
@@ -341,4 +349,39 @@
 
 .kanban-card.priority-alta {
     border-left: 4px solid hsl(350, 80%, 55%);
+}/* Archived History Styles */
+.archived-task-item-premium {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.85rem 1.2rem;
+    background: hsl(var(--color-background));
+    border: 1px solid hsl(var(--color-border));
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.archived-task-item-premium:hover {
+    border-color: var(--color-primary);
+    background: hsl(var(--color-primary) / 0.02);
+    transform: translateX(4px);
+    box-shadow: var(--shadow-sm);
+}
+
+.archived-task-info-premium {
+    display: flex;
+    flex-direction: column;
+}
+
+.archived-task-title-premium {
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin: 0;
+    color: var(--color-text);
+}
+
+.archived-task-date-premium {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
 }

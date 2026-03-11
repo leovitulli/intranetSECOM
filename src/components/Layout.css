@@ -164,6 +164,7 @@
     padding: 0.5rem 1rem;
     width: 400px;
     transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    position: relative;
 }
 
 .search-bar:focus-within {
@@ -183,6 +184,26 @@
     outline: none;
     font-size: 0.875rem;
     color: hsl(var(--color-text));
+    padding-right: 1.5rem;
+}
+
+.clear-search {
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: hsl(var(--color-text-muted));
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    padding: 0.25rem;
+    border-radius: 50%;
+}
+
+.clear-search:hover {
+    color: hsl(var(--color-text));
+    background: hsl(var(--color-border) / 0.5);
 }
 
 .search-bar input::placeholder {

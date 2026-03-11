@@ -14,7 +14,8 @@ export const INITIAL_TASKS: Task[] = [
         comments: [],
         attachments: [
             { id: 'a1', name: 'referencias_evento.pdf', url: '#', type: 'pdf', size: '2.4 MB' }
-        ]
+        ],
+        createdAt: new Date(Date.now() - 86400000 * 5)
     },
     {
         id: '2',
@@ -33,7 +34,8 @@ export const INITIAL_TASKS: Task[] = [
         attachments: [
             { id: 'a2', name: 'logo_prefeitura_2025.png', url: '#', type: 'image', size: '450 KB' },
             { id: 'a3', name: 'roteiro_vacinacao.docx', url: '#', type: 'doc', size: '1.2 MB' }
-        ]
+        ],
+        createdAt: new Date(Date.now() - 86400000 * 2)
     },
     {
         id: '3',
@@ -51,7 +53,8 @@ export const INITIAL_TASKS: Task[] = [
         ],
         attachments: [
             { id: 'a4', name: 'entrevista_v2.mp4', url: '#', type: 'video', size: '45 MB' }
-        ]
+        ],
+        createdAt: new Date(Date.now() - 3600000 * 5)
     },
     {
         id: '4',
@@ -66,6 +69,7 @@ export const INITIAL_TASKS: Task[] = [
         comments: [
             { id: 'c5', author: 'João Silva', avatar: 'https://ui-avatars.com/api/?name=Joao', text: 'Postado as 08h00!', date: new Date(Date.now() - 86400000) }
         ],
-        attachments: []
+        attachments: [],
+        createdAt: new Date(Date.now() - 86400000)
     }
 ];
