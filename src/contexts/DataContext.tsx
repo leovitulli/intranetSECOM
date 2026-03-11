@@ -19,6 +19,7 @@ interface DataContextType {
     unarchiveTask: (taskId: string) => Promise<void>;
     addSuggestion: (title: string, description: string, department: string, author: string, attachmentUrls?: string[]) => Promise<void>;
     addJobFunction: (title: string) => Promise<void>;
+    updateJobFunction: (id: string, newTitle: string) => Promise<void>;
     removeJobFunction: (id: string) => Promise<void>;
     deleteSuggestion: (suggestionId: string) => Promise<void>;
     addEvent: (eventData: any) => Promise<void>;
@@ -548,7 +549,55 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const updateJobFunction = async (id: string, newTitle: string) => {
+        const oldJob = jobFunctions.find(j => j.id === id);
+        if (!oldJob) return;
+
+        const oldTitle = oldJob.title;
+
+        // 1. Update the job_functions table
+        const { error: jobError } = await supabase
+            .from('job_functions')
+            .update({ title: newTitle })
+            .eq('id', id);
+
+        if (jobError) {
+            console.error("Error updating job function:", jobError);
+            throw jobError;
+        }
+
+        // 2. Cascade update to all users (job_titles is string[])
+        try {
+            const { data: usersToUpdate } = await supabase
+                .from('users')
+                .select('id, job_titles')
+                .contains('job_titles', [oldTitle]);
+
+            if (usersToUpdate && usersToUpdate.length > 0) {
+                for (const u of usersToUpdate) {
+                    const newTitles = u.job_titles.map((t: string) => t === oldTitle ? newTitle : t);
+                    await supabase.from('users').update({ job_titles: newTitles }).eq('id', u.id);
+                }
+            }
+        } catch (cascadeError) {
+            console.warn("Cascade update to users failed:", cascadeError);
+            // We don't throw here to avoid blocking the whole operation if just one user fails
+        }
+
+        // 3. Update local state
+        setJobFunctions(prev => prev.map(jf => jf.id === id ? { ...jf, title: newTitle } : jf).sort((a, b) => a.title.localeCompare(b.title)));
+        
+        // Also update local team state to reflect changes instantly without refetch
+        setTeam(prev => prev.map(m => ({
+            ...m,
+            job_titles: (m.job_titles || []).map((t: string) => t === oldTitle ? newTitle : t)
+        })));
+    };
+
     const removeJobFunction = async (id: string) => {
+        const jobToRemove = jobFunctions.find(j => j.id === id);
+        if (!jobToRemove) return;
+
         const { error } = await supabase
             .from('job_functions')
             .delete()
@@ -556,8 +605,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
         if (error) {
             console.error("Error removing job function:", error);
+            // If it's a foreign key error or handled restricted delete
+            if (error.code === '23503') {
+                throw new Error("Este cargo não pode ser removido pois está em uso.");
+            }
             throw error;
         }
+
         setJobFunctions(prev => prev.filter(jf => jf.id !== id));
     };
 
@@ -764,7 +818,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         <DataContext.Provider value={{
             tasks, archivedTasks, team, events, suggestions, jobFunctions,
             loading, updateTaskStatus, updateTask, addTask, deleteTask, archiveTask,
-            unarchiveTask, addSuggestion, deleteSuggestion, addJobFunction, removeJobFunction,
+            unarchiveTask, addSuggestion, deleteSuggestion, addJobFunction, updateJobFunction, removeJobFunction,
             addEvent, updateEvent, deleteEvent,
             searchTerm, setSearchTerm
         }}>
