@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { X, MapPin, Building2, Award, CheckSquare, Calendar, Users } from 'lucide-react';
 import type { Task, InaugurationTipo, InaugurationChecklistItem } from '../types/kanban';
 import { useAuth } from '../contexts/AuthContext';
-import { useData } from '../contexts/DataContext';
 import SecretariasMultiSelect from './SecretariasMultiSelect';
+import TeamMultiSelect from './TeamMultiSelect';
 import './CreateInaugurationModal.css';
 
 interface CreateInaugurationModalProps {
@@ -30,7 +30,6 @@ function buildChecklist(tipo: InaugurationTipo): InaugurationChecklistItem[] {
 
 export default function CreateInaugurationModal({ onClose, onCreate }: CreateInaugurationModalProps) {
     const { user } = useAuth();
-    const { team } = useData();
     const [nome, setNome] = useState('');
     const [endereco, setEndereco] = useState('');
     const [secretarias, setSecretarias] = useState<string[]>([]);
@@ -48,11 +47,6 @@ export default function CreateInaugurationModal({ onClose, onCreate }: CreateIna
         setChecklist(prev => prev.map(item => item.id === id ? { ...item, done: !item.done } : item));
     };
 
-    const toggleAssignee = (name: string) => {
-        setAssignees(prev =>
-            prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
-        );
-    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -102,7 +96,8 @@ export default function CreateInaugurationModal({ onClose, onCreate }: CreateIna
                     <p>Preencha os dados para registrar uma nova inauguração na SECOM.</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="create-task-form" style={{ paddingTop: '1.5rem' }}>
+                <form onSubmit={handleSubmit} className="inaug-form-container">
+                    <div className="modal-body-scroll create-task-form">
                     {/* Nome */}
                     <div className="form-group">
                         <label htmlFor="inaug-nome">
@@ -168,18 +163,11 @@ export default function CreateInaugurationModal({ onClose, onCreate }: CreateIna
                             <Users size={15} /> Responsáveis / Colaboradores
                             <small style={{ fontWeight: 400, marginLeft: '6px', color: 'hsl(var(--color-text-muted))' }}>— você é incluído automaticamente</small>
                         </label>
-                        <div className="team-grid">
-                        {team.filter(m => m.name !== user?.name).map(member => (
-                                <label key={member.id} className="type-checkbox" style={{ fontSize: '0.85rem' }}>
-                                    <input
-                                        type="checkbox"
-                                        checked={assignees.includes(member.name)}
-                                        onChange={() => toggleAssignee(member.name)}
-                                    />
-                                    <strong>{member.name}</strong> <span style={{ color: 'var(--color-text-muted)' }}>({member.role})</span>
-                                </label>
-                            ))}
-                        </div>
+                        <TeamMultiSelect
+                            selected={assignees}
+                            onChange={setAssignees}
+                            placeholder="Busque e selecione os membros da equipe..."
+                        />
                     </div>
 
                     {/* Tipo de Inauguração */}
@@ -233,6 +221,8 @@ export default function CreateInaugurationModal({ onClose, onCreate }: CreateIna
                                 </label>
                             ))}
                         </div>
+                    </div>
+
                     </div>
 
                     <div className="form-actions">

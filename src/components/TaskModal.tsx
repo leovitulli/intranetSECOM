@@ -46,6 +46,8 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
     const [isEditingDesc, setIsEditingDesc] = useState(false);
     const [editDescContent, setEditDescContent] = useState(task.description);
 
+    const [isEditingInaug, setIsEditingInaug] = useState(false);
+
     const [activityLogs, setActivityLogs] = useState<any[]>([]);
 
     const handleTypeToggleInModal = (typeKey: any) => {
@@ -346,56 +348,113 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                 <div className="section-header-premium">
                                     <span className="section-number-premium">02</span>
                                     <h3>Dados da Inauguração</h3>
+                                    {!isEditingInaug && (
+                                        <button className="btn-edit-premium" onClick={() => setIsEditingInaug(true)}>Editar</button>
+                                    )}
                                 </div>
 
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                                    {inaugNome && (
-                                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                                            <Award size={15} style={{ color: 'hsl(330, 50%, 50%)', flexShrink: 0, marginTop: 2 }} />
-                                            <div>
-                                                <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'hsl(330, 40%, 55%)', letterSpacing: '0.05em' }}>Nome</div>
-                                                <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{inaugNome}</div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.25rem' }}>
+                                    {isEditingInaug ? (
+                                        <div className="inaug-edit-grid" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                            <div className="form-group-premium">
+                                                <label><Award size={14} /> Nome da Inauguração</label>
+                                                <input
+                                                    type="text"
+                                                    className="input-premium"
+                                                    value={editedTask.inauguracao_nome || ''}
+                                                    onChange={e => handleFieldChange('inauguracao_nome', e.target.value)}
+                                                />
                                             </div>
-                                        </div>
-                                    )}
-                                    {inaugEndereco && (
-                                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                                            <MapPin size={15} style={{ color: 'hsl(330, 50%, 50%)', flexShrink: 0, marginTop: 2 }} />
-                                            <div>
-                                                <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'hsl(330, 40%, 55%)', letterSpacing: '0.05em' }}>Endereço</div>
-                                                <div style={{ fontSize: '0.9rem' }}>{inaugEndereco}</div>
+                                            <div className="form-group-premium">
+                                                <label><MapPin size={14} /> Endereço</label>
+                                                <input
+                                                    type="text"
+                                                    className="input-premium"
+                                                    value={editedTask.inauguracao_endereco || ''}
+                                                    onChange={e => handleFieldChange('inauguracao_endereco', e.target.value)}
+                                                />
                                             </div>
-                                        </div>
-                                    )}
-                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                                        <Building2 size={15} style={{ color: 'hsl(330, 50%, 50%)', flexShrink: 0, marginTop: 6 }} />
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'hsl(330, 40%, 55%)', letterSpacing: '0.05em', marginBottom: '0.35rem' }}>Secretaria(s)</div>
-                                            <SecretariasMultiSelect
-                                                selected={editedTask.inauguracao_secretarias || []}
-                                                onChange={(newSecs) => {
-                                                    handleFieldChange('inauguracao_secretarias', newSecs);
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                    {inaugTipo && (
-                                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                                            <Award size={15} style={{ color: 'hsl(330, 50%, 50%)', flexShrink: 0, marginTop: 2 }} />
-                                            <div>
-                                                <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'hsl(330, 40%, 55%)', letterSpacing: '0.05em' }}>Tipo</div>
-                                                <div style={{ fontSize: '0.9rem' }}>{inaugTipo}</div>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                                <div className="form-group-premium">
+                                                    <label><Activity size={14} /> Tipo</label>
+                                                    <select
+                                                        className="select-premium"
+                                                        value={editedTask.inauguracao_tipo || 'simples'}
+                                                        onChange={e => handleFieldChange('inauguracao_tipo', e.target.value)}
+                                                    >
+                                                        <option value="simples">Simples</option>
+                                                        <option value="master">Master</option>
+                                                    </select>
+                                                </div>
+                                                <div className="form-group-premium">
+                                                    <label><Calendar size={14} /> Data</label>
+                                                    <input
+                                                        type="date"
+                                                        className="input-premium"
+                                                        value={editedTask.inauguracao_data ? new Date(editedTask.inauguracao_data).toISOString().split('T')[0] : ''}
+                                                        onChange={e => handleFieldChange('inauguracao_data', e.target.value ? new Date(e.target.value + 'T12:00:00') : null)}
+                                                    />
+                                                </div>
                                             </div>
+                                            <button 
+                                                className="btn-primary small" 
+                                                style={{ alignSelf: 'flex-end', marginTop: '0.5rem' }}
+                                                onClick={() => setIsEditingInaug(false)}
+                                            >
+                                                Confirmar Edição
+                                            </button>
                                         </div>
-                                    )}
-                                    {inaugData && (
-                                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                                            <Calendar size={15} style={{ color: 'hsl(330, 50%, 50%)', flexShrink: 0, marginTop: 2 }} />
-                                            <div>
-                                                <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'hsl(330, 40%, 55%)', letterSpacing: '0.05em' }}>Data da Inauguração</div>
-                                                <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'hsl(330, 55%, 40%)' }}>{inaugData}</div>
+                                    ) : (
+                                        <>
+                                            {inaugNome && (
+                                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+                                                    <Award size={15} style={{ color: 'hsl(330, 50%, 50%)', flexShrink: 0, marginTop: 2 }} />
+                                                    <div>
+                                                        <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'hsl(330, 40%, 55%)', letterSpacing: '0.05em' }}>Nome</div>
+                                                        <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{inaugNome}</div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {inaugEndereco && (
+                                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+                                                    <MapPin size={15} style={{ color: 'hsl(330, 50%, 50%)', flexShrink: 0, marginTop: 2 }} />
+                                                    <div>
+                                                        <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'hsl(330, 40%, 55%)', letterSpacing: '0.05em' }}>Endereço</div>
+                                                        <div style={{ fontSize: '0.9rem' }}>{inaugEndereco}</div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+                                                <Building2 size={15} style={{ color: 'hsl(330, 50%, 50%)', flexShrink: 0, marginTop: 6 }} />
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'hsl(330, 40%, 55%)', letterSpacing: '0.05em', marginBottom: '0.35rem' }}>Secretaria(s)</div>
+                                                    <SecretariasMultiSelect
+                                                        selected={editedTask.inauguracao_secretarias || []}
+                                                        onChange={(newSecs) => {
+                                                            handleFieldChange('inauguracao_secretarias', newSecs);
+                                                        }}
+                                                    />
+                                                </div>
                                             </div>
-                                        </div>
+                                            {inaugTipo && (
+                                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+                                                    <Award size={15} style={{ color: 'hsl(330, 50%, 50%)', flexShrink: 0, marginTop: 2 }} />
+                                                    <div>
+                                                        <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'hsl(330, 40%, 55%)', letterSpacing: '0.05em' }}>Tipo</div>
+                                                        <div style={{ fontSize: '0.9rem' }}>{inaugTipo}</div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {inaugData && (
+                                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+                                                    <Calendar size={15} style={{ color: 'hsl(330, 50%, 50%)', flexShrink: 0, marginTop: 2 }} />
+                                                    <div>
+                                                        <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'hsl(330, 40%, 55%)', letterSpacing: '0.05em' }}>Data da Inauguração</div>
+                                                        <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'hsl(330, 55%, 40%)' }}>{inaugData}</div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </>
                                     )}
                                 </div>
 
