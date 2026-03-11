@@ -8,7 +8,7 @@ import './ProfileTeamTab.css';
 
 
 export default function ProfileTeamTab() {
-    const { team, loading } = useData();
+    const { team, loading, searchTerm } = useData();
     const [members, setMembers] = useState<TeamMember[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
@@ -208,7 +208,17 @@ export default function ProfileTeamTab() {
             <div className={viewMode === 'grid' ? 'directory-grid' : 'team-list-view'}>
                 {loading && <div className="empty-state" style={{ width: '100%', gridColumn: '1 / -1' }}>Carregando equipe...</div>}
 
-                {!loading && members.map(member => {
+                {!loading && members
+                    .filter(m => {
+                        if (!searchTerm) return true;
+                        const searchLower = searchTerm.toLowerCase();
+                        return (
+                            m.name.toLowerCase().includes(searchLower) ||
+                            m.email?.toLowerCase().includes(searchLower) ||
+                            m.job_titles?.some(t => t.toLowerCase().includes(searchLower))
+                        );
+                    })
+                    .map(member => {
                     const isBusy = busyIds.has(member.id);
                     return (
                         <div key={member.id} className={`team-card glass ${viewMode === 'list' ? 'list-item' : ''}`}>
