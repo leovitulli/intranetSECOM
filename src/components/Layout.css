@@ -261,3 +261,105 @@
     background-color: hsl(var(--color-background));
     position: relative;
 }
+
+/* ─── MOBILE RESPONSIVO ─── */
+
+/* Botão hamburguer — oculto no desktop */
+.hamburger-btn {
+    display: none;
+    background: transparent;
+    border: 1px solid hsl(var(--color-border));
+    color: hsl(var(--color-text));
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all var(--transition-fast);
+}
+
+.hamburger-btn:hover {
+    background-color: hsl(var(--color-surface));
+}
+
+/* Overlay escuro por trás da sidebar */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 90;
+    backdrop-filter: blur(2px);
+}
+
+@media (max-width: 768px) {
+    /* Mostrar hamburguer */
+    .hamburger-btn {
+        display: flex;
+    }
+
+    /* Sidebar vira drawer lateral */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        z-index: 100;
+        transform: translateX(-100%);
+        transition: transform var(--transition-normal);
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Quando aberta */
+    .sidebar.sidebar-open {
+        transform: translateX(0);
+    }
+
+    /* Mostrar overlay quando sidebar aberta */
+    .sidebar.sidebar-open ~ .sidebar-overlay,
+    .sidebar-overlay {
+        display: block;
+    }
+
+    /* Main wrapper ocupa tela toda */
+    .main-wrapper {
+        width: 100%;
+    }
+
+    /* Topbar mais compacta */
+    .topbar {
+        padding: 0 1rem;
+        gap: 0.75rem;
+    }
+
+    /* Search bar adaptada */
+    .search-bar {
+        width: 100%;
+        flex: 1;
+        min-width: 0;
+    }
+
+    /* Content area com padding menor */
+    .content-area {
+        padding: 1rem;
+    }
+
+    /* Dropdown de notificações: largura total em mobile */
+    .notifications-dropdown {
+        width: calc(100vw - 2rem) !important;
+        right: -0.5rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .topbar {
+        padding: 0 0.75rem;
+        height: 60px;
+    }
+
+    .content-area {
+        padding: 0.75rem;
+    }
+}

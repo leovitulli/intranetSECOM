@@ -1,0 +1,320 @@
+/* ─────────────────────────────────────────────
+   ProfileTeamTab.css  —  Gestão de Equipe
+───────────────────────────────────────────── */
+
+/* Container principal */
+.profile-team-tab {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* ── Cabeçalho da página ── */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.page-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: hsl(var(--color-text));
+    margin: 0 0 0.25rem 0;
+}
+
+.page-header .subtitle {
+    font-size: 0.875rem;
+    color: hsl(var(--color-text-muted));
+    margin: 0;
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* ── Botão primário ── */
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: hsl(var(--color-primary));
+    color: #fff;
+    border: none;
+    padding: 0.6rem 1.25rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.btn-primary:hover {
+    background-color: hsl(var(--color-primary-dark));
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px hsl(var(--color-primary) / 0.3);
+}
+
+/* ── Botão ícone pequeno ── */
+.icon-btn-small {
+    background: transparent;
+    border: 1px solid hsl(var(--color-border));
+    color: hsl(var(--color-text-muted));
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.icon-btn-small:hover {
+    background-color: hsl(var(--color-primary) / 0.08);
+    color: hsl(var(--color-primary));
+    border-color: hsl(var(--color-primary) / 0.3);
+}
+
+.icon-btn-small.active {
+    background-color: hsl(var(--color-primary) / 0.12);
+    color: hsl(var(--color-primary));
+    border-color: hsl(var(--color-primary) / 0.4);
+}
+
+.icon-btn-small.danger:hover {
+    background-color: hsl(0 84% 60% / 0.1);
+    color: hsl(0 84% 60%);
+    border-color: hsl(0 84% 60% / 0.3);
+}
+
+.icon-btn-small:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* ── Grid de cards (modo grade) ── */
+.directory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
+}
+
+/* ── Lista de membros (modo lista) ── */
+.team-list-view {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* ── Card de membro ── */
+.team-card {
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.team-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Card no modo lista */
+.team-card.list-item {
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.875rem 1.25rem;
+}
+
+/* ── Cabeçalho do card ── */
+.team-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.team-card.list-item .team-card-header {
+    flex: 1;
+    align-items: center;
+}
+
+/* ── Avatares ── */
+.team-avatar-large {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.team-avatar-small {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+/* ── Info no modo lista ── */
+.team-list-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+/* ── Ações do card ── */
+.team-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+/* ── Corpo do card ── */
+.team-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+/* ── Nome do membro ── */
+.team-card-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: hsl(var(--color-text));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Contato ── */
+.team-card-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: hsl(var(--color-text-muted));
+    overflow: hidden;
+}
+
+.contact-item span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.contact-item svg {
+    flex-shrink: 0;
+    color: hsl(var(--color-text-muted));
+}
+
+/* ── Rodapé do card ── */
+.team-card-footer {
+    margin-top: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid hsl(var(--color-border) / 0.5);
+}
+
+/* ── Status de login ── */
+.login-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: var(--radius-full);
+}
+
+.login-status.has-login {
+    background-color: hsl(142 71% 45% / 0.1);
+    color: hsl(142 71% 35%);
+    border: 1px solid hsl(142 71% 45% / 0.25);
+}
+
+.login-status.no-login {
+    background-color: hsl(var(--color-border));
+    color: hsl(var(--color-text-muted));
+    border: 1px solid hsl(var(--color-border));
+}
+
+/* ── Estado vazio ── */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: hsl(var(--color-text-muted));
+    font-size: 0.9rem;
+    grid-column: 1 / -1;
+}
+
+/* ── Animação de sincronização ── */
+@keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.spin-slow {
+    animation: spin-slow 2s linear infinite;
+}
+
+/* ── Texto oculto em mobile ── */
+.hide-mobile {
+    display: inline;
+}
+
+/* ── Responsividade mobile ── */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .directory-grid {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1rem;
+    }
+
+    .hide-mobile {
+        display: none;
+    }
+
+    .btn-primary {
+        padding: 0.6rem 0.875rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .directory-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .team-card.list-item {
+        padding: 0.75rem 1rem;
+    }
+}

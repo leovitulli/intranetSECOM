@@ -4,7 +4,7 @@ import type { TeamMember } from '../types/team';
 import { useData } from '../contexts/DataContext';
 import TeamMemberModal from '../components/TeamMemberModal';
 import { supabase, getSupabaseAdmin } from '../lib/supabaseClient';
-import '../pages/Profile.css';
+import './ProfileTeamTab.css';
 
 
 export default function ProfileTeamTab() {

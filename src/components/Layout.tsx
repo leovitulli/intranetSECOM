@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, Newspaper, LogOut, Bell, BellPlus, Search, CalendarDays, CalendarClock, MessageSquarePlus, BarChart3, Check, X } from 'lucide-react';
+import { LayoutDashboard, Newspaper, LogOut, Bell, BellPlus, Search, CalendarDays, CalendarClock, MessageSquarePlus, BarChart3, Check, X, Menu } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useData } from '../contexts/DataContext';
@@ -14,6 +14,7 @@ export default function Layout() {
     const { searchTerm, setSearchTerm } = useData();
     const isAdmin = user?.role === 'admin' || user?.role === 'desenvolvedor';
     const [isNotifOpen, setIsNotifOpen] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const notifRef = useRef<HTMLDivElement>(null);
 
     // Close dropdown when clicking outside
@@ -29,8 +30,12 @@ export default function Layout() {
 
     return (
         <div className="layout-container">
+            {/* Overlay mobile */}
+            {isSidebarOpen && (
+                <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />
+            )}
             {/* Sidebar */}
-            <aside className="sidebar">
+            <aside className={`sidebar ${isSidebarOpen ? 'sidebar-open' : ''}`}>
                 <div className="sidebar-header">
                     <div className="logo">
                         <div className="logo-icon text-gradient">SECOM</div>
@@ -120,6 +125,13 @@ export default function Layout() {
             {/* Main Content Area */}
             <div className="main-wrapper">
                 <header className="topbar glass">
+                    <button
+                        className="hamburger-btn"
+                        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                        aria-label="Menu"
+                    >
+                        <Menu size={22} />
+                    </button>
                     <div className="search-bar">
                         <Search size={18} className="search-icon" />
                         <input
