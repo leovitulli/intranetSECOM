@@ -24,6 +24,7 @@ export default function ProfileTeamTab() {
 
     // ─── CREATE ──────────────────────────────────────────────────────────────
     const handleCreateMember = async (member: TeamMember, password?: string) => {
+        setBusy(member.id || 'new', true);
         try {
             let authUserId: string | undefined;
 
@@ -59,16 +60,21 @@ export default function ProfileTeamTab() {
             alert(`✅ ${member.name} cadastrado!${authUserId && member.email ? `\n📧 Um e-mail de confirmação foi enviado para ${member.email}` : ''
                 }`);
         } catch (err: any) {
-            console.error(err);
-            alert(`❌ Erro ao criar usuário: ${err.message}`);
+            console.error('Create member error:', err);
+            alert(`❌ Erro ao criar usuário: ${err.message || 'Erro desconhecido'}`);
+        } finally {
+            setBusy(member.id || 'new', false);
         }
     };
 
     // ─── EDIT ─────────────────────────────────────────────────────────────────
     const handleEditMember = async (member: TeamMember) => {
+        setBusy(member.id, true);
         try {
             const oldMember = members.find(m => m.id === member.id);
-            const isEmailChanging = oldMember && oldMember.email !== member.email;
+            if (!oldMember) throw new Error('Colaborador não encontrado no sistema.');
+
+            const isEmailChanging = oldMember.email !== member.email;
 
             const payload: any = {
                 name: member.name,
@@ -100,8 +106,10 @@ export default function ProfileTeamTab() {
                 alert(`⚠️ O e-mail foi alterado para pendente: ${member.email}.\n\nPara segurança, a sessão atual do usuário foi invalidada. Ele precisará confirmar a mudança no próximo acesso.`);
             }
         } catch (err: any) {
-            console.error(err);
-            alert(`❌ Erro ao salvar: ${err.message}`);
+            console.error('Edit member error:', err);
+            alert(`❌ Erro ao salvar: ${err.message || 'Erro desconhecido'}`);
+        } finally {
+            setBusy(member.id, false);
         }
     };
 

@@ -94,7 +94,10 @@ export default function Profile() {
 
         } catch (error: any) {
             console.error('Update profile error:', error);
-            setToast({ message: 'Erro ao salvar perfil.', type: 'error' });
+            setToast({ 
+                message: `Erro ao salvar perfil: ${error.message || 'Verifique sua conexão ou permissões.'}`, 
+                type: 'error' 
+            });
         } finally {
             setIsSaving(false);
         }
