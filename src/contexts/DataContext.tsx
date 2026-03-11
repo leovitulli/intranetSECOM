@@ -45,7 +45,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
         try {
             // Fetch Team
-            const { data: teamData } = await supabase.from('users').select('*');
+            const { data: teamData } = await supabase.from('users').select('*').order('name');
             if (teamData) {
                 const formattedTeam: TeamMember[] = teamData.map((u: any) => ({
                     id: u.id,
@@ -56,7 +56,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                     hasLogin: u.role !== 'Motorista',
                     color: 'hsl(210, 100%, 50%)', // Default or generate
                     avatar_url: u.avatar_url || undefined,
-                    job_titles: u.job_titles || [],
+                    job_titles: (u.job_titles || []).sort((a: string, b: string) => a.localeCompare(b)),
                 }));
                 setTeam(formattedTeam);
             }
@@ -544,7 +544,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             throw error;
         }
         if (data) {
-            setJobFunctions(prev => [...prev, data]);
+            setJobFunctions(prev => [...prev, data].sort((a, b) => a.title.localeCompare(b.title)));
         }
     };
 

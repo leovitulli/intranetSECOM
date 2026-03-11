@@ -16,7 +16,7 @@ export default function ProfileTeamTab() {
     const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
 
     if (members.length === 0 && team.length > 0 && !loading) {
-        setMembers(team);
+        setMembers([...team].sort((a, b) => a.name.localeCompare(b.name)));
     }
 
     const setBusy = (id: string, busy: boolean) =>
@@ -53,8 +53,8 @@ export default function ProfileTeamTab() {
             const { error } = await supabase.from('users').insert([payload]);
             if (error) throw error;
 
-            const newMember: TeamMember = { ...member, id: profileId };
-            setMembers(prev => [...prev, newMember]);
+            const newMember: TeamMember = { ...member, id: profileId, job_titles: (member.job_titles || []).sort((a, b) => a.localeCompare(b)) };
+            setMembers(prev => [...prev, newMember].sort((a, b) => a.name.localeCompare(b.name)));
             setIsModalOpen(false);
             alert(`✅ ${member.name} cadastrado!${authUserId && member.email ? `\n📧 Um e-mail de confirmação foi enviado para ${member.email}` : ''
                 }`);
@@ -92,7 +92,7 @@ export default function ProfileTeamTab() {
             const { error } = await supabase.from('users').update(payload).eq('id', member.id);
             if (error) throw error;
 
-            setMembers(prev => prev.map(m => m.id === member.id ? { ...m, ...payload, ...member, email: isEmailChanging ? m.email : member.email } : m));
+            setMembers(prev => prev.map(m => m.id === member.id ? { ...m, ...payload, ...member, email: isEmailChanging ? m.email : member.email, job_titles: (member.job_titles || []).sort((a, b) => a.localeCompare(b)) } : m).sort((a, b) => a.name.localeCompare(b.name)));
             setIsModalOpen(false);
             setEditingMember(null);
 

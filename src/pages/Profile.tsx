@@ -48,11 +48,12 @@ export default function Profile() {
     }, [user]);
 
     const handleJobTitleToggle = (title: string) => {
-        setJobTitles(prev =>
-            prev.includes(title)
+        setJobTitles(prev => {
+            const next = prev.includes(title)
                 ? prev.filter(t => t !== title)
-                : [...prev, title]
-        );
+                : [...prev, title];
+            return [...next].sort((a, b) => a.localeCompare(b));
+        });
     };
 
     const handleSaveProfile = async (e: React.FormEvent) => {
