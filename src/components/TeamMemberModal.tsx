@@ -50,18 +50,18 @@ export default function TeamMemberModal({ member, onClose, onSave }: TeamMemberM
             return;
         }
 
-        const memberData = {
-            ...member,
+        const memberData: TeamMember = {
+            ...(member || {}),
+            id: member?.id || '', 
             name,
             email: email.toLowerCase().trim(),
             phone,
             role,
             job_titles: jobTitles,
-            has_login: hasLogin,
-            password: password || undefined
-        };
+            hasLogin: hasLogin // Usar hasLogin conforme a interface original se necessário
+        } as TeamMember;
 
-        onSave(memberData);
+        onSave(memberData, password || undefined);
     };
 
     return (
