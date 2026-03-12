@@ -167,7 +167,7 @@ export default function SendNotification() {
                         </div>
                     )}
 
-                    <button type="submit" className="btn-primary" disabled={sending} style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+                    <button type="submit" className="btn-primary" disabled={sending}>
                         <Send size={18} />
                         {sending ? 'Enviando...' : 'Enviar Notificação'}
                     </button>
@@ -175,18 +175,23 @@ export default function SendNotification() {
 
                 {/* Preview */}
                 <div className="send-notif-preview glass">
-                    <h2>Preview</h2>
-                    <p style={{ fontSize: '0.85rem', color: 'hsl(var(--color-text-muted))', marginBottom: '1.5rem' }}>
-                        Assim sua notificação vai aparecer no sino de cada pessoa:
+                    <h2>Preview em Tempo Real</h2>
+                    <p style={{ fontSize: '0.875rem', color: 'hsl(var(--color-text-muted))', marginBottom: '1rem' }}>
+                        Veja como seu alerta será visualizado pela equipe:
                     </p>
-                    <div style={{ background: 'hsl(var(--color-background))', borderRadius: 'var(--radius-md)', padding: '1rem', borderLeft: '3px solid hsl(var(--color-primary))', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <strong style={{ fontSize: '0.9rem', color: 'hsl(var(--color-text))' }}>
-                            {title || 'Título da notificação...'}
-                        </strong>
-                        <p style={{ margin: 0, fontSize: '0.8rem', color: 'hsl(var(--color-text-muted))', lineHeight: 1.4 }}>
-                            {message || 'Mensagem aqui...'}
-                        </p>
-                        <span style={{ fontSize: '0.7rem', color: 'hsl(var(--color-text-muted))' }}>agora mesmo</span>
+                    
+                    <div className="notif-preview-card">
+                        <div className="notif-preview-title">
+                            {title || 'Título da sua notificação'}
+                        </div>
+                        <div className="notif-preview-message">
+                            {message || 'O conteúdo da sua mensagem aparecerá aqui conforme você digita...'}
+                        </div>
+                        <div className="notif-preview-time">agora mesmo</div>
+                    </div>
+
+                    <div style={{ marginTop: 'auto', padding: '1rem', background: 'hsl(var(--color-primary) / 0.05)', borderRadius: 'var(--radius-md)', fontSize: '0.8rem', color: 'hsl(var(--color-primary))', border: '1px dashed hsl(var(--color-primary) / 0.3)' }}>
+                        <strong>Dica:</strong> Mantenha o título curto e direto para maior impacto.
                     </div>
                 </div>
             </div>

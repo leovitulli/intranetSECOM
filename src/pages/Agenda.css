@@ -66,17 +66,21 @@
 }
 
 .agenda-day {
-    background-color: hsl(var(--color-surface) / 0.5);
-    border: 1px solid hsl(var(--color-border));
-    border-radius: var(--radius-lg);
+    background: hsl(var(--color-surface) / 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--color-border) / 0.5);
+    border-radius: var(--radius-xl);
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .agenda-day.is-today {
-    border-color: hsl(var(--color-primary) / 0.5);
-    box-shadow: 0 4px 20px hsl(var(--color-primary) / 0.1);
+    border-color: hsl(var(--color-primary));
+    box-shadow: var(--shadow-glow);
     background-color: hsl(var(--color-surface));
 }
 

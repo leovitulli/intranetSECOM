@@ -46,12 +46,13 @@ export default function CalendarPage() {
     ]);
 
     const events = useMemo(() => {
+        const isNoFilterSelected = selectedFilters.length === 0;
+
         const mappedTasks: CalendarEvent[] = tasks
             .filter(t => t.dueDate)
             .filter(t => {
-                // If "inauguracao" is selected, show tasks with 'inauguracao' type or status
+                if (isNoFilterSelected) return true;
                 if (selectedFilters.includes('inauguracao') && (t.status === 'inauguracao' || t.type.includes('inauguracao'))) return true;
-                // Otherwise check if any of the task types are in selected filters
                 return t.type.some(type => selectedFilters.includes(type));
             })
             .map(t => ({
@@ -62,7 +63,7 @@ export default function CalendarPage() {
             }));
 
         const mappedAgenda: CalendarEvent[] = agendaEvents
-            .filter(() => selectedFilters.includes('release') || selectedFilters.includes('video') || selectedFilters.includes('foto')) // Agenda usually falls under general pauta
+            .filter(() => isNoFilterSelected || selectedFilters.includes('release') || selectedFilters.includes('video') || selectedFilters.includes('foto'))
             .map(e => ({
                 id: `agenda-${e.id}`,
                 title: `Externa: ${e.title}`,
@@ -70,7 +71,7 @@ export default function CalendarPage() {
                 date: e.date
             }));
 
-        const mappedSystem = comemorativas.filter(() => selectedFilters.includes('sistema'));
+        const mappedSystem = comemorativas.filter(() => isNoFilterSelected || selectedFilters.includes('sistema'));
 
         return [...mappedTasks, ...mappedAgenda, ...mappedSystem];
     }, [tasks, agendaEvents, comemorativas, selectedFilters]);
@@ -173,7 +174,7 @@ export default function CalendarPage() {
                             }`}
                         key={day.toISOString()}
                     >
-                        <span className="cell-number">{formattedDate}</span>
+                        <div className="cell-number">{formattedDate}</div>
                         <div className="cell-events">
                             {dayEvents.map(evt => (
                                 <div
@@ -210,6 +211,7 @@ export default function CalendarPage() {
                 <div className="header-actions-group">
                     <div className="calendar-filter-chips">
                         {[
+                            { id: 'all', label: 'Todos', icon: <Plus size={14} />, color: 'hsl(var(--color-primary))' },
                             { id: 'video', label: 'Vídeos', icon: <Video size={14} />, color: '#ec4899' },
                             { id: 'foto', label: 'Fotos', icon: <Camera size={14} />, color: '#0d9488' },
                             { id: 'inauguracao', label: 'Inauguração', icon: <Landmark size={14} />, color: '#7c3aed' },
@@ -219,12 +221,17 @@ export default function CalendarPage() {
                         ].map(f => (
                             <button
                                 key={f.id}
-                                className={`filter-chip ${selectedFilters.includes(f.id) ? 'active' : ''}`}
+                                className={`filter-chip ${f.id === 'all' ? (selectedFilters.length === 6 ? 'active' : '') : (selectedFilters.includes(f.id) ? 'active' : '')}`}
                                 style={{ 
                                     '--chip-color': f.color,
-                                    borderColor: selectedFilters.includes(f.id) ? f.color : 'hsl(var(--color-border) / 0.5)'
+                                    borderColor: (f.id === 'all' ? (selectedFilters.length === 6) : selectedFilters.includes(f.id)) ? f.color : 'hsl(var(--color-border) / 0.5)'
                                 } as React.CSSProperties}
                                 onClick={() => {
+                                    if (f.id === 'all') {
+                                        if (selectedFilters.length === 6) setSelectedFilters([]);
+                                        else setSelectedFilters(['video', 'foto', 'inauguracao', 'release', 'arte', 'sistema']);
+                                        return;
+                                    }
                                     setSelectedFilters(prev =>
                                         prev.includes(f.id)
                                             ? prev.filter(x => x !== f.id)

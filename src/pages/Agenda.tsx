@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { MapPin, Users, Clock, ExternalLink } from 'lucide-react';
 import { format, addDays, startOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import TaskModal from '../components/TaskModal';
+
 import type { Task } from '../types/kanban';
 import './Agenda.css';
 
@@ -12,7 +12,6 @@ export default function Agenda() {
     const { tasks, team, loading, updateTask } = useData();
     const [currentDate] = useState(new Date());
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-    const navigate = useNavigate();
 
     const startOfCurrentWeek = startOfWeek(currentDate, { weekStartsOn: 1 }); // Monday
     const days = [0, 1, 2, 3, 4, 5, 6].map(i => addDays(startOfCurrentWeek, i)); // Mon to Sun
@@ -23,14 +22,6 @@ export default function Agenda() {
                 <div>
                     <h1>Agenda da Equipe Externa</h1>
                     <p className="subtitle">Visão geral de organização das equipes durante a semana.</p>
-                </div>
-                <div className="header-actions" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <button
-                        className="btn-primary"
-                        onClick={() => navigate('/pautas')}
-                    >
-                        Criar Agenda (Via Pautas)
-                    </button>
                 </div>
             </div>
 
