@@ -207,7 +207,7 @@ export default function CalendarPage() {
                     <h1>Calendário</h1>
                     <p className="subtitle">Planejamento mensal de pautas, feriados e datas comemorativas.</p>
                 </div>
-                <div className="header-actions-stack">
+                <div className="header-actions-group">
                     <div className="calendar-filter-chips">
                         {[
                             { id: 'video', label: 'Vídeos', icon: <Video size={14} />, color: '#ec4899' },
