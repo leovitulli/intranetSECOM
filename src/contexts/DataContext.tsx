@@ -50,58 +50,66 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         setLoading(true);
 
         try {
-            // Fetch Team
-            const { data: teamData } = await supabase.from('users').select('*').order('name');
+            // Run all primary fetches in parallel for better performance
+            const [
+                { data: teamData },
+                { data: jobFunctionsData },
+                { data: tasksResponse },
+                { data: eventsData },
+                { data: suggestionsData }
+            ] = await Promise.all([
+                supabase.from('users').select('*').order('name'),
+                supabase.from('job_functions').select('*').order('title'),
+                supabase.from('tasks').select(`
+                    id, title, description, status, type, creator, priority, due_date, archived, archived_at,
+                    inauguracao_nome, inauguracao_endereco, inauguracao_secretarias, inauguracao_tipo, inauguracao_checklist, inauguracao_data,
+                    pauta_data, pauta_horario, pauta_endereco, pauta_saida, is_pauta_externa,
+                    attachments, comments,
+                    task_assignees ( users ( name ) )
+                `).order('created_at', { ascending: false }),
+                supabase.from('events').select(`
+                    id, title, date, time, location, type, departure_time, mayor_attending,
+                    event_attendees ( user_id )
+                `),
+                supabase.from('suggestions').select('*').order('created_at', { ascending: false })
+            ]);
+
+            // 1. Process Team
             if (teamData) {
                 const formattedTeam: TeamMember[] = teamData.map((u: any) => ({
                     id: u.id,
                     name: u.name,
                     role: u.role,
                     email: u.email || undefined,
-                    phone: undefined, // Not in schema yet
+                    phone: undefined,
                     hasLogin: u.role !== 'Motorista',
-                    color: 'hsl(210, 100%, 50%)', // Default or generate
+                    color: 'hsl(210, 100%, 50%)',
                     avatar_url: u.avatar_url || undefined,
                     job_titles: (u.job_titles || []).sort((a: string, b: string) => a.localeCompare(b)),
                 }));
                 setTeam(formattedTeam);
             }
 
-            // Fetch Job Functions
-            const { data: jobFunctionsData } = await supabase.from('job_functions').select('*').order('title');
+            // 2. Process Job Functions
             if (jobFunctionsData) {
                 setJobFunctions(jobFunctionsData);
             }
 
-            // Fetch Tasks — try with archived columns first, fall back if migration not yet run
-            let { data: tasksData, error: tasksError } = await supabase
-                .from('tasks')
-                .select(`
-                    id, title, description, status, type, creator, priority, due_date, archived, archived_at,
+            // 3. Process Tasks
+            let finalTasksData = tasksResponse;
+            if (!tasksResponse) {
+                // Fallback for missing columns if migration not fully applied
+                const { data: fallbackTasks } = await supabase.from('tasks').select(`
+                    id, title, description, status, type, creator, priority, due_date,
                     inauguracao_nome, inauguracao_endereco, inauguracao_secretarias, inauguracao_tipo, inauguracao_checklist, inauguracao_data,
                     pauta_data, pauta_horario, pauta_endereco, pauta_saida, is_pauta_externa,
                     attachments, comments,
                     task_assignees ( users ( name ) )
-                `)
-                .order('created_at', { ascending: false });
-
-            if (tasksError) {
-                console.error("Primary tasks query failed, using fallback:", tasksError);
-                // Fallback: migration not applied yet, fetch without archived columns
-                const fallback = await supabase
-                    .from('tasks')
-                    .select(`
-                        id, title, description, status, type, creator, priority, due_date,
-                        inauguracao_nome, inauguracao_endereco, inauguracao_secretarias, inauguracao_tipo, inauguracao_checklist, inauguracao_data,
-                        pauta_data, pauta_horario, pauta_endereco, pauta_saida, is_pauta_externa,
-                        attachments, comments,
-                        task_assignees ( users ( name ) )
-                    `)
-                    .order('created_at', { ascending: false });
-                tasksData = fallback.data as any;
+                `).order('created_at', { ascending: false });
+                finalTasksData = fallbackTasks;
             }
 
-            if (tasksData) {
+            if (finalTasksData) {
                 const formatTask = (t: any): Task => ({
                     id: t.id,
                     title: t.title,
@@ -119,17 +127,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                     archived_at: t.archived_at ? new Date(t.archived_at) : null,
                     inauguracao_nome: t.inauguracao_nome || undefined,
                     inauguracao_endereco: t.inauguracao_endereco || undefined,
-                    inauguracao_secretarias: (() => {
-                        if (t.inauguracao_secretarias && t.inauguracao_secretarias.length > 0) {
-                            return t.inauguracao_secretarias;
-                        }
-                        // Fallback for old cards: parse from description text
-                        const match = (t.description || '').match(/\*\*Secretarias:\*\*\s*([^\n]+)/);
-                        if (match) {
-                            return match[1].split(',').map((s: string) => s.trim()).filter(Boolean);
-                        }
-                        return undefined;
-                    })(),
+                    inauguracao_secretarias: Array.isArray(t.inauguracao_secretarias) ? t.inauguracao_secretarias : undefined,
                     inauguracao_tipo: t.inauguracao_tipo || undefined,
                     pauta_data: t.pauta_data || undefined,
                     pauta_horario: t.pauta_horario || undefined,
@@ -145,17 +143,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                     })(),
                     inauguracao_data: t.inauguracao_data ? new Date(t.inauguracao_data.includes('T') ? t.inauguracao_data : t.inauguracao_data + 'T12:00:00') : undefined,
                 });
-                setTasks(tasksData.filter((t: any) => !t.archived).map(formatTask));
-                setArchivedTasks(tasksData.filter((t: any) => t.archived).map(formatTask));
+                setTasks(finalTasksData.filter((t: any) => !t.archived).map(formatTask));
+                setArchivedTasks(finalTasksData.filter((t: any) => t.archived).map(formatTask));
             }
 
-
-            // Fetch Events
-            const { data: eventsData } = await supabase.from('events').select(`
-                id, title, date, time, location, type, departure_time, mayor_attending,
-                event_attendees ( user_id )
-            `);
-
+            // 4. Process Events
             if (eventsData) {
                 const formattedEvents = eventsData.map((e: any) => ({
                     id: e.id,
@@ -171,12 +163,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 setEvents(formattedEvents);
             }
 
-            // Fetch Suggestions
-            const { data: suggestionsData } = await supabase
-                .from('suggestions')
-                .select('*')
-                .order('created_at', { ascending: false });
-
+            // 5. Process Suggestions
             if (suggestionsData) {
                 const formattedSuggestions = suggestionsData.map((s: any) => ({
                     ...s,
@@ -186,7 +173,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             }
 
         } catch (error) {
-            console.error("Error fetching data:", error);
+            console.error("Critical Error fetching data in parallel:", error);
         } finally {
             setLoading(false);
         }

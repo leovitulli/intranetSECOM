@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import type { User } from '@supabase/supabase-js';
+import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js';
 import LoadingScreen from '../components/LoadingScreen';
 
 export interface UserProfile {
@@ -32,39 +32,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         let isActive = true;
 
-        const checkSession = async () => {
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-
-                if (!isActive) return;
-
-                if (session?.user) {
-                    await fetchProfile(session.user);
-                } else {
-                    setIsLoading(false);
-                }
-            } catch (err) {
-                console.error('🏁 Auth: checkSession failed:', err);
-                if (isActive) setIsLoading(false);
-            } finally {
-                if (isActive) {
-                    setIsInitialLoad(false);
-                }
-            }
-        };
-
-        checkSession();
-
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            async (_event: any, session: any) => {
+            async (event: AuthChangeEvent, session: Session | null) => {
                 if (!isActive) return;
+
+                console.log('🔐 Auth event:', event);
 
                 if (session?.user) {
                     await fetchProfile(session.user);
                 } else {
                     setUser(null);
                     setIsLoading(false);
-                    setIsInitialLoad(false); // Ensure we don't stick on loading
+                    setIsInitialLoad(false);
                 }
             }
         );

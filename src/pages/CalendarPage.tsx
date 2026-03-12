@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Video, Camera, Landmark, FileText, Palette, Settings } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import TaskModal from '../components/TaskModal';
 import EventModal from '../components/EventModal';
@@ -115,10 +115,19 @@ export default function CalendarPage() {
     // Generate Calendar Grid
     const renderHeader = () => {
         return (
-            <div className="calendar-header-nav">
-                <button className="icon-btn" onClick={prevMonth}><ChevronLeft size={24} /></button>
-                <h2>{format(currentMonth, 'MMMM yyyy', { locale: ptBR })}</h2>
-                <button className="icon-btn" onClick={nextMonth}><ChevronRight size={24} /></button>
+            <div className="calendar-navigation-header">
+                <div className="calendar-nav-controls">
+                    <button className="icon-btn" onClick={prevMonth}><ChevronLeft size={20} /></button>
+                    <h2>{format(currentMonth, 'MMMM yyyy', { locale: ptBR })}</h2>
+                    <button className="icon-btn" onClick={nextMonth}><ChevronRight size={20} /></button>
+                </div>
+                
+                <div className="calendar-legend">
+                    <span className="legend-item"><div className="legend-marker marker-pauta"></div> Pauta Oficial</span>
+                    <span className="legend-item"><div className="legend-marker marker-feriado"></div> Feriado Nacional/Local</span>
+                    <span className="legend-item"><div className="legend-marker marker-comemorativa"></div> Data Comemorativa</span>
+                    <span className="legend-item"><div className="legend-marker marker-inauguracao"></div> Inaugurações</span>
+                </div>
             </div>
         );
     };
@@ -169,12 +178,11 @@ export default function CalendarPage() {
                             {dayEvents.map(evt => (
                                 <div
                                     key={evt.id}
-                                    className={`calendar-event-pill type-${evt.type}`}
+                                    className={`calendar-event-bar type-${evt.type}`}
                                     title={evt.title}
                                     onClick={() => handleEventClick(evt)}
                                 >
-                                    <div className="pill-dot"></div>
-                                    <span className="pill-text">{evt.title}</span>
+                                    <span className="event-label">{evt.title}</span>
                                 </div>
                             ))}
                         </div>
@@ -202,16 +210,20 @@ export default function CalendarPage() {
                 <div className="header-actions-group">
                     <div className="calendar-filter-chips">
                         {[
-                            { id: 'video', label: '🎬 Vídeos', color: 'hsl(330, 70%, 50%)' },
-                            { id: 'foto', label: '📸 Fotos', color: 'hsl(170, 60%, 40%)' },
-                            { id: 'inauguracao', label: '🏛️ Inauguração', color: 'hsl(330, 50%, 40%)' },
-                            { id: 'release', label: '📝 Release', color: 'hsl(200, 70%, 45%)' },
-                            { id: 'arte', label: '🎨 Arte', color: 'hsl(260, 60%, 60%)' },
-                            { id: 'sistema', label: '⚙️ Sistema', color: 'hsl(0, 0%, 50%)' },
+                            { id: 'video', label: 'Vídeos', icon: <Video size={14} />, color: '#ec4899' },
+                            { id: 'foto', label: 'Fotos', icon: <Camera size={14} />, color: '#0d9488' },
+                            { id: 'inauguracao', label: 'Inauguração', icon: <Landmark size={14} />, color: '#7c3aed' },
+                            { id: 'release', label: 'Release', icon: <FileText size={14} />, color: '#2563eb' },
+                            { id: 'arte', label: 'Arte', icon: <Palette size={14} />, color: '#8b5cf6' },
+                            { id: 'sistema', label: 'Sistema', icon: <Settings size={14} />, color: '#64748b' },
                         ].map(f => (
                             <button
                                 key={f.id}
                                 className={`filter-chip ${selectedFilters.includes(f.id) ? 'active' : ''}`}
+                                style={{ 
+                                    '--chip-color': f.color,
+                                    border: selectedFilters.includes(f.id) ? `1px solid ${f.color}` : '1px solid transparent'
+                                } as React.CSSProperties}
                                 onClick={() => {
                                     setSelectedFilters(prev =>
                                         prev.includes(f.id)
@@ -220,6 +232,7 @@ export default function CalendarPage() {
                                     );
                                 }}
                             >
+                                <span className="chip-icon" style={{ color: f.color }}>{f.icon}</span>
                                 {f.label}
                             </button>
                         ))}
@@ -233,12 +246,6 @@ export default function CalendarPage() {
 
             <div className="calendar-full-wrapper glass">
                 {renderHeader()}
-                <div className="calendar-legend">
-                    <span className="legend-item"><div className="pill-dot" style={{ background: 'var(--color-primary)' }}></div> Pauta Oficial</span>
-                    <span className="legend-item"><div className="pill-dot" style={{ background: '#f87171' }}></div> Feriado Nacional/Local</span>
-                    <span className="legend-item"><div className="pill-dot" style={{ background: '#fbbf24' }}></div> Data Comemorativa</span>
-                    <span className="legend-item"><div className="pill-dot" style={{ background: 'hsl(330, 60%, 65%)' }}></div> Inaugurações</span>
-                </div>
                 {renderDaysOfWeek()}
                 {renderCells()}
             </div>
