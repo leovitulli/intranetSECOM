@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { useAuth } from './AuthContext';
 import type { Task } from '../types/kanban';
 import type { TeamMember } from '../types/team';
 
@@ -10,6 +11,7 @@ interface DataContextType {
     events: any[];
     suggestions: any[];
     jobFunctions: { id: string, title: string }[];
+    onlineUsers: any[];
     loading: boolean;
     updateTaskStatus: (taskId: string, newStatus: Task['status']) => Promise<void>;
     updateTask: (updatedTask: Task) => Promise<void>;
@@ -38,8 +40,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     const [events, setEvents] = useState<any[]>([]);
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [jobFunctions, setJobFunctions] = useState<{ id: string, title: string }[]>([]);
+    const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+
+    const { user: currentUser } = useAuth();
 
     const fetchData = async () => {
         setLoading(true);
@@ -807,16 +812,49 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         };
     }, []);
 
-    // Request Notification permission on mount
+    // Presence Subscription
     useEffect(() => {
-        if ('Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission();
-        }
-    }, []);
+        if (!currentUser) return;
+
+        const presenceChannel = supabase.channel('online-users', {
+            config: {
+                presence: {
+                    key: currentUser.id,
+                },
+            },
+        });
+
+        presenceChannel
+            .on('presence', { event: 'sync' }, () => {
+                const state = presenceChannel.presenceState();
+                const online = Object.values(state).flat().map((p: any) => p.user);
+                
+                // Remove duplicates and self if needed (keeping self for UI)
+                const uniqueOnline = online.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+                setOnlineUsers(uniqueOnline);
+            })
+            .subscribe(async (status: string) => {
+                if (status === 'SUBSCRIBED') {
+                    await presenceChannel.track({
+                        user: {
+                            id: currentUser.id,
+                            name: currentUser.name,
+                            avatar: currentUser.avatar,
+                            role: currentUser.role
+                        },
+                        online_at: new Date().toISOString(),
+                    });
+                }
+            });
+
+        return () => {
+            presenceChannel.unsubscribe();
+        };
+    }, [currentUser]);
 
     return (
         <DataContext.Provider value={{
-            tasks, archivedTasks, team, events, suggestions, jobFunctions,
+            tasks, archivedTasks, team, events, suggestions, jobFunctions, onlineUsers,
             loading, updateTaskStatus, updateTask, addTask, deleteTask, archiveTask,
             unarchiveTask, addSuggestion, deleteSuggestion, addJobFunction, updateJobFunction, removeJobFunction,
             addEvent, updateEvent, deleteEvent,

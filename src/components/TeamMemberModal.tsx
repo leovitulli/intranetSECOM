@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Eye, EyeOff } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
 import type { TeamMember } from '../types/team';
 import './TeamMemberModal.css';
 
@@ -12,7 +13,10 @@ interface TeamMemberModalProps {
 
 export default function TeamMemberModal({ member, onClose, onSave }: TeamMemberModalProps) {
     const isEditMode = !!member;
+    const { user: currentUser } = useAuth();
     const { jobFunctions } = useData();
+
+    const isDev = currentUser?.role === 'desenvolvedor';
 
     const [name, setName] = useState(member?.name || '');
     const [role, setRole] = useState(member?.role || 'user');
@@ -121,7 +125,9 @@ export default function TeamMemberModal({ member, onClose, onSave }: TeamMemberM
                             <label>Nível de Acesso *</label>
                             <select value={role} onChange={e => setRole(e.target.value)} required>
                                 <option value="admin">Administrador</option>
-                                <option value="desenvolvedor">Desenvolvedor</option>
+                                <option value="desenvolvedor" disabled={!isDev}>
+                                    Desenvolvedor {!isDev && '(Apenas Desenvolvedores)'}
+                                </option>
                                 <option value="user">Usuário Comum</option>
                                 <option value="viewer">Somente Visualização</option>
                                 <option value="motorista">Motorista (Sem Acesso)</option>

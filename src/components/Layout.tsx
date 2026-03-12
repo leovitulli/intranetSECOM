@@ -11,7 +11,7 @@ import './Layout.css';
 export default function Layout() {
     const { user, logout } = useAuth();
     const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
-    const { searchTerm, setSearchTerm } = useData();
+    const { searchTerm, setSearchTerm, onlineUsers } = useData();
     const isAdmin = user?.role === 'admin' || user?.role === 'desenvolvedor';
     const [isNotifOpen, setIsNotifOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -150,6 +150,20 @@ export default function Layout() {
                             </button>
                         )}
                     </div>
+
+                    {user?.role === 'desenvolvedor' && (
+                        <div className="online-users-indicator">
+                            <div className="online-avatars-list">
+                                {onlineUsers.map(u => (
+                                    <div key={u.id} className="online-avatar-wrapper" title={`${u.name} (Online)`}>
+                                        <img src={u.avatar} alt={u.name} className="online-avatar" />
+                                        <span className="online-status-dot"></span>
+                                    </div>
+                                ))}
+                            </div>
+                            <span className="online-count-hint">{onlineUsers.length} online</span>
+                        </div>
+                    )}
                     <div className="topbar-actions" ref={notifRef} style={{ position: 'relative' }}>
                         <button className="icon-btn" onClick={() => setIsNotifOpen(!isNotifOpen)}>
                             <Bell size={20} />

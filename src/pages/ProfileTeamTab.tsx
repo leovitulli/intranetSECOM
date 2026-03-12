@@ -2,13 +2,16 @@ import { useState } from 'react';
 import { UserPlus, Pencil, Trash2, Mail, Phone, KeySquare, Slash, LayoutGrid, List, RefreshCw, ShieldCheck } from 'lucide-react';
 import type { TeamMember } from '../types/team';
 import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
 import TeamMemberModal from '../components/TeamMemberModal';
 import { supabase, getSupabaseAdmin } from '../lib/supabaseClient';
 import './ProfileTeamTab.css';
 
 
 export default function ProfileTeamTab() {
+    const { user: currentUser } = useAuth();
     const { team, loading, searchTerm } = useData();
+    const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'desenvolvedor';
     const [members, setMembers] = useState<TeamMember[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
@@ -200,13 +203,15 @@ export default function ProfileTeamTab() {
                         </button>
                     </div>
 
-                    <button
-                        className="btn-primary"
-                        onClick={() => { setEditingMember(null); setIsModalOpen(true); }}
-                    >
-                        <UserPlus size={18} />
-                        <span className="hide-mobile">Novo Usuário</span>
-                    </button>
+                    {isAdmin && (
+                        <button
+                            className="btn-primary"
+                            onClick={() => { setEditingMember(null); setIsModalOpen(true); }}
+                        >
+                            <UserPlus size={18} />
+                            <span className="hide-mobile">Novo Usuário</span>
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -261,32 +266,36 @@ export default function ProfileTeamTab() {
 
                                 {/* Action buttons */}
                                 <div className="team-actions" style={viewMode === 'list' ? { marginLeft: 'auto', display: 'flex', gap: '4px' } : {}}>
-                                    <button
-                                        className="icon-btn-small"
-                                        title="Editar"
-                                        disabled={isBusy}
-                                        onClick={() => { setEditingMember(member); setIsModalOpen(true); }}
-                                    >
-                                        <Pencil size={14} />
-                                    </button>
-                                    {member.email && member.hasLogin && (
-                                        <button
-                                            className={`icon-btn-small ${member.pending_email && member.pending_email !== member.email ? 'active' : ''}`}
-                                            title={member.pending_email && member.pending_email !== member.email ? 'Sincronização pendente - Clique para re-enviar' : 'Re-enviar convite / Reset de senha'}
-                                            disabled={isBusy}
-                                            onClick={() => handleRefreshSync(member)}
-                                        >
-                                            <RefreshCw size={14} className={member.pending_email && member.pending_email !== member.email ? 'spin-slow' : ''} />
-                                        </button>
+                                    {isAdmin && (
+                                        <>
+                                            <button
+                                                className="icon-btn-small"
+                                                title="Editar"
+                                                disabled={isBusy}
+                                                onClick={() => { setEditingMember(member); setIsModalOpen(true); }}
+                                            >
+                                                <Pencil size={14} />
+                                            </button>
+                                            {member.email && member.hasLogin && (
+                                                <button
+                                                    className={`icon-btn-small ${member.pending_email && member.pending_email !== member.email ? 'active' : ''}`}
+                                                    title={member.pending_email && member.pending_email !== member.email ? 'Sincronização pendente - Clique para re-enviar' : 'Re-enviar convite / Reset de senha'}
+                                                    disabled={isBusy}
+                                                    onClick={() => handleRefreshSync(member)}
+                                                >
+                                                    <RefreshCw size={14} className={member.pending_email && member.pending_email !== member.email ? 'spin-slow' : ''} />
+                                                </button>
+                                            )}
+                                            <button
+                                                className="icon-btn-small danger"
+                                                title="Remover usuário"
+                                                disabled={isBusy}
+                                                onClick={() => handleDeleteMember(member)}
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </>
                                     )}
-                                    <button
-                                        className="icon-btn-small danger"
-                                        title="Remover usuário"
-                                        disabled={isBusy}
-                                        onClick={() => handleDeleteMember(member)}
-                                    >
-                                        <Trash2 size={14} />
-                                    </button>
                                 </div>
                             </div>
 
