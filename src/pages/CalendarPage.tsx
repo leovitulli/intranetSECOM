@@ -207,42 +207,44 @@ export default function CalendarPage() {
                     <h1>Calendário</h1>
                     <p className="subtitle">Planejamento mensal de pautas, feriados e datas comemorativas.</p>
                 </div>
-                <div className="header-actions-group">
-            <div className="calendar-filter-row">
-                <div className="calendar-filter-chips">
-                    {[
-                        { id: 'video', label: 'Vídeos', icon: <Video size={14} />, color: '#ec4899' },
-                        { id: 'foto', label: 'Fotos', icon: <Camera size={14} />, color: '#0d9488' },
-                        { id: 'inauguracao', label: 'Inauguração', icon: <Landmark size={14} />, color: '#7c3aed' },
-                        { id: 'release', label: 'Release', icon: <FileText size={14} />, color: '#2563eb' },
-                        { id: 'arte', label: 'Arte', icon: <Palette size={14} />, color: '#8b5cf6' },
-                        { id: 'sistema', label: 'Sistema', icon: <Settings size={14} />, color: '#64748b' },
-                    ].map(f => (
-                        <button
-                            key={f.id}
-                            className={`filter-chip ${selectedFilters.includes(f.id) ? 'active' : ''}`}
-                            style={{ 
-                                '--chip-color': f.color,
-                                borderColor: selectedFilters.includes(f.id) ? f.color : 'hsl(var(--color-border) / 0.5)'
-                            } as React.CSSProperties}
-                            onClick={() => {
-                                setSelectedFilters(prev =>
-                                    prev.includes(f.id)
-                                        ? prev.filter(x => x !== f.id)
-                                        : [...prev, f.id]
-                                );
-                            }}
-                        >
-                            <span className="chip-icon" style={{ color: f.color }}>{f.icon}</span>
-                            {f.label}
-                        </button>
-                    ))}
+                <div className="header-actions-stack">
+                    <div className="calendar-filter-chips">
+                        {[
+                            { id: 'video', label: 'Vídeos', icon: <Video size={14} />, color: '#ec4899' },
+                            { id: 'foto', label: 'Fotos', icon: <Camera size={14} />, color: '#0d9488' },
+                            { id: 'inauguracao', label: 'Inauguração', icon: <Landmark size={14} />, color: '#7c3aed' },
+                            { id: 'release', label: 'Release', icon: <FileText size={14} />, color: '#2563eb' },
+                            { id: 'arte', label: 'Arte', icon: <Palette size={14} />, color: '#8b5cf6' },
+                            { id: 'sistema', label: 'Sistema', icon: <Settings size={14} />, color: '#64748b' },
+                        ].map(f => (
+                            <button
+                                key={f.id}
+                                className={`filter-chip ${selectedFilters.includes(f.id) ? 'active' : ''}`}
+                                style={{ 
+                                    '--chip-color': f.color,
+                                    borderColor: selectedFilters.includes(f.id) ? f.color : 'hsl(var(--color-border) / 0.5)'
+                                } as React.CSSProperties}
+                                onClick={() => {
+                                    setSelectedFilters(prev =>
+                                        prev.includes(f.id)
+                                            ? prev.filter(x => x !== f.id)
+                                            : [...prev, f.id]
+                                    );
+                                }}
+                            >
+                                <span className="chip-icon" style={{ color: f.color }}>{f.icon}</span>
+                                {f.label}
+                            </button>
+                        ))}
+                    </div>
+                    <button className="btn-add-event" onClick={() => setIsModalOpen(true)}>
+                        <Plus size={18} />
+                        Adicionar Data/Evento
+                    </button>
                 </div>
-                <button className="btn-add-event" onClick={() => setIsModalOpen(true)}>
-                    <Plus size={18} />
-                    Adicionar Data/Evento
-                </button>
             </div>
+        </div>
+    </div>
 
             <div className="calendar-full-wrapper glass">
                 {renderHeader()}
