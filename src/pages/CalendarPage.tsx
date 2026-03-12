@@ -123,7 +123,7 @@ export default function CalendarPage() {
                 </div>
                 
                 <div className="calendar-legend">
-                    <span className="legend-item">Pauta Oficial</span>
+                    <span className="legend-item"><div className="legend-marker marker-pauta"></div> Pauta Oficial</span>
                     <span className="legend-item"><div className="legend-marker marker-feriado"></div> Feriado Nacional/Local</span>
                     <span className="legend-item"><div className="legend-marker marker-comemorativa"></div> Data Comemorativa</span>
                     <span className="legend-item"><div className="legend-marker marker-inauguracao"></div> Inaugurações</span>

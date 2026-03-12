@@ -149,6 +149,7 @@
     border-radius: 2px;
 }
 
+.marker-pauta { background-color: #3b82f6; }
 .marker-feriado { background-color: #f87171; }
 .marker-comemorativa { background-color: #fbbf24; }
 .marker-inauguracao { background-color: #f472b6; }
