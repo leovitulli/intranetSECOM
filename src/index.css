@@ -198,6 +198,7 @@ h6 {
   background-color: hsl(var(--color-background)) !important;
   border-color: hsl(var(--color-primary) / 0.5) !important;
 }
+
 /* --- Global Modals (Fixed via Shell) --- */
 .modal-overlay {
   position: fixed !important;
@@ -261,11 +262,23 @@ h6 {
 }
 
 @keyframes fadeInModal {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUpModal {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }

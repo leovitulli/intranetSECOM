@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Eye, EyeOff } from 'lucide-react';
+import { X, Eye, EyeOff, UserPlus } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import type { TeamMember } from '../types/team';
@@ -26,7 +26,6 @@ export default function TeamMemberModal({ member, onClose, onSave }: TeamMemberM
     const [showPass, setShowPass] = useState(false);
     const [jobTitles, setJobTitles] = useState<string[]>(member?.job_titles || []);
     const [hasLogin, setHasLogin] = useState<boolean>(member?.hasLogin ?? true);
-    const color = member?.color || `hsl(${Math.floor(Math.random() * 360)}, 70%, 55%)`;
 
     useEffect(() => {
         if (member) {
@@ -51,183 +50,190 @@ export default function TeamMemberModal({ member, onClose, onSave }: TeamMemberM
             return;
         }
 
-        const savedMember: TeamMember = {
-            id: member?.id || '',
-            name: name.trim(),
+        const memberData = {
+            ...member,
+            name,
+            email: email.toLowerCase().trim(),
+            phone,
             role,
-            color,
-            hasLogin,
-            email: email.trim() || undefined,
-            phone: phone.trim() || undefined,
-            job_titles: jobTitles
+            job_titles: jobTitles,
+            has_login: hasLogin,
+            password: password || undefined
         };
 
-        onSave(savedMember, hasLogin && !isEditMode ? password : undefined);
+        onSave(memberData);
     };
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content team-modal" onClick={e => e.stopPropagation()}>
-                <button className="modal-close" onClick={onClose}>
-                    <X size={20} />
-                </button>
-
-                <div className="modal-header">
-                    <h2 className="modal-title">{isEditMode ? 'Editar Perfil' : 'Novo Usuário'}</h2>
-                    <p className="subtitle" style={{ marginTop: '0.5rem', fontSize: '0.9rem' }}>
-                        {isEditMode
-                            ? 'Atualize os dados do colaborador.'
-                            : 'Cadastre um novo colaborador. Se tiver acesso, um login será criado.'}
-                    </p>
+        <div className="modal-overlay">
+            <div className="modal-content nova-pauta-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '650px' }}>
+                <div className="nova-pauta-header-premium">
+                    <div className="header-left-premium">
+                        <div className="header-icon-premium">
+                            <UserPlus size={22} />
+                        </div>
+                        <div className="header-titles-premium">
+                            <h2>{isEditMode ? 'Editar Perfil' : 'Novo Usuário'}</h2>
+                            <span className="header-subtitle-premium">
+                                {isEditMode ? 'Atualize as permissões e dados do colaborador' : 'Cadastre um novo membro para a equipe interna'}
+                            </span>
+                        </div>
+                    </div>
+                    <button className="close-btn-premium" onClick={onClose} title="Fechar">
+                        <X size={20} />
+                    </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="team-form">
-                    {/* Name */}
-                    <div className="form-group">
-                        <label>Nome Completo *</label>
-                        <input
-                            type="text"
-                            value={name}
-                            onChange={e => setName(e.target.value)}
-                            placeholder="Ex: João Silva"
-                            required
-                        />
-                    </div>
-
-                    <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        {/* Email */}
-                        <div className="form-group">
-                            <label>E-mail {!isEditMode && hasLogin ? '*' : '(Opcional)'}</label>
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={e => setEmail(e.target.value)}
-                                placeholder="usuario@secom.gov.br"
-                                required={!isEditMode && hasLogin}
-                            />
+                <form onSubmit={handleSubmit} className="nova-pauta-body-premium" noValidate>
+                    {/* --- Seção 1: Dados do Colaborador --- */}
+                    <div className="modal-section-group-premium">
+                        <div className="section-header-premium">
+                            <span className="section-number-premium">01</span>
+                            <h3>Dados Básicos</h3>
                         </div>
 
-                        {/* Phone */}
-                        <div className="form-group">
-                            <label>Telefone / WhatsApp</label>
+                        <div className="nova-pauta-field-premium">
+                            <label className="field-label-premium">Nome Completo</label>
                             <input
                                 type="text"
-                                value={phone}
-                                onChange={e => setPhone(e.target.value)}
-                                placeholder="(00) 90000-0000"
+                                className="input-premium title-input-premium"
+                                placeholder="Ex: João Silva"
+                                value={name}
+                                onChange={e => setName(e.target.value)}
+                                required
+                                autoFocus
                             />
                         </div>
+
+                        <div className="fields-grid-2-premium" style={{ marginTop: '0.5rem' }}>
+                            <div className="nova-pauta-field-premium">
+                                <label className="field-label-premium">E-mail {!isEditMode && hasLogin ? '*' : '(Opcional)'}</label>
+                                <input
+                                    type="email"
+                                    className="input-premium"
+                                    value={email}
+                                    onChange={e => setEmail(e.target.value)}
+                                    placeholder="usuario@secom.gov.br"
+                                    required={!isEditMode && hasLogin}
+                                />
+                            </div>
+
+                            <div className="nova-pauta-field-premium">
+                                <label className="field-label-premium">WhatsApp / Celular</label>
+                                <input
+                                    type="text"
+                                    className="input-premium"
+                                    value={phone}
+                                    onChange={e => setPhone(e.target.value)}
+                                    placeholder="(00) 90000-0000"
+                                />
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Role + Password row */}
-                    <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div className="form-group">
-                            <label>Nível de Acesso *</label>
-                            <select value={role} onChange={e => setRole(e.target.value)} required>
-                                <option value="admin">Administrador</option>
-                                <option value="desenvolvedor" disabled={!isDev}>
-                                    Desenvolvedor {!isDev && '(Apenas Desenvolvedores)'}
-                                </option>
-                                <option value="user">Usuário Comum</option>
-                                <option value="viewer">Somente Visualização</option>
-                                <option value="motorista">Motorista (Sem Acesso)</option>
-                            </select>
+                    {/* --- Seção 2: Funções e Especialidades --- */}
+                    <div className="modal-section-group-premium alternate-bg-premium">
+                        <div className="section-header-premium">
+                            <span className="section-number-premium">02</span>
+                            <h3>Funções e Especialidades</h3>
                         </div>
 
-                        {/* Password — only shown when creating a new user with login */}
-                        {!isEditMode && hasLogin && (
-                            <div className="form-group">
-                                <label>Senha Inicial *</label>
-                                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                                    <input
-                                        type={showPass ? 'text' : 'password'}
-                                        value={password}
-                                        onChange={e => setPassword(e.target.value)}
-                                        placeholder="Mínimo 6 caracteres"
-                                        style={{ paddingRight: '2.5rem', width: '100%' }}
-                                        required
-                                        minLength={6}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPass(v => !v)}
-                                        style={{ position: 'absolute', right: '0.6rem', background: 'none', border: 'none', cursor: 'pointer', color: 'hsl(var(--color-text-muted))' }}
-                                    >
-                                        {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
-                                    </button>
-                                </div>
+                        <div className="nova-pauta-field-premium">
+                            <div className="job-tags-grid-premium">
+                                {Array.from(new Set([...jobFunctions.map(jf => jf.title), ...jobTitles])).map(title => {
+                                    const isOrphaned = !jobFunctions.find(jf => jf.title === title);
+                                    const isSelected = jobTitles.includes(title);
+                                    return (
+                                        <label
+                                            key={title}
+                                            className={`job-tag-premium-fixed ${isSelected ? 'active' : ''} ${isOrphaned ? 'orphaned' : ''}`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={isSelected}
+                                                onChange={() => setJobTitles(prev =>
+                                                    prev.includes(title) ? prev.filter(t => t !== title) : [...prev, title]
+                                                )}
+                                                style={{ display: 'none' }}
+                                            />
+                                            {title}
+                                            {isOrphaned && <span className="tag-hint-premium">(Antigo)</span>}
+                                        </label>
+                                    );
+                                })}
                             </div>
-                        )}
+                        </div>
                     </div>
 
-                    {/* Job Titles */}
-                    <div className="form-group">
-                        <label>Funções / Especialidades</label>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.5rem', padding: '0.75rem', background: 'hsl(var(--color-background))', border: '1px solid hsl(var(--color-border))', borderRadius: 'var(--radius-md)' }}>
-                            {Array.from(new Set([...jobFunctions.map(jf => jf.title), ...jobTitles])).map(title => {
-                                const isOrphaned = !jobFunctions.find(jf => jf.title === title);
-                                return (
-                                    <label
-                                        key={title}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '0.3rem',
-                                            fontSize: '0.8rem',
-                                            padding: '0.3rem 0.7rem',
-                                            borderRadius: '99px',
-                                            border: `1px solid ${jobTitles.includes(title) ? (isOrphaned ? 'hsl(var(--color-danger))' : 'hsl(var(--color-primary))') : 'hsl(var(--color-border))'}`,
-                                            background: jobTitles.includes(title) ? (isOrphaned ? 'hsl(var(--color-danger) / 0.1)' : 'hsl(var(--color-primary) / 0.1)') : 'transparent',
-                                            color: jobTitles.includes(title) ? (isOrphaned ? 'hsl(var(--color-danger))' : 'hsl(var(--color-primary))') : 'hsl(var(--color-text-muted))',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.15s',
-                                            userSelect: 'none'
-                                        }}
-                                    >
+                    {/* --- Seção 3: Controle de Acesso --- */}
+                    <div className="modal-section-group-premium">
+                        <div className="section-header-premium">
+                            <span className="section-number-premium">03</span>
+                            <h3>Controle de Acesso</h3>
+                        </div>
+
+                        <div className="fields-grid-2-premium">
+                            <div className="nova-pauta-field-premium">
+                                <label className="field-label-premium">Nível de Permissão</label>
+                                <select 
+                                    className="input-premium select-premium" 
+                                    value={role} 
+                                    onChange={e => setRole(e.target.value)} 
+                                    required
+                                >
+                                    <option value="user">Usuário Comum</option>
+                                    <option value="admin">Administrador</option>
+                                    <option value="viewer">Somente Visualização</option>
+                                    <option value="motorista">Motorista (Sem Acesso)</option>
+                                    {isDev && <option value="desenvolvedor">Desenvolvedor</option>}
+                                </select>
+                            </div>
+
+                            {!isEditMode && hasLogin && (
+                                <div className="nova-pauta-field-premium">
+                                    <label className="field-label-premium">Senha Inicial *</label>
+                                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                                         <input
-                                            type="checkbox"
-                                            checked={jobTitles.includes(title)}
-                                            onChange={() => setJobTitles(prev =>
-                                                prev.includes(title) ? prev.filter(t => t !== title) : [...prev, title]
-                                            )}
-                                            style={{ display: 'none' }}
+                                            type={showPass ? 'text' : 'password'}
+                                            className="input-premium"
+                                            value={password}
+                                            onChange={e => setPassword(e.target.value)}
+                                            placeholder="Mínimo 6 caracteres"
+                                            required
+                                            minLength={6}
                                         />
-                                        {title} {isOrphaned && <span style={{ fontSize: '0.65rem', opacity: 0.7 }}>(Antigo)</span>}
-                                    </label>
-                                );
-                            })}
-                            {jobFunctions.length === 0 && jobTitles.length === 0 && (
-                                <span style={{ fontSize: '0.8rem', color: 'hsl(var(--color-text-muted))' }}>Nenhum cargo cadastrado nas configurações.</span>
+                                        <button
+                                            type="button"
+                                            className="pass-toggle-btn-premium"
+                                            onClick={() => setShowPass(v => !v)}
+                                        >
+                                            {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
+                                </div>
                             )}
                         </div>
-                    </div>
 
-                    {/* Toggle Login */}
-                    <div className="login-access-container">
-                        <label className="toggle-switch-wrapper">
-                            <div className="toggle-info">
-                                <strong>Permitir acesso ao sistema?</strong>
-                                <span className="toggle-desc">
-                                    {hasLogin
-                                        ? 'A pessoa poderá fazer login e acessar a intranet.'
-                                        : 'Perfil somente para alocação (ex: Motoristas), sem senha.'}
+                        <div className={`pauta-externa-toggle-card-premium ${hasLogin ? 'active' : ''} mt-1-premium`}
+                            onClick={() => setHasLogin(!hasLogin)}>
+                            <div className="toggle-info-premium">
+                                <span className="toggle-title-premium">Permitir acesso ao sistema?</span>
+                                <span className="toggle-description-premium">
+                                    {hasLogin 
+                                        ? 'O usuário poderá fazer login e acessar as ferramentas' 
+                                        : 'Perfil somente para alocação (motoristas, etc), sem acesso direto'}
                                 </span>
                             </div>
-                            <label className="switch">
-                                <input
-                                    type="checkbox"
-                                    checked={hasLogin}
-                                    onChange={e => setHasLogin(e.target.checked)}
-                                />
-                                <span className="slider round"></span>
-                            </label>
-                        </label>
+                            <div className={`toggle-switch-premium ${hasLogin ? 'on' : ''}`}>
+                                <div className="toggle-knob-premium"></div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="form-actions">
-                        <button type="button" className="btn-secondary" onClick={onClose}>Cancelar</button>
-                        <button type="submit" className="btn-primary" disabled={!name}>
-                            {isEditMode ? 'Salvar Alterações' : 'Criar Usuário'}
+                    <div className="nova-pauta-footer-premium">
+                        <button type="button" className="btn-cancel-premium" onClick={onClose}>Cancelar</button>
+                        <button type="submit" className="btn-save-premium" disabled={!name}>
+                            <span>{isEditMode ? 'Salvar Alterações' : 'Criar Usuário'}</span>
                         </button>
                     </div>
                 </form>
