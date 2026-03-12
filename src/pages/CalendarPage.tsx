@@ -241,12 +241,10 @@ export default function CalendarPage() {
                         <Plus size={18} />
                         Adicionar Data/Evento
                     </button>
-                </div>
             </div>
         </div>
-    </div>
 
-            <div className="calendar-full-wrapper glass">
+        <div className="calendar-full-wrapper glass">
                 {renderHeader()}
                 {renderDaysOfWeek()}
                 {renderCells()}
