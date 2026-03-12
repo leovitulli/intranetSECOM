@@ -12,7 +12,13 @@ export default function Profile() {
     const { jobFunctions } = useData();
 
     // Tabs state
-    const [activeTab, setActiveTab] = useState<'perfil' | 'equipe' | 'cargos'>('perfil');
+    const [activeTab, setActiveTab] = useState<'perfil' | 'equipe' | 'cargos'>(() => {
+        return (localStorage.getItem('profileActiveTab') as any) || 'perfil';
+    });
+
+    useEffect(() => {
+        localStorage.setItem('profileActiveTab', activeTab);
+    }, [activeTab]);
 
     // Form state for My Profile
     const [name, setName] = useState('');

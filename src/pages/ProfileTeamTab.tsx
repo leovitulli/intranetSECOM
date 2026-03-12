@@ -64,7 +64,11 @@ export default function ProfileTeamTab() {
                 }`);
         } catch (err: any) {
             console.error('Create member error:', err);
-            alert(`❌ Erro ao criar usuário: ${err.message || 'Erro desconhecido'}`);
+            if (err.message?.includes('already registered')) {
+                alert(`❌ Erro: O e-mail "${member.email}" já está cadastrado no sistema (Supabase Auth).\n\nSe o usuário não aparece na lista, ele pode ter sido excluído apenas da tabela pública. \n\nSOLUÇÃO: Vá no Dashboard do Supabase > Authentication, procure por esse e-mail e exclua-o lá antes de tentar novamente.`);
+            } else {
+                alert(`❌ Erro ao criar usuário: ${err.message || 'Erro desconhecido'}`);
+            }
         } finally {
             setBusy(member.id || 'new', false);
         }
@@ -126,7 +130,7 @@ export default function ProfileTeamTab() {
 
     // ─── DELETE ───────────────────────────────────────────────────────────────
     const handleDeleteMember = async (member: TeamMember) => {
-        if (!confirm(`Remover ${member.name} do sistema?\n\nO perfil será excluído. O acesso ao sistema será bloqueado automaticamente.`)) return;
+        if (!confirm(`Remover ${member.name} do sistema?\n\n⚠️ IMPORTANTE: Isso removerá apenas o perfil. Para liberar o e-mail "${member.email}" para um novo cadastro, você também precisará removê-lo manualmente no Dashboard do Supabase > Authentication.`)) return;
 
         setBusy(member.id, true);
         try {
