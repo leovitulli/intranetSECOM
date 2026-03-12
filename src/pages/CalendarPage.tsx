@@ -117,13 +117,13 @@ export default function CalendarPage() {
         return (
             <div className="calendar-navigation-header">
                 <div className="calendar-nav-controls">
-                    <button className="icon-btn" onClick={prevMonth}><ChevronLeft size={20} /></button>
-                    <h2>{format(currentMonth, 'MMMM yyyy', { locale: ptBR })}</h2>
-                    <button className="icon-btn" onClick={nextMonth}><ChevronRight size={20} /></button>
+                    <button className="icon-btn-nav" onClick={prevMonth}><ChevronLeft size={20} /></button>
+                    <h2 className="current-month-title">{format(currentMonth, 'MMMM yyyy', { locale: ptBR })}</h2>
+                    <button className="icon-btn-nav" onClick={nextMonth}><ChevronRight size={20} /></button>
                 </div>
                 
                 <div className="calendar-legend">
-                    <span className="legend-item"><div className="legend-marker marker-pauta"></div> Pauta Oficial</span>
+                    <span className="legend-item">Pauta Oficial</span>
                     <span className="legend-item"><div className="legend-marker marker-feriado"></div> Feriado Nacional/Local</span>
                     <span className="legend-item"><div className="legend-marker marker-comemorativa"></div> Data Comemorativa</span>
                     <span className="legend-item"><div className="legend-marker marker-inauguracao"></div> Inaugurações</span>
@@ -208,40 +208,40 @@ export default function CalendarPage() {
                     <p className="subtitle">Planejamento mensal de pautas, feriados e datas comemorativas.</p>
                 </div>
                 <div className="header-actions-group">
-                    <div className="calendar-filter-chips">
-                        {[
-                            { id: 'video', label: 'Vídeos', icon: <Video size={14} />, color: '#ec4899' },
-                            { id: 'foto', label: 'Fotos', icon: <Camera size={14} />, color: '#0d9488' },
-                            { id: 'inauguracao', label: 'Inauguração', icon: <Landmark size={14} />, color: '#7c3aed' },
-                            { id: 'release', label: 'Release', icon: <FileText size={14} />, color: '#2563eb' },
-                            { id: 'arte', label: 'Arte', icon: <Palette size={14} />, color: '#8b5cf6' },
-                            { id: 'sistema', label: 'Sistema', icon: <Settings size={14} />, color: '#64748b' },
-                        ].map(f => (
-                            <button
-                                key={f.id}
-                                className={`filter-chip ${selectedFilters.includes(f.id) ? 'active' : ''}`}
-                                style={{ 
-                                    '--chip-color': f.color,
-                                    border: selectedFilters.includes(f.id) ? `1px solid ${f.color}` : '1px solid transparent'
-                                } as React.CSSProperties}
-                                onClick={() => {
-                                    setSelectedFilters(prev =>
-                                        prev.includes(f.id)
-                                            ? prev.filter(x => x !== f.id)
-                                            : [...prev, f.id]
-                                    );
-                                }}
-                            >
-                                <span className="chip-icon" style={{ color: f.color }}>{f.icon}</span>
-                                {f.label}
-                            </button>
-                        ))}
-                    </div>
-                    <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
-                        <Plus size={18} />
-                        Adicionar Data/Evento
-                    </button>
+            <div className="calendar-filter-row">
+                <div className="calendar-filter-chips">
+                    {[
+                        { id: 'video', label: 'Vídeos', icon: <Video size={14} />, color: '#ec4899' },
+                        { id: 'foto', label: 'Fotos', icon: <Camera size={14} />, color: '#0d9488' },
+                        { id: 'inauguracao', label: 'Inauguração', icon: <Landmark size={14} />, color: '#7c3aed' },
+                        { id: 'release', label: 'Release', icon: <FileText size={14} />, color: '#2563eb' },
+                        { id: 'arte', label: 'Arte', icon: <Palette size={14} />, color: '#8b5cf6' },
+                        { id: 'sistema', label: 'Sistema', icon: <Settings size={14} />, color: '#64748b' },
+                    ].map(f => (
+                        <button
+                            key={f.id}
+                            className={`filter-chip ${selectedFilters.includes(f.id) ? 'active' : ''}`}
+                            style={{ 
+                                '--chip-color': f.color,
+                                borderColor: selectedFilters.includes(f.id) ? f.color : 'hsl(var(--color-border) / 0.5)'
+                            } as React.CSSProperties}
+                            onClick={() => {
+                                setSelectedFilters(prev =>
+                                    prev.includes(f.id)
+                                        ? prev.filter(x => x !== f.id)
+                                        : [...prev, f.id]
+                                );
+                            }}
+                        >
+                            <span className="chip-icon" style={{ color: f.color }}>{f.icon}</span>
+                            {f.label}
+                        </button>
+                    ))}
                 </div>
+                <button className="btn-add-event" onClick={() => setIsModalOpen(true)}>
+                    <Plus size={18} />
+                    Adicionar Data/Evento
+                </button>
             </div>
 
             <div className="calendar-full-wrapper glass">

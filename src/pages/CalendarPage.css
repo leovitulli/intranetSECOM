@@ -1,288 +1,300 @@
 /* CalendarPage.css */
 
-.calendar-full-wrapper {
-    background-color: hsl(var(--color-surface));
-    border: 1px solid hsl(var(--color-border));
-    border-radius: var(--radius-xl);
-    padding: 1.5rem;
+.calendar-page {
+    padding-top: 1rem;
+}
+
+.page-header {
+    margin-bottom: 2rem;
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
 }
 
-.calendar-navigation-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.calendar-nav-controls {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-}
-
-.calendar-nav-controls h2 {
-    margin: 0;
-    text-transform: capitalize;
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: hsl(var(--color-text));
-}
-
-.calendar-legend {
-    display: flex;
-    gap: 1.5rem;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.85rem;
-    color: hsl(var(--color-text-muted));
-    font-weight: 500;
-}
-
-.legend-marker {
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
-}
-
-.marker-pauta { background-color: var(--color-primary); }
-.marker-feriado { background-color: #f87171; }
-.marker-comemorativa { background-color: #fbbf24; }
-.marker-inauguracao { background-color: hsl(330, 60%, 65%); }
-
-.calendar-days-row {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    text-align: right;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid hsl(var(--color-border));
-    margin-bottom: 0.5rem;
-}
-
-.calendar-dow {
-    font-weight: 600;
-    color: hsl(var(--color-text-muted));
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    padding-right: 0.5rem;
-}
-
-.calendar-body {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-}
-
-.calendar-row {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    flex: 1;
-}
-
-.calendar-cell {
-    aspect-ratio: 1 / 1;
-    height: auto;
-    border-bottom: 1px solid hsl(var(--color-border));
-    border-right: 1px solid hsl(var(--color-border));
-    padding: 0.5rem;
-    display: flex;
-    flex-direction: column;
-    transition: background-color var(--transition-fast);
-    overflow: hidden;
-}
-
-.calendar-cell:nth-child(7n) {
-    border-right: none;
-}
-
-.calendar-row:last-child .calendar-cell {
-    border-bottom: none;
-}
-
-.calendar-cell:hover {
-    background-color: hsl(var(--color-background) / 0.5);
-}
-
-.calendar-cell.disabled {
-    background-color: hsl(var(--color-background) / 0.3);
-    opacity: 0.5;
-}
-
-.calendar-cell.selected .cell-number {
-    background-color: hsl(var(--color-primary));
-    color: white;
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    margin-left: auto;
-    font-size: 0.9rem;
-}
-
-.cell-number {
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-    text-align: right;
-    display: block;
-    color: hsl(var(--color-text-muted));
-    font-size: 0.95rem;
-}
-
-.cell-events {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    overflow-y: auto;
-    flex: 1;
-}
-
-/* Custom scrollbar for cells */
-.cell-events::-webkit-scrollbar {
-    width: 4px;
-}
-
-.cell-events::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.cell-events::-webkit-scrollbar-thumb {
-    background: hsl(var(--color-border));
-    border-radius: 4px;
-}
-
-.calendar-event-bar {
-    display: flex;
-    align-items: center;
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    cursor: pointer;
-    transition: filter var(--transition-fast);
-}
-
-.calendar-event-bar:hover {
-    filter: brightness(0.95);
-}
-
-.calendar-event-bar .event-label {
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Event Types Styling */
-.type-pauta {
-    background-color: hsl(var(--color-primary) / 0.15);
-    color: hsl(var(--color-text));
-    border-left: 3px solid hsl(var(--color-primary));
-}
-
-.type-feriado {
-    background-color: #fee2e2;
-    color: #991b1b;
-}
-
-.type-comemorativa {
-    background-color: #fef3c7;
-    color: #92400e;
-}
-
-.type-inauguracao {
-    background-color: hsla(330, 60%, 65%, 0.2);
-    color: hsl(330, 50%, 35%);
-    border-left: 3px solid hsl(330, 60%, 65%);
-}
-
-/* Small Modal Adjustments */
-.small-modal {
-    max-width: 500px;
-}
-
-.simple-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1.5rem 2rem;
-}
-
-.simple-form label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-}
-
-@media (max-width: 768px) {
-    .calendar-cell {
-        min-height: 80px;
-        padding: 0.25rem;
-    }
-
-    .calendar-event-bar .event-label {
-        display: none;
-        /* Hide text on mobile to save space */
-    }
-
-    .calendar-event-bar {
-        padding: 0.25rem;
-        justify-content: center;
-    }
-}
-
-/* Filter Chips */
-.header-actions-group {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
+.calendar-filter-row {
+    margin-bottom: 2rem;
 }
 
 .calendar-filter-chips {
     display: flex;
-    gap: 0.5rem;
-    padding: 0.35rem;
-    border-radius: var(--radius-full);
+    gap: 0.75rem;
+    flex-wrap: wrap;
 }
 
 .filter-chip {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.4rem 0.8rem;
+    gap: 0.6rem;
+    padding: 0.5rem 1.25rem;
     border-radius: var(--radius-full);
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     font-weight: 600;
     background: white;
     color: hsl(var(--color-text-muted));
     cursor: pointer;
     transition: all var(--transition-fast);
-    border: 1px solid hsl(var(--color-border) / 0.5);
-    white-space: nowrap;
+    border: 1px solid var(--chip-color);
+    box-shadow: var(--shadow-sm);
 }
 
 .filter-chip:hover {
-    background: hsl(var(--color-background));
-    border-color: hsl(var(--color-border));
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
 }
 
 .filter-chip.active {
     background: white;
-    box-shadow: 0 4px 10px hsl(var(--color-text) / 0.05);
+    box-shadow: 0 4px 12px hsl(var(--color-text) / 0.1);
 }
 
 .chip-icon {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.btn-add-event {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.25rem;
+    background-color: hsl(var(--color-primary));
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-add-event:hover {
+    background-color: hsl(var(--color-primary-dark));
+    transform: translateY(-1px);
+}
+
+.calendar-full-wrapper {
+    background-color: white;
+    border: 1px solid hsl(var(--color-border) / 0.5);
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    box-shadow: var(--shadow-lg);
+}
+
+.calendar-navigation-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.calendar-nav-controls {
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+}
+
+.icon-btn-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid hsl(var(--color-border));
+    background: white;
+    border-radius: 50%;
+    color: hsl(var(--color-text-muted));
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.icon-btn-nav:hover {
+    border-color: hsl(var(--color-primary));
+    color: hsl(var(--color-primary));
+}
+
+.current-month-title {
+    margin: 0;
+    text-transform: capitalize;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.calendar-legend {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.legend-marker {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+.marker-feriado { background-color: #f87171; }
+.marker-comemorativa { background-color: #fbbf24; }
+.marker-inauguracao { background-color: #f472b6; }
+
+.calendar-days-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    padding-bottom: 1rem;
+    margin-top: 1rem;
+}
+
+.calendar-dow {
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+}
+
+.calendar-body {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid hsl(var(--color-border) / 0.5);
+    border-left: 1px solid hsl(var(--color-border) / 0.5);
+}
+
+.calendar-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-cell {
+    aspect-ratio: 1.2 / 1;
+    min-height: 150px;
+    border-bottom: 1px solid hsl(var(--color-border) / 0.5);
+    border-right: 1px solid hsl(var(--color-border) / 0.5);
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    transition: background-color var(--transition-fast);
+}
+
+.calendar-cell:hover {
+    background-color: hsl(var(--color-background) / 0.3);
+}
+
+.calendar-cell.disabled {
+    background-color: #f8fafc;
+    opacity: 0.6;
+}
+
+.calendar-cell.selected .cell-number {
+    background-color: #2563eb;
+    color: white;
+}
+
+.cell-number {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #1e293b;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    margin-left: auto;
+}
+
+.cell-events {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.calendar-event-bar {
+    display: flex;
+    align-items: center;
+    padding: 0.35rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.calendar-event-bar:hover {
+    filter: brightness(0.95);
+    transform: translateX(2px);
+}
+
+.event-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* New Event Bar Styles */
+.type-pauta {
+    background-color: #eff6ff;
+    color: #1e40af;
+    border-left: 3px solid #3b82f6;
+}
+
+.type-feriado {
+    background-color: #fef2f2;
+    color: #991b1b;
+}
+
+.type-comemorativa {
+    background-color: #fffbeb;
+    color: #92400e;
+}
+
+.type-inauguracao {
+    background-color: #fdf2f8;
+    color: #9d174d;
+    border-left: 3px solid #f472b6;
+}
+
+@media (max-width: 1024px) {
+    .calendar-cell {
+        min-height: 120px;
+        aspect-ratio: 1 / 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .calendar-navigation-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .calendar-legend {
+        gap: 1rem;
+    }
+    
+    .calendar-cell {
+        min-height: 80px;
+    }
+    
+    .event-label {
+        display: none;
+    }
+    
+    .calendar-event-bar {
+        height: 8px;
+        padding: 0;
+    }
 }
