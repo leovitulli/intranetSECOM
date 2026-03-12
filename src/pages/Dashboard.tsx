@@ -160,9 +160,8 @@ export default function Dashboard() {
                         <span>Nova Pauta</span>
                     </button>
                     <button
-                        className="btn-primary"
+                        className="btn-primary btn-inauguracao"
                         onClick={() => setIsCreateInaugModalOpen(true)}
-                        style={{ background: 'hsl(330, 55%, 55%)', borderColor: 'hsl(330, 55%, 45%)' }}
                     >
                         <Plus size={18} />
                         <span>Nova Inauguração</span>

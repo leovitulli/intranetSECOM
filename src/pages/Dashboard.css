@@ -41,6 +41,18 @@
     box-shadow: 0 6px 12px hsl(var(--color-primary) / 0.3);
 }
 
+.btn-inauguracao {
+    background-color: hsl(330, 55%, 55%) !important;
+    border-color: hsl(330, 55%, 45%) !important;
+    color: white !important;
+}
+
+.btn-inauguracao:hover:not(:disabled) {
+    background-color: hsl(330, 55%, 45%) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px hsla(330, 55%, 55%, 0.3) !important;
+}
+
 /* Kanban Board Layout */
 .kanban-board {
     display: flex;
