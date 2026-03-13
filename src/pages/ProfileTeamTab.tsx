@@ -12,26 +12,23 @@ export default function ProfileTeamTab() {
     const { user: currentUser } = useAuth();
     const { team, loading, searchTerm } = useData();
     const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'desenvolvedor';
-    const [members, setMembers] = useState<TeamMember[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
-
-    if (members.length === 0 && team.length > 0 && !loading) {
-        setMembers([...team].sort((a, b) => a.name.localeCompare(b.name)));
-    }
 
     const setBusy = (id: string, busy: boolean) =>
         setBusyIds(prev => { const s = new Set(prev); busy ? s.add(id) : s.delete(id); return s; });
 
     // ─── CREATE ──────────────────────────────────────────────────────────────
     const handleCreateMember = async (member: TeamMember, password?: string) => {
-        setBusy(member.id || 'new', true);
+        const tempId = 'new-' + Date.now();
+        setBusy(tempId, true);
         try {
             let authUserId: string | undefined;
 
             if (member.hasLogin && member.email && password) {
+                console.log('🏁 Iniciando Auth para:', member.email);
                 // signUp sends a confirmation email to the user automatically
                 // Using supabaseAdmin (persistSession: false) to prevent auto-login
                 const { data: signUpData, error: signUpError } = await getSupabaseAdmin().auth.signUp({
@@ -41,6 +38,7 @@ export default function ProfileTeamTab() {
                 });
                 if (signUpError) throw signUpError;
                 authUserId = signUpData.user?.id;
+                console.log('✅ Auth criado. ID:', authUserId);
             }
 
             const profileId = authUserId || crypto.randomUUID();
@@ -54,23 +52,27 @@ export default function ProfileTeamTab() {
                 has_login: member.hasLogin
             };
 
-            const { error } = await supabase.from('users').insert([payload]);
-            if (error) throw error;
+            console.log('💾 Salvando no banco (tabela users)...');
+            const { error: insertError } = await supabase.from('users').insert([payload]);
+            
+            if (insertError) {
+                console.error('Database insert error:', insertError);
+                throw new Error(`Auth OK, mas erro no Banco: ${insertError.message}`);
+            }
 
-            const newMember: TeamMember = { ...member, id: profileId, job_titles: (member.job_titles || []).sort((a, b) => a.localeCompare(b)) };
-            setMembers(prev => [...prev, newMember].sort((a, b) => a.name.localeCompare(b.name)));
+            console.log('🎉 Tudo pronto!');
             setIsModalOpen(false);
-            alert(`✅ ${member.name} cadastrado!${authUserId && member.email ? `\n📧 Um e-mail de confirmação foi enviado para ${member.email}` : ''
-                }`);
+            alert(`✅ ${member.name} cadastrado com sucesso!\n\nO perfil aparecerá na lista em instantes.`);
         } catch (err: any) {
             console.error('Create member error:', err);
-            if (err.message?.includes('already registered')) {
-                alert(`❌ Erro: O e-mail "${member.email}" já está cadastrado no sistema (Supabase Auth).\n\nSe o usuário não aparece na lista, ele pode ter sido excluído apenas da tabela pública. \n\nSOLUÇÃO: Vá no Dashboard do Supabase > Authentication, procure por esse e-mail e exclua-o lá antes de tentar novamente.`);
+            const msg = err.message || '';
+            if (msg.includes('already registered') || msg.includes('identity_already_exists')) {
+                alert(`❌ E-mail "${member.email}" já está em uso.\n\nSe ele não aparece na lista, remova-o no Supabase Dashboard > Authentication primeiro.`);
             } else {
-                alert(`❌ Erro ao criar usuário: ${err.message || 'Erro desconhecido'}`);
+                alert(`❌ Falha no cadastro: ${msg}`);
             }
         } finally {
-            setBusy(member.id || 'new', false);
+            setBusy(tempId, false);
         }
     };
 
@@ -78,8 +80,8 @@ export default function ProfileTeamTab() {
     const handleEditMember = async (member: TeamMember) => {
         setBusy(member.id, true);
         try {
-            const oldMember = members.find(m => m.id === member.id);
-            if (!oldMember) throw new Error('Colaborador não encontrado no sistema.');
+            const oldMember = team.find(m => m.id === member.id);
+            if (!oldMember) throw new Error('Colaborador não encontrado.');
 
             const isEmailChanging = oldMember.email !== member.email;
 
@@ -105,7 +107,6 @@ export default function ProfileTeamTab() {
             const { error } = await supabase.from('users').update(payload).eq('id', member.id);
             if (error) throw error;
 
-            setMembers(prev => prev.map(m => m.id === member.id ? { ...m, ...payload, ...member, email: isEmailChanging ? m.email : member.email, job_titles: (member.job_titles || []).sort((a, b) => a.localeCompare(b)) } : m).sort((a, b) => a.name.localeCompare(b.name)));
             setIsModalOpen(false);
             setEditingMember(null);
 
@@ -130,16 +131,14 @@ export default function ProfileTeamTab() {
 
     // ─── DELETE ───────────────────────────────────────────────────────────────
     const handleDeleteMember = async (member: TeamMember) => {
-        if (!confirm(`Remover ${member.name} do sistema?\n\n⚠️ IMPORTANTE: Isso removerá apenas o perfil. Para liberar o e-mail "${member.email}" para um novo cadastro, você também precisará removê-lo manualmente no Dashboard do Supabase > Authentication.`)) return;
+        if (!confirm(`Remover ${member.name}?`)) return;
 
         setBusy(member.id, true);
         try {
-            // Remove from public.users (RLS will block any further login)
             const { error } = await supabase.from('users').delete().eq('id', member.id);
             if (error) throw error;
-            setMembers(prev => prev.filter(m => m.id !== member.id));
-        } catch (err: any) {
-            alert(`❌ Erro ao remover: ${err.message}`);
+        } catch (error: any) {
+            alert(`❌ Erro ao remover: ${error.message}`);
         } finally {
             setBusy(member.id, false);
         }
@@ -172,8 +171,8 @@ export default function ProfileTeamTab() {
                 if (error) throw error;
                 alert(`📧 E-mail de redefinição de senha enviado para ${targetEmail}`);
             }
-        } catch (err: any) {
-            alert(`❌ Erro ao processar: ${err.message}`);
+        } catch (error: any) {
+            alert(`❌ Erro: ${error.message}`);
         } finally {
             setBusy(member.id, false);
         }
@@ -225,17 +224,17 @@ export default function ProfileTeamTab() {
             <div className={viewMode === 'grid' ? 'directory-grid' : 'team-list-view'}>
                 {loading && <div className="empty-state" style={{ width: '100%', gridColumn: '1 / -1' }}>Carregando equipe...</div>}
 
-                {!loading && members
-                    .filter(m => {
+                {!loading && team
+                    .filter((m: TeamMember) => {
                         if (!searchTerm) return true;
                         const searchLower = searchTerm.toLowerCase();
                         return (
                             m.name.toLowerCase().includes(searchLower) ||
                             m.email?.toLowerCase().includes(searchLower) ||
-                            m.job_titles?.some(t => t.toLowerCase().includes(searchLower))
+                            m.job_titles?.some((t: string) => t.toLowerCase().includes(searchLower))
                         );
                     })
-                    .map(member => {
+                    .map((member: TeamMember) => {
                     const isBusy = busyIds.has(member.id);
                     return (
                         <div key={member.id} className={`team-card glass ${viewMode === 'list' ? 'list-item' : ''}`}>

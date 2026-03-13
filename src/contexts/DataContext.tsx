@@ -793,9 +793,43 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             )
             .subscribe();
 
+        const usersChannel = supabase.channel('schema-db-users')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'users' },
+                async () => {
+                    console.log('👥 Team data changed. Refetching...');
+                    const { data: teamData, error: teamError } = await supabase
+                        .from('users')
+                        .select('*')
+                        .order('name');
+                    
+                    if (teamError) {
+                        console.error('Realtime team refetch error:', teamError);
+                        return;
+                    }
+                    if (teamData) {
+                        const formattedTeam: TeamMember[] = teamData.map((u: any) => ({
+                            id: u.id,
+                            name: u.name,
+                            role: u.role,
+                            email: u.email || undefined,
+                            phone: u.phone || undefined,
+                            hasLogin: u.has_login ?? (u.role !== 'Motorista'),
+                            color: 'hsl(210, 100%, 50%)',
+                            avatar_url: u.avatar_url || undefined,
+                            job_titles: (u.job_titles || []).sort((a: string, b: string) => a.localeCompare(b)),
+                        }));
+                        setTeam(formattedTeam);
+                    }
+                }
+            )
+            .subscribe();
+
         return () => {
             supabase.removeChannel(channel);
             supabase.removeChannel(suggestionsChannel);
+            supabase.removeChannel(usersChannel);
         };
     }, []);
 

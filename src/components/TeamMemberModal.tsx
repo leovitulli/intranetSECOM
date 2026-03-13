@@ -27,6 +27,8 @@ export default function TeamMemberModal({ member, onClose, onSave }: TeamMemberM
     const [jobTitles, setJobTitles] = useState<string[]>(member?.job_titles || []);
     const [hasLogin, setHasLogin] = useState<boolean>(member?.hasLogin ?? true);
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     useEffect(() => {
         if (member) {
             setName(member.name);
@@ -40,7 +42,8 @@ export default function TeamMemberModal({ member, onClose, onSave }: TeamMemberM
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name.trim()) return;
+        if (!name.trim() || isSubmitting) return;
+        
         if (!isEditMode && hasLogin && !email) {
             alert('E-mail é obrigatório para usuários com acesso ao sistema.');
             return;
@@ -50,18 +53,24 @@ export default function TeamMemberModal({ member, onClose, onSave }: TeamMemberM
             return;
         }
 
+        setIsSubmitting(true);
         const memberData: TeamMember = {
             ...(member || {}),
             id: member?.id || '', 
             name,
             email: email.toLowerCase().trim(),
             phone,
-            role,
+            role: role.toLowerCase(), // Padronização para letras minúsculas
             job_titles: jobTitles,
-            hasLogin: hasLogin // Usar hasLogin conforme a interface original se necessário
+            hasLogin: hasLogin
         } as TeamMember;
 
         onSave(memberData, password || undefined);
+        
+        // Se for erro, o modal continua aberto e queremos liberar o botão após um tempo 
+        // ou via prop se necessário, mas como o onSave é async no pai, 
+        // o fechamento do modal pelo pai resetará tudo.
+        setTimeout(() => setIsSubmitting(false), 5000); 
     };
 
     return (
@@ -231,9 +240,9 @@ export default function TeamMemberModal({ member, onClose, onSave }: TeamMemberM
                     </div>
 
                     <div className="nova-pauta-footer-premium">
-                        <button type="button" className="btn-cancel-premium" onClick={onClose}>Cancelar</button>
-                        <button type="submit" className="btn-save-premium" disabled={!name}>
-                            <span>{isEditMode ? 'Salvar Alterações' : 'Criar Usuário'}</span>
+                        <button type="button" className="btn-cancel-premium" onClick={onClose} disabled={isSubmitting}>Cancelar</button>
+                        <button type="submit" className="btn-save-premium" disabled={!name || isSubmitting}>
+                            <span>{isSubmitting ? 'Processando...' : (isEditMode ? 'Salvar Alterações' : 'Criar Usuário')}</span>
                         </button>
                     </div>
                 </form>

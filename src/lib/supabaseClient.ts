@@ -13,11 +13,16 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 }) as any;
 
 // Separate client for admin operations (e.g., creating users) that should not persist a session
-let _adminClient: ReturnType<typeof createClient> | null = null;
+let _adminClient: any = null;
 export const getSupabaseAdmin = () => {
     if (!_adminClient) {
         _adminClient = createClient(supabaseUrl, supabaseKey, {
-            auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+            auth: { 
+                persistSession: false, 
+                autoRefreshToken: false, 
+                detectSessionInUrl: false,
+                lock: noOpLock
+            }
         });
     }
     return _adminClient;
