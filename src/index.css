@@ -218,9 +218,9 @@ h6 {
 }
 
 .modal-content {
-  background-color: hsl(var(--color-surface)) !important;
-  width: 100% !important;
-  max-width: 600px !important;
+  background-color: hsl(var(--color-surface));
+  width: 100%;
+  max-width: 600px;
   max-height: 90vh !important;
   border-radius: var(--radius-xl) !important;
   box-shadow: 0 20px 50px hsla(0, 0%, 0%, 0.3) !important;

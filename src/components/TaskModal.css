@@ -25,7 +25,7 @@
     }
 }
 
-.modal-content {
+.modal-overlay .modal-content {
     background-color: hsl(var(--color-surface));
     width: 100%;
     max-width: 1100px;
