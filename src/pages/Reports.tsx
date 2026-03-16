@@ -91,11 +91,35 @@ export default function Reports() {
         ].filter(d => d.value > 0);
     }, [filteredTasks]);
 
-    // Chart Data: Status Geral
-    const statusData = useMemo(() => [
-        { name: 'Em Fila/Produção', value: totalAndamento, color: '#3B82F6', filter: 'andamento' },
-        { name: 'Concluídas', value: totalConcluidas, color: '#10B981', filter: 'concluida' },
-    ].filter(d => d.value > 0), [totalConcluidas, totalAndamento]);
+    // Chart Data: Status Geral (Funil de Kanban)
+    const statusData = useMemo(() => {
+        const counts = {
+            solicitado: 0,
+            producao: 0,
+            correcao: 0,
+            aprovado: 0,
+            publicado: 0,
+            cancelado: 0,
+            inauguracao: 0
+        };
+
+        filteredTasks.forEach(task => {
+            if (counts[task.status] !== undefined) {
+                counts[task.status]++;
+            }
+        });
+
+        // Use standard CSS variables indirectly via hsl raw values approximating the css vars for recharts
+        return [
+            { name: 'Solicitação', value: counts.solicitado, color: 'hsl(225, 75%, 55%)', filter: 'solicitado' },
+            { name: 'Em Produção', value: counts.producao, color: 'hsl(250, 70%, 60%)', filter: 'producao' },
+            { name: 'Correção', value: counts.correcao, color: 'hsl(270, 70%, 60%)', filter: 'correcao' },
+            { name: 'Aprovado', value: counts.aprovado, color: 'hsl(280, 70%, 55%)', filter: 'aprovado' },
+            { name: 'Publicado', value: counts.publicado, color: 'hsl(290, 70%, 55%)', filter: 'publicado' },
+            { name: 'Reprovado', value: counts.cancelado, color: 'hsl(0, 70%, 55%)', filter: 'cancelado' },
+            { name: 'Inauguração', value: counts.inauguracao, color: 'hsl(310, 75%, 55%)', filter: 'inauguracao' },
+        ].filter(d => d.value > 0);
+    }, [filteredTasks]);
 
     // Chart Data: Ranking de Secretarias
     const rankingSecretarias = useMemo(() => {
@@ -129,6 +153,7 @@ export default function Reports() {
                 if (activeFilter.value === 'concluida') {
                     return t.status === 'publicado' || isInaugurationFinished(t);
                 }
+                return t.status === activeFilter.value;
             }
             if (activeFilter.type === 'type') {
                 return t.type.includes(activeFilter.value as any) || (activeFilter.value === 'inauguracao' && t.status === 'inauguracao');
@@ -341,9 +366,16 @@ export default function Reports() {
                         <div className="chart-body" style={{ height: 260 }}>
                             {statusData.length > 0 ? (
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={statusData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+                                    <BarChart data={statusData} margin={{ top: 20, right: 10, left: -20, bottom: 40 }}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
-                                        <XAxis dataKey="name" fontSize={12} stroke="var(--color-text-muted)" />
+                                        <XAxis 
+                                            dataKey="name" 
+                                            fontSize={11} 
+                                            stroke="var(--color-text-muted)" 
+                                            angle={-35} 
+                                            textAnchor="end"
+                                            interval={0}
+                                        />
                                         <YAxis fontSize={12} stroke="var(--color-text-muted)" allowDecimals={false} />
                                         <Tooltip
                                             cursor={{ fill: 'rgba(0,0,0,0.04)' }}
