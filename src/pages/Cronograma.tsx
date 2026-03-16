@@ -8,7 +8,7 @@ import type { Task } from '../types/kanban';
 import './Agenda.css';
 import './Cronograma.css';
 
-type FilterType = 'todos' | 'foto' | 'video' | 'texto' | 'inauguracao' | 'arte';
+type FilterType = 'todos' | 'foto' | 'video' | 'release' | 'post' | 'inauguracao' | 'arte';
 
 export default function Cronograma() {
     const { tasks, team, loading, updateTask } = useData();
@@ -25,7 +25,8 @@ export default function Cronograma() {
         { id: 'inauguracao', label: 'Inauguração', icon: Building2, color: 'var(--color-status-inauguracao)' },
         { id: 'video', label: 'Vídeo', icon: Video, color: 'hsl(var(--color-warning))' },
         { id: 'foto', label: 'Foto', icon: ImageIcon, color: 'hsl(var(--color-success))' },
-        { id: 'texto', label: 'Texto', icon: FileText, color: 'hsl(var(--color-info))' },
+        { id: 'release', label: 'Release', icon: FileText, color: 'hsl(var(--color-info))' },
+        { id: 'post', label: 'Post', icon: FileText, color: 'hsl(var(--color-warning))' },
         { id: 'arte', label: 'Arte', icon: FileText, color: 'hsl(var(--color-accent))' },
     ];
 
@@ -48,12 +49,14 @@ export default function Cronograma() {
                                 const typeMap: Record<string, string> = {
                                     'foto': 'foto',
                                     'video': 'video',
-                                    'texto': 'texto',
+                                    'release': 'release',
+                                    'post': 'post',
                                     'inauguracao': 'inauguracao',
                                     'arte': 'arte'
                                 };
                                 badgeClass = `badge-tag badge-${typeMap[f.id]}`;
-                                if (f.id === 'texto') filterLabel = '📝 Release';
+                                if (f.id === 'release') filterLabel = '📝 Release';
+                                if (f.id === 'post') filterLabel = '📱 Post';
                                 if (f.id === 'arte') filterLabel = '🎨 Arte Gráfica';
                                 if (f.id === 'video') filterLabel = '🎬 Vídeo';
                                 if (f.id === 'foto') filterLabel = '📸 Fotos';
@@ -122,19 +125,17 @@ export default function Cronograma() {
                                         >
                                             <div className="card-header" style={{ marginBottom: '8px' }}>
                                                 <div className="task-badges-container" style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                                                    {task.type?.includes('inauguracao' as any) && (
-                                                        <span className="badge-tag badge-inauguracao">
-                                                            <Building2 size={12} /> Inauguração
-                                                        </span>
-                                                    )}
                                                     {task.type?.includes('video' as any) && (
                                                         <span className="badge-tag badge-video">🎬 Vídeo</span>
                                                     )}
                                                     {task.type?.includes('foto' as any) && (
                                                         <span className="badge-tag badge-foto">📸 Fotos</span>
                                                     )}
-                                                    {task.type?.includes('texto' as any) && (
-                                                        <span className="badge-tag badge-texto">📝 Release</span>
+                                                    {task.type?.includes('release' as any) && (
+                                                        <span className="badge-tag badge-release">📝 Release</span>
+                                                    )}
+                                                    {task.type?.includes('post' as any) && (
+                                                        <span className="badge-tag badge-post">📱 Post</span>
                                                     )}
                                                     {task.type?.includes('arte' as any) && (
                                                         <span className="badge-tag badge-arte">🎨 Arte Gráfica</span>

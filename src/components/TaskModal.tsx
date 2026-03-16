@@ -235,15 +235,18 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                 <div className="modal-header">
                     <div className="modal-header-actions">
                         <div className="task-badges-container">
-                            {editedTask.type.map(t => (
-                                <span key={t} className={`badge-tag badge-${t === 'release' ? 'texto' : t}`}>
-                                    {t === 'release' && '📝 Release'}
-                                    {t === 'arte' && '🎨 Arte Gráfica'}
-                                    {t === 'video' && '🎬 Vídeo'}
-                                    {t === 'foto' && '📸 Fotos'}
-                                    {t === 'inauguracao' && 'Inauguração'}
-                                </span>
-                            ))}
+                            {editedTask.type.map(t => {
+                                if (t === 'inauguracao') return null;
+                                return (
+                                    <span key={t} className={`badge-tag badge-${t}`}>
+                                        {t === 'release' && '📝 Release'}
+                                        {t === 'post' && '📱 Post'}
+                                        {t === 'arte' && '🎨 Arte Gráfica'}
+                                        {t === 'video' && '🎬 Vídeo'}
+                                        {t === 'foto' && '📸 Fotos'}
+                                    </span>
+                                );
+                            })}
                         </div>
 
                         <div className="priority-selector">
@@ -798,7 +801,8 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                 <label className="detail-label-premium">Tipos de Material</label>
                                 <div className="material-pills-premium side">
                                     {[
-                                        { id: 'release', label: 'Texto' },
+                                        { id: 'release', label: 'Release' },
+                                        { id: 'post', label: 'Post' },
                                         { id: 'video', label: 'Vídeo' },
                                         { id: 'foto', label: 'Foto' },
                                         { id: 'arte', label: 'Arte' },

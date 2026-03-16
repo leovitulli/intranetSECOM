@@ -71,9 +71,10 @@ export default function Reports() {
 
     // Chart Data: Tipos de Material
     const materialData = useMemo(() => {
-        const counts = { texto: 0, video: 0, foto: 0, inauguracao: 0, arte: 0 };
+        const counts = { release: 0, post: 0, video: 0, foto: 0, inauguracao: 0, arte: 0 };
         filteredTasks.forEach(task => {
-            if (task.type.includes('release')) counts.texto++;
+            if (task.type.includes('release')) counts.release++;
+            if (task.type.includes('post')) counts.post++;
             if (task.type.includes('video')) counts.video++;
             if (task.type.includes('foto')) counts.foto++;
             if (task.type.includes('arte')) counts.arte++;
@@ -81,7 +82,8 @@ export default function Reports() {
         });
 
         return [
-            { name: 'Texto', value: counts.texto, color: '#4F46E5', filter: 'release' },
+            { name: 'Release', value: counts.release, color: '#4F46E5', filter: 'release' },
+            { name: 'Post', value: counts.post, color: '#D97706', filter: 'post' },
             { name: 'Vídeo', value: counts.video, color: '#EC4899', filter: 'video' },
             { name: 'Foto', value: counts.foto, color: '#10B981', filter: 'foto' },
             { name: 'Arte', value: counts.arte, color: '#8B5CF6', filter: 'arte' },

@@ -216,6 +216,7 @@ export default function CalendarPage() {
                             { id: 'video', label: '🎬 Vídeos' },
                             { id: 'foto', label: '📸 Fotos' },
                             { id: 'release', label: '📝 Release' },
+                            { id: 'post', label: '📱 Post' },
                             { id: 'arte', label: '🎨 Arte Gráfica' },
                             { id: 'sistema', label: '⚙️ Sistema' },
                         ].map(f => {
@@ -229,7 +230,7 @@ export default function CalendarPage() {
                                 badgeClass = 'badge-tag badge-sistema';
                             } else {
                                 const typeMap: Record<string, string> = {
-                                    'foto': 'foto', 'video': 'video', 'release': 'texto', 'inauguracao': 'inauguracao', 'arte': 'arte'
+                                    'foto': 'foto', 'video': 'video', 'release': 'release', 'inauguracao': 'inauguracao', 'arte': 'arte', 'post': 'post'
                                 };
                                 badgeClass = `badge-tag badge-${typeMap[f.id]}`;
                             }

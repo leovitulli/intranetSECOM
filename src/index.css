@@ -311,9 +311,14 @@ h6 {
   color: #157a6e;
 }
 
-.badge-texto {
+.badge-release {
   background-color: #eaf4fc;
   color: #0f7ddb;
+}
+
+.badge-post {
+  background-color: #fef08a;
+  color: #ca8a04;
 }
 
 .badge-arte {

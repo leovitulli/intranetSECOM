@@ -11,17 +11,23 @@ Sempre que a interface demandar exibição de "Cards" (como no Kanban, Agenda Ex
 
 A classe base fundamental para legendas de mídia é a `badge-tag` implementada no `index.css`. Elas reproduzem o efeito de "pílulas" arredondadas (`border-radius: 20px`), compostas por cor de fundo suave e cor de texto vívida, sempre acompanhadas de seus respectivos emojis (exceto Inauguração que possui um ícone especial se necessário).
 
-- **📝 Release:** `<span className="badge-tag badge-texto">📝 Release</span>`
+As etiquetas originais foram atualizadas:
+- **📝 Release:** `<span className="badge-tag badge-release">📝 Release</span>`
 - **🎬 Vídeo:** `<span className="badge-tag badge-video">🎬 Vídeo</span>`
 - **📸 Fotos:** `<span className="badge-tag badge-foto">📸 Fotos</span>`
-- **🎨 Arte Gráfica:** `<span className="badge-tag badge-arte">🎨 Arte Gráfica</span>`
-- **Inauguração:** `<span className="badge-tag badge-inauguracao">Inauguração</span>` (ou acompanhado de ícone `<Building2 />`)
+- **📱 Post:** `<span className="badge-tag badge-post">📱 Post</span>`
+- **🎨 Arte Gráfica:** `<span className="badge-tag badge-arte">🎨 Arte</span>`
+
+**🚨 Atenção para Inaugurações:** Inaugurações **NÃO** possuem `badge-tag` visível dentro dos Cards (seja em calendário, kanban ou agenda externa), pois a própria coluna e cor vermelha forte à esquerda já as distinguem. Elas aparecem apenas nos **Filtros** de pesquisa no topo das páginas.
 
 O CSS está localizado em `index.css`:
 ```css
 .badge-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.6rem; border-radius: 20px; white-space: nowrap; line-height: 1; }
-.badge-texto { background-color: #eaf4fc; color: #0f7ddb; }
+.badge-release { background-color: #eaf4fc; color: #0f7ddb; }
 .badge-video { background-color: #fdf0f8; color: #e040a3; }
+.badge-foto { background-color: #f0fdf4; color: #16a34a; }
+.badge-post { background-color: #fef08a; color: #ca8a04; }
+...
 ...
 ```
 

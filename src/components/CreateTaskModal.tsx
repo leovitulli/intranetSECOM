@@ -300,7 +300,8 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                                 <label className="field-label-premium">Tipo de Material</label>
                                 <div className="material-pills-premium">
                                     {[
-                                        { id: 'release', label: 'Texto' },
+                                        { id: 'release', label: 'Release' },
+                                        { id: 'post', label: 'Post' },
                                         { id: 'video', label: 'Vídeo' },
                                         { id: 'foto', label: 'Foto' },
                                         { id: 'inauguracao', label: 'Inauguração' }

@@ -1,5 +1,5 @@
 export type TaskStatus = 'solicitado' | 'producao' | 'correcao' | 'publicado' | 'inauguracao';
-export type TaskType = 'release' | 'arte' | 'video' | 'foto' | 'inauguracao';
+export type TaskType = 'release' | 'arte' | 'video' | 'foto' | 'post' | 'inauguracao';
 export type TaskPriority = 'baixa' | 'media' | 'alta';
 
 export interface Comment {
