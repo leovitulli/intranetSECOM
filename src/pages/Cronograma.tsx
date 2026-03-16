@@ -170,6 +170,33 @@ export default function Cronograma() {
                                                 </div>
                                             )}
 
+                                            {(() => {
+                                                const firstImage = task.attachments?.find(a => a.type === 'image');
+                                                if (!firstImage) return null;
+                                                return (
+                                                    <div 
+                                                        className="attachment-preview-premium"
+                                                        style={{ 
+                                                            marginTop: '0.5rem', 
+                                                            marginBottom: '0.75rem', 
+                                                            borderRadius: 'var(--radius-md)', 
+                                                            overflow: 'hidden', 
+                                                            height: '110px', 
+                                                            backgroundColor: 'var(--color-bg-secondary)',
+                                                            border: '1px solid var(--color-border)',
+                                                            position: 'relative'
+                                                        }}
+                                                    >
+                                                        <img src={firstImage.url} alt="Anexo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                        {(task.attachments?.filter(a => a.type === 'image').length || 0) > 1 && (
+                                                            <div style={{ position: 'absolute', bottom: 6, right: 6, background: 'rgba(0,0,0,0.6)', color: 'white', padding: '2px 6px', borderRadius: 4, fontSize: '0.7rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                                <ImageIcon size={12} /> +{(task.attachments?.filter(a => a.type === 'image').length || 0) - 1}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
+
                                             <div className="card-footer" style={{ borderTop: 'none', paddingTop: 0, marginTop: '8px' }}>
                                                 <div className="event-time" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--color-text-muted)', background: 'var(--color-bg-tertiary)', padding: '4px 8px', borderRadius: '12px' }}>
                                                     <Clock size={12} /> {task.pauta_horario || 'Horário a definir'}

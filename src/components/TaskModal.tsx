@@ -144,9 +144,16 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
 
                 const ext = file.name.split('.').pop();
                 const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-                const { error } = await supabase.storage
+                const uploadPromise = supabase.storage
                     .from('task-attachments')
                     .upload(path, file, { upsert: false });
+                
+                const timeoutPromise = new Promise<{error: any}>((_, reject) => {
+                    setTimeout(() => reject(new Error('O sistema demorou muito para responder (timeout). A internet pode ter oscilado. Tente novamente.')), 15000);
+                });
+
+                const uploadResult = await Promise.race([uploadPromise, timeoutPromise]) as any;
+                const error = uploadResult?.error;
 
                 if (error) {
                     console.error('Upload Error:', error);
