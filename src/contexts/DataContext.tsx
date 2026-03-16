@@ -15,7 +15,7 @@ interface DataContextType {
     loading: boolean;
     updateTaskStatus: (taskId: string, newStatus: Task['status']) => Promise<void>;
     updateTask: (updatedTask: Task) => Promise<void>;
-    addTask: (task: Omit<Task, 'id' | 'comments' | 'attachments'>) => Promise<void>;
+    addTask: (task: Omit<Task, 'id' | 'comments' | 'attachments'>) => Promise<boolean>;
     deleteTask: (taskId: string) => Promise<void>;
     archiveTask: (taskId: string) => Promise<void>;
     unarchiveTask: (taskId: string) => Promise<void>;
@@ -291,7 +291,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    const addTask = async (taskData: Omit<Task, 'id' | 'comments' | 'attachments'>) => {
+    const addTask = async (taskData: Omit<Task, 'id' | 'comments' | 'attachments'>): Promise<boolean> => {
         try {
             const { data, error } = await supabase
                 .from('tasks')
@@ -353,23 +353,27 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                     const retry = await supabase.from('tasks').insert([safeTaskData]).select().single();
                     if (retry.error) {
                         alert("ERRO CRÍTICO: Não foi possível criar a pauta mesmo em modo de segurança. \nErro: " + retry.error.message);
-                        return;
+                        return false;
                     }
 
                     // Se funcionar em Safe Mode, atualiza e sai
-                    return processNewTaskData(retry.data, taskData);
+                    await processNewTaskData(retry.data, taskData);
+                    return true;
                 }
 
                 alert("Erro grave ao tentar salvar no banco de dados da SECOM: \n" + error.message);
-                return;
+                return false;
             }
 
             if (data) {
                 await processNewTaskData(data, taskData);
+                return true;
             }
+            return false;
         } catch (err: any) {
             console.error("Unexpected error in addTask:", err);
             alert("Erro inesperado ao criar pauta: " + err.message);
+            return false;
         }
     };
 

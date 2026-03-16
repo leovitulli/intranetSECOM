@@ -140,13 +140,13 @@ export default function Dashboard() {
     };
 
     const handleCreateTask = async (newTask: Task) => {
-        await addTask(newTask);
-        setIsCreateModalOpen(false);
+        const success = await addTask(newTask);
+        if (success) setIsCreateModalOpen(false);
     };
 
     const handleCreateInaugTask = async (newTask: Task) => {
-        await addTask(newTask);
-        setIsCreateInaugModalOpen(false);
+        const success = await addTask(newTask);
+        if (success) setIsCreateInaugModalOpen(false);
     };
 
     return (

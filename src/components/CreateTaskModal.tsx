@@ -11,7 +11,7 @@ import { ptBR } from 'date-fns/locale';
 
 interface CreateTaskModalProps {
     onClose: () => void;
-    onCreate: (task: Task) => void;
+    onCreate: (task: Task) => Promise<void>;
 }
 
 export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalProps) {
@@ -25,6 +25,7 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
     const [assignees, setAssignees] = useState<string[]>([]);
     const [secretarias, setSecretarias] = useState<string[]>([]);
     const [creators, setCreators] = useState<string[]>(user?.name ? [user.name] : []);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Form fields
     const [pautaData, setPautaData] = useState('');
@@ -53,35 +54,42 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
         );
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!title.trim()) return;
 
-        const newTask: Task = {
-            id: crypto.randomUUID(),
-            title,
-            description: description || '',
-            status: 'solicitado',
-            type: types,
-            creator: creators.length > 0 ? creators.join(', ') : (user?.name || 'Sistema'),
-            priority,
-            assignees,
-            dueDate: pautaData ? new Date(pautaData) : null,
-            createdAt: new Date(),
-            comments: [],
-            attachments: [],
-            inauguracao_nome: types.includes('inauguracao' as TaskType) ? title : undefined,
-            inauguracao_endereco: pautaEndereco,
-            inauguracao_secretarias: secretarias,
-            inauguracao_data: pautaData ? new Date(pautaData) : undefined,
-            pauta_data: pautaData,
-            pauta_horario: (pautaHorarioStart && pautaHorarioEnd) ? `${pautaHorarioStart} às ${pautaHorarioEnd}` : (pautaHorarioStart || pautaHorarioEnd || ''),
-            pauta_saida: pautaSaida,
-            pauta_endereco: pautaEndereco,
-            is_pauta_externa: isPautaExterna
-        };
+        setIsSubmitting(true);
+        try {
+            const newTask: Task = {
+                id: crypto.randomUUID(),
+                title,
+                description: description || '',
+                status: 'solicitado',
+                type: types,
+                creator: creators.length > 0 ? creators.join(', ') : (user?.name || 'Sistema'),
+                priority,
+                assignees,
+                dueDate: pautaData ? new Date(pautaData) : null,
+                createdAt: new Date(),
+                comments: [],
+                attachments: [],
+                inauguracao_nome: types.includes('inauguracao' as TaskType) ? title : undefined,
+                inauguracao_endereco: pautaEndereco,
+                inauguracao_secretarias: secretarias,
+                inauguracao_data: pautaData ? new Date(pautaData) : undefined,
+                pauta_data: pautaData,
+                pauta_horario: (pautaHorarioStart && pautaHorarioEnd) ? `${pautaHorarioStart} às ${pautaHorarioEnd}` : (pautaHorarioStart || pautaHorarioEnd || ''),
+                pauta_saida: pautaSaida,
+                pauta_endereco: pautaEndereco,
+                is_pauta_externa: isPautaExterna
+            };
 
-        onCreate(newTask);
+            await onCreate(newTask);
+        } catch (error) {
+            console.error("Erro ao criar pauta: ", error);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
 
@@ -320,9 +328,9 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                     </div>
 
                     <div className="nova-pauta-footer-premium">
-                        <button type="button" className="btn-cancel-premium" onClick={onClose}>Cancelar</button>
-                        <button type="submit" className="btn-save-premium" disabled={!title}>
-                            <span>Criar Pauta</span>
+                        <button type="button" className="btn-cancel-premium" onClick={onClose} disabled={isSubmitting}>Cancelar</button>
+                        <button type="submit" className="btn-save-premium" disabled={!title || isSubmitting}>
+                            <span>{isSubmitting ? 'Criando Pauta...' : 'Criar Pauta'}</span>
                         </button>
                     </div>
                 </form>
