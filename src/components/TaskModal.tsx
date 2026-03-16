@@ -236,9 +236,9 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                     <div className="modal-header-actions">
                         <div className="task-badges-container">
                             {editedTask.type.map(t => (
-                                <span key={t} className={`badge-premium type-${t}`}>
+                                <span key={t} className={`badge-tag badge-${t === 'release' ? 'texto' : t}`}>
                                     {t === 'release' && '📝 Release'}
-                                    {t === 'arte' && '🎨 Arte'}
+                                    {t === 'arte' && '🎨 Arte Gráfica'}
                                     {t === 'video' && '🎬 Vídeo'}
                                     {t === 'foto' && '📸 Fotos'}
                                     {t === 'inauguracao' && 'Inauguração'}

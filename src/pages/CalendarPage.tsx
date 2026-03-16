@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Video, Camera, Landmark, FileText, Palette, Settings } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Building2 } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import TaskModal from '../components/TaskModal';
 import EventModal from '../components/EventModal';
@@ -209,40 +209,62 @@ export default function CalendarPage() {
                     <p className="subtitle">Planejamento mensal de pautas, feriados e datas comemorativas.</p>
                 </div>
                 <div className="header-actions-group">
-                    <div className="calendar-filter-chips">
+                    <div className="calendar-filter-chips" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         {[
-                            { id: 'all', label: 'Todos', icon: <Plus size={14} />, color: 'hsl(var(--color-primary))' },
-                            { id: 'video', label: 'Vídeos', icon: <Video size={14} />, color: '#ec4899' },
-                            { id: 'foto', label: 'Fotos', icon: <Camera size={14} />, color: '#0d9488' },
-                            { id: 'inauguracao', label: 'Inauguração', icon: <Landmark size={14} />, color: '#7c3aed' },
-                            { id: 'release', label: 'Release', icon: <FileText size={14} />, color: '#2563eb' },
-                            { id: 'arte', label: 'Arte', icon: <Palette size={14} />, color: '#8b5cf6' },
-                            { id: 'sistema', label: 'Sistema', icon: <Settings size={14} />, color: '#64748b' },
-                        ].map(f => (
-                            <button
-                                key={f.id}
-                                className={`filter-chip ${f.id === 'all' ? (selectedFilters.length === 6 ? 'active' : '') : (selectedFilters.includes(f.id) ? 'active' : '')}`}
-                                style={{ 
-                                    '--chip-color': f.color,
-                                    borderColor: (f.id === 'all' ? (selectedFilters.length === 6) : selectedFilters.includes(f.id)) ? f.color : 'hsl(var(--color-border) / 0.5)'
-                                } as React.CSSProperties}
-                                onClick={() => {
-                                    if (f.id === 'all') {
-                                        if (selectedFilters.length === 6) setSelectedFilters([]);
-                                        else setSelectedFilters(['video', 'foto', 'inauguracao', 'release', 'arte', 'sistema']);
-                                        return;
-                                    }
-                                    setSelectedFilters(prev =>
-                                        prev.includes(f.id)
-                                            ? prev.filter(x => x !== f.id)
-                                            : [...prev, f.id]
-                                    );
-                                }}
-                            >
-                                <span className="chip-icon" style={{ color: f.color }}>{f.icon}</span>
-                                {f.label}
-                            </button>
-                        ))}
+                            { id: 'all', label: 'Todos' },
+                            { id: 'inauguracao', label: 'Inauguração' },
+                            { id: 'video', label: '🎬 Vídeos' },
+                            { id: 'foto', label: '📸 Fotos' },
+                            { id: 'release', label: '📝 Release' },
+                            { id: 'arte', label: '🎨 Arte Gráfica' },
+                            { id: 'sistema', label: '⚙️ Sistema' },
+                        ].map(f => {
+                            const isAllSelected = selectedFilters.length === 6;
+                            const isActive = f.id === 'all' ? isAllSelected : selectedFilters.includes(f.id);
+                            
+                            let badgeClass = '';
+                            if (f.id === 'all' || f.id === 'sistema') {
+                                badgeClass = 'badge-tag';
+                            } else {
+                                const typeMap: Record<string, string> = {
+                                    'foto': 'foto', 'video': 'video', 'release': 'texto', 'inauguracao': 'inauguracao', 'arte': 'arte'
+                                };
+                                badgeClass = `badge-tag badge-${typeMap[f.id]}`;
+                            }
+
+                            return (
+                                <button
+                                    key={f.id}
+                                    className={`${badgeClass}`}
+                                    style={{
+                                        opacity: isActive ? 1 : 0.4,
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        padding: '0.4rem 1rem',
+                                        fontSize: '0.85rem',
+                                        transition: 'all 0.2s',
+                                        boxShadow: isActive ? '0 0 10px rgba(255,255,255,0.1)' : 'none',
+                                        ...(f.id === 'all' || f.id === 'sistema' ? { background: 'rgba(255,255,255,0.1)', color: '#fff' } : {})
+                                    }}
+                                    onClick={() => {
+                                        if (f.id === 'all') {
+                                            if (selectedFilters.length === 6) setSelectedFilters([]);
+                                            else setSelectedFilters(['video', 'foto', 'inauguracao', 'release', 'arte', 'sistema']);
+                                            return;
+                                        }
+                                        setSelectedFilters(prev =>
+                                            prev.includes(f.id)
+                                                ? prev.filter(x => x !== f.id)
+                                                : [...prev, f.id]
+                                        );
+                                    }}
+                                >
+                                    {f.id === 'all' && <Plus size={14} style={{ marginRight: '4px' }} />}
+                                    {f.id === 'inauguracao' && <Building2 size={12} style={{ marginRight: '4px' }} />}
+                                    {f.label}
+                                </button>
+                            );
+                        })}
                     </div>
                     <button className="btn-add-event" onClick={() => setIsModalOpen(true)}>
                         <Plus size={18} />

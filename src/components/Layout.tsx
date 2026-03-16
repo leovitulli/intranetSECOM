@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, Newspaper, LogOut, Bell, BellPlus, Search, CalendarDays, CalendarClock, MessageSquarePlus, BarChart3, Check, X, Menu } from 'lucide-react';
+import { LayoutDashboard, Newspaper, LogOut, Bell, BellPlus, Search, CalendarDays, CalendarClock, MessageSquarePlus, BarChart3, Check, X, Menu, AlignEndHorizontal } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useData } from '../contexts/DataContext';
@@ -58,6 +58,14 @@ export default function Layout() {
                     >
                         <CalendarClock size={20} />
                         <span>Agenda Externa</span>
+                    </NavLink>
+
+                    <NavLink
+                        to="/cronograma"
+                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                    >
+                        <AlignEndHorizontal size={20} />
+                        <span>Cronograma Semanal</span>
                     </NavLink>
 
                     <NavLink

@@ -1,0 +1,32 @@
+/* Filtros do Cronograma */
+.cronograma-filters {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+.cronograma-filters .filter-pill {
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--color-text-muted);
+    transition: all 0.2s ease;
+}
+
+.cronograma-filters .filter-pill:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+
+.cronograma-filters .filter-pill.active {
+    background: var(--color-primary);
+    color: #fff;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+}
+

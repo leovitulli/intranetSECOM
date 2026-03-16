@@ -17,6 +17,7 @@ const CalendarPage = lazy(() => import('./pages/CalendarPage'));
 const Reports = lazy(() => import('./pages/Reports'));
 const Profile = lazy(() => import('./pages/Profile'));
 const SendNotification = lazy(() => import('./pages/SendNotification'));
+const Cronograma = lazy(() => import('./pages/Cronograma'));
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
@@ -25,29 +26,24 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 function AppRoutes() {
+  const { user } = useAuth();
   return (
     <NotificationProvider>
       <DataProvider>
         <Suspense fallback={<LoadingScreen />}>
           <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <Layout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
+            <Route element={user ? <Layout /> : <Navigate to="/login" />}>
+              <Route index element={<Dashboard />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="agenda" element={<Agenda />} />
               <Route path="calendario" element={<CalendarPage />} />
               <Route path="sugestoes" element={<Suggestions />} />
-              <Route path="relatorios" element={<Reports />} />
+              <Route path="relatorios" element={user && (user.role === 'admin' || user.role === 'desenvolvedor') ? <Reports /> : <Navigate to="/" />} />
               <Route path="noticias" element={<News />} />
               <Route path="perfil" element={<Profile />} />
               <Route path="notificacoes" element={<SendNotification />} />
+              <Route path="cronograma" element={<Cronograma />} />
             </Route>
           </Routes>
         </Suspense>

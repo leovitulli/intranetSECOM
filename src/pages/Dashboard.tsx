@@ -72,11 +72,11 @@ export default function Dashboard() {
             <div className="task-badges-container">
                 {types.map(t => {
                     switch (t) {
-                        case 'release': return <span key={t} className="badge type-release">📝 Release</span>;
-                        case 'arte': return <span key={t} className="badge type-arte">🎨 Arte Gráfica</span>;
-                        case 'video': return <span key={t} className="badge type-video">🎬 Vídeo</span>;
-                        case 'foto': return <span key={t} className="badge type-foto">📸 Fotos</span>;
-                        case 'inauguracao': return <span key={t} className="badge type-inauguracao">Inauguração</span>;
+                        case 'release': return <span key={t} className="badge-tag badge-texto">📝 Release</span>;
+                        case 'arte': return <span key={t} className="badge-tag badge-arte">🎨 Arte Gráfica</span>;
+                        case 'video': return <span key={t} className="badge-tag badge-video">🎬 Vídeo</span>;
+                        case 'foto': return <span key={t} className="badge-tag badge-foto">📸 Fotos</span>;
+                        case 'inauguracao': return <span key={t} className="badge-tag badge-inauguracao">Inauguração</span>;
                         default: return null;
                     }
                 })}

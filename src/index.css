@@ -282,3 +282,41 @@ h6 {
     opacity: 1;
   }
 }
+
+/* Global Badges for Task Types (Legendas de Pauta) */
+.badge-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 20px;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.badge-inauguracao {
+  background-color: #ffe5ec;
+  color: #d61f43;
+}
+
+.badge-video {
+  background-color: #fdf0f8;
+  color: #e040a3;
+}
+
+.badge-foto {
+  background-color: #e6f7f4;
+  color: #157a6e;
+}
+
+.badge-texto {
+  background-color: #eaf4fc;
+  color: #0f7ddb;
+}
+
+.badge-arte {
+  background-color: #f4eafa;
+  color: #a23eda;
+}
