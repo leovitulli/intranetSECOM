@@ -174,15 +174,17 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                                 </div>
                             </div>
 
-                            <div className="nova-pauta-field-premium">
-                                <label className="field-label-premium">Saída do Paço</label>
-                                <input
-                                    type="time"
-                                    className="input-premium"
-                                    value={pautaSaida}
-                                    onChange={e => setPautaSaida(e.target.value)}
-                                />
-                            </div>
+                            {isPautaExterna && (
+                                <div className="nova-pauta-field-premium">
+                                    <label className="field-label-premium">Saída do Paço</label>
+                                    <input
+                                        type="time"
+                                        className="input-premium"
+                                        value={pautaSaida}
+                                        onChange={e => setPautaSaida(e.target.value)}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         <div className="nova-pauta-field-premium mt-1-premium">
@@ -219,7 +221,7 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                         <div className={`pauta-externa-toggle-card-premium ${isPautaExterna ? 'active' : ''}`}
                             onClick={() => setIsPautaExterna(!isPautaExterna)}>
                             <div className="toggle-info-premium">
-                                <span className="toggle-title-premium">Adicionar à Agenda Semanal</span>
+                                <span className="toggle-title-premium">Adicionar à Agenda Externa</span>
                                 <span className="toggle-description-premium">Esta pauta ficará visível para toda a equipe externa</span>
                             </div>
                             <div className={`toggle-switch-premium ${isPautaExterna ? 'on' : ''}`}>
@@ -258,14 +260,16 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                             </div>
                         </div>
 
-                        <div className="nova-pauta-field-premium mt-1-premium">
-                            <label className="field-label-premium">Equipe Externa (Agenda)</label>
-                            <TeamMultiSelect
-                                selected={assignees}
-                                onChange={setAssignees}
-                                placeholder="Busque e selecione os membros da equipe..."
-                            />
-                        </div>
+                        {isPautaExterna && (
+                            <div className="nova-pauta-field-premium mt-1-premium">
+                                <label className="field-label-premium">Equipe Externa (Agenda)</label>
+                                <TeamMultiSelect
+                                    selected={assignees}
+                                    onChange={setAssignees}
+                                    placeholder="Busque e selecione os membros da equipe..."
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {/* --- Seção 4: Configurações Extras --- */}

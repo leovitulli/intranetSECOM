@@ -705,13 +705,15 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                             </div>
 
                             {/* Equipe Externa */}
-                            <div className="detail-item-premium">
-                                <label className="detail-label-premium">Equipe Externa (Agenda)</label>
-                                <TeamMultiSelect
-                                    selected={editedTask.assignees || []}
-                                    onChange={(newAssignees) => handleFieldChange('assignees', newAssignees)}
-                                />
-                            </div>
+                            {editedTask.is_pauta_externa && (
+                                <div className="detail-item-premium">
+                                    <label className="detail-label-premium">Equipe Externa (Agenda)</label>
+                                    <TeamMultiSelect
+                                        selected={editedTask.assignees || []}
+                                        onChange={(newAssignees) => handleFieldChange('assignees', newAssignees)}
+                                    />
+                                </div>
+                            )}
 
                             {/* Data da Pauta */}
                             <div className="detail-item-premium">
@@ -757,15 +759,17 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                 </div>
                             </div>
 
-                            <div className="detail-item-premium">
-                                <label className="detail-label-premium">Saída do Paço</label>
-                                <input
-                                    type="time"
-                                    className="input-premium"
-                                    value={editedTask.pauta_saida || ''}
-                                    onChange={e => handleFieldChange('pauta_saida', e.target.value)}
-                                />
-                            </div>
+                            {editedTask.is_pauta_externa && (
+                                <div className="detail-item-premium">
+                                    <label className="detail-label-premium">Saída do Paço</label>
+                                    <input
+                                        type="time"
+                                        className="input-premium"
+                                        value={editedTask.pauta_saida || ''}
+                                        onChange={e => handleFieldChange('pauta_saida', e.target.value)}
+                                    />
+                                </div>
+                            )}
 
                             {/* Endereço */}
                             <div className="detail-item-premium">
