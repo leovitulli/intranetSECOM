@@ -121,23 +121,24 @@ export default function Cronograma() {
                                             key={task.id}
                                             className="event-card clickable"
                                             onClick={() => setSelectedTask(task)}
-                                            style={{ borderLeft: `4px solid var(--status-${task.status})` }}
+                                            style={{ borderLeft: `4px solid var(--status-${task.status})`, padding: 0, display: 'flex', flexDirection: 'row', overflow: 'hidden' }}
                                         >
-                                            <div className="card-header" style={{ marginBottom: '8px' }}>
-                                                <div className="task-badges-container" style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                                                    {task.type?.includes('video' as any) && (
-                                                        <span className="badge-tag badge-video">🎬 Vídeo</span>
-                                                    )}
-                                                    {task.type?.includes('foto' as any) && (
-                                                        <span className="badge-tag badge-foto">📸 Fotos</span>
-                                                    )}
-                                                    {task.type?.includes('release' as any) && (
-                                                        <span className="badge-tag badge-release">📝 Release</span>
-                                                    )}
-                                                    {task.type?.includes('post' as any) && (
-                                                        <span className="badge-tag badge-post">📱 Post</span>
-                                                    )}
-                                                    {task.type?.includes('arte' as any) && (
+                                            <div style={{ flex: 1, padding: '1.25rem', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                                                <div className="card-header" style={{ marginBottom: '8px' }}>
+                                                    <div className="task-badges-container" style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                                        {task.type?.includes('video' as any) && (
+                                                            <span className="badge-tag badge-video">🎬 Vídeo</span>
+                                                        )}
+                                                        {task.type?.includes('foto' as any) && (
+                                                            <span className="badge-tag badge-foto">📸 Fotos</span>
+                                                        )}
+                                                        {task.type?.includes('release' as any) && (
+                                                            <span className="badge-tag badge-release">📝 Release</span>
+                                                        )}
+                                                        {task.type?.includes('post' as any) && (
+                                                            <span className="badge-tag badge-post">📱 Post</span>
+                                                        )}
+                                                        {task.type?.includes('arte' as any) && (
                                                         <span className="badge-tag badge-arte">🎨 Arte Gráfica</span>
                                                     )}
                                                 </div>
@@ -169,37 +170,6 @@ export default function Cronograma() {
                                                     {task.description}
                                                 </div>
                                             )}
-
-                                            {(() => {
-                                                const firstImage = task.attachments?.find(a => a.type === 'image');
-                                                if (!firstImage) return null;
-                                                return (
-                                                    <div 
-                                                        className="attachment-preview-premium"
-                                                        style={{ 
-                                                            marginTop: '0.5rem', 
-                                                            marginBottom: '0.75rem', 
-                                                            borderRadius: 'var(--radius-md)', 
-                                                            overflow: 'hidden', 
-                                                            minHeight: '140px',
-                                                            maxHeight: '220px',
-                                                            display: 'flex',
-                                                            justifyContent: 'center',
-                                                            alignItems: 'center',
-                                                            backgroundColor: 'hsl(var(--color-text) / 0.03)',
-                                                            border: '1px solid var(--color-border)',
-                                                            position: 'relative'
-                                                        }}
-                                                    >
-                                                        <img src={firstImage.url} alt="Anexo" style={{ maxWidth: '100%', maxHeight: '220px', objectFit: 'contain', borderRadius: 'var(--radius-md)' }} />
-                                                        {(task.attachments?.filter(a => a.type === 'image').length || 0) > 1 && (
-                                                            <div style={{ position: 'absolute', bottom: 6, right: 6, background: 'rgba(0,0,0,0.65)', color: 'white', padding: '2px 8px', borderRadius: 12, fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, backdropFilter: 'blur(4px)' }}>
-                                                                <ImageIcon size={12} /> +{(task.attachments?.filter(a => a.type === 'image').length || 0) - 1}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })()}
 
                                             <div className="card-footer" style={{ borderTop: 'none', paddingTop: 0, marginTop: '8px' }}>
                                                 <div className="event-time" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--color-text-muted)', background: 'var(--color-bg-tertiary)', padding: '4px 8px', borderRadius: '12px' }}>
@@ -240,6 +210,37 @@ export default function Cronograma() {
                                                     );
                                                 })()}
                                             </div>
+                                        </div>
+
+                                        {(() => {
+                                            const firstImage = task.attachments?.find(a => a.type === 'image');
+                                            if (!firstImage) return null;
+                                            return (
+                                                <div 
+                                                    className="attachment-side-preview"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        window.open(firstImage.url, '_blank');
+                                                    }}
+                                                    style={{ 
+                                                        width: '130px', 
+                                                        flexShrink: 0, 
+                                                        backgroundColor: 'var(--color-bg-secondary)',
+                                                        borderLeft: '1px solid var(--color-border)',
+                                                        position: 'relative',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                    title="Clique para ver a foto em tamanho original"
+                                                >
+                                                    <img src={firstImage.url} alt="Anexo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    {(task.attachments?.filter(a => a.type === 'image').length || 0) > 1 && (
+                                                        <div style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.65)', color: 'white', padding: '2px 8px', borderRadius: 12, fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, backdropFilter: 'blur(4px)' }}>
+                                                            <ImageIcon size={12} /> +{(task.attachments?.filter(a => a.type === 'image').length || 0) - 1}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
                                         </div>
                                     ))
                                 )}
