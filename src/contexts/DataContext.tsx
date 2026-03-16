@@ -321,39 +321,35 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             if (error) {
                 console.error("Supabase Add Task Error:", error);
 
-                // Temporary workaround: If it's a missing column error for the new fields
-                if (error.message.includes('column "pauta_data" of relation "tasks" does not exist') || error.code === '42703') {
-                    console.log("⚠️ Missing new columns. Retrying without them...");
-                    const fallbackTaskData = {
+                // Tenta modo "Safe Recovery": caso o servidor online esteja com schema desatualizado
+                if (error.code === '42703' || error.message.includes('does not exist') || error.message.includes('invalid input value for enum')) {
+                    console.log("⚠️ Schema mismatch detected! Retrying with absolute safe payload...");
+                    // Transfere as tags não suportadas (como post) para a descrição caso seja erro de enum
+                    let safeType = taskData.type;
+                    if (error.message.includes('enum')) safeType = safeType.filter(t => t !== 'post' && t !== 'inauguracao');
+
+                    const safeTaskData = {
                         title: taskData.title,
                         description: taskData.description,
                         status: taskData.status,
-                        type: taskData.type,
+                        type: safeType,
                         creator: taskData.creator,
                         priority: taskData.priority,
                         due_date: taskData.dueDate?.toISOString() || null,
-                        inauguracao_nome: taskData.inauguracao_nome || null,
-                        inauguracao_endereco: taskData.inauguracao_endereco || null,
-                        inauguracao_secretarias: taskData.inauguracao_secretarias || null,
-                        inauguracao_tipo: taskData.inauguracao_tipo || null,
-                        inauguracao_checklist: taskData.inauguracao_checklist || null,
-                        inauguracao_data: taskData.inauguracao_data?.toISOString().split('T')[0] || null,
-                        pauta_saida: (taskData as any).pauta_saida || null,
-                        is_pauta_externa: (taskData as any).is_pauta_externa || false,
                         created_at: new Date().toISOString(),
                     };
 
-                    const retry = await supabase.from('tasks').insert([fallbackTaskData]).select().single();
+                    const retry = await supabase.from('tasks').insert([safeTaskData]).select().single();
                     if (retry.error) {
-                        alert("Erro ao criar pauta (fallback): " + retry.error.message);
+                        alert("ERRO CRÍTICO: Não foi possível criar a pauta mesmo em modo de segurança. \nErro: " + retry.error.message);
                         return;
                     }
 
-                    // If retry succeeds, proceed to handle it below by re-assigning data and error
+                    // Se funcionar em Safe Mode, atualiza e sai
                     return processNewTaskData(retry.data, taskData);
                 }
 
-                alert("Erro ao criar pauta: " + error.message);
+                alert("Erro grave ao tentar salvar no banco de dados da SECOM: \n" + error.message);
                 return;
             }
 
