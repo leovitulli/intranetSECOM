@@ -176,16 +176,14 @@ export default function Cronograma() {
                                                 </div>
                                             </div>
 
-                                            <div className="event-team" style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center' }}>
+                                            <div className="event-team" style={{ marginTop: '0.75rem', borderTop: '1px solid var(--color-border)', paddingTop: '0.75rem', display: 'flex', alignItems: 'center' }}>
                                                 {(() => {
                                                     const creatorsArray = task.creator ? task.creator.split(',').map(s => s.trim()).filter(Boolean) : [];
                                                     const assigneesArray = task.assignees || [];
                                                     const allPeople = Array.from(new Set([...creatorsArray, ...assigneesArray]));
 
                                                     if (allPeople.length === 0) {
-                                                        return (
-                                                            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Equipe não definida</span>
-                                                        );
+                                                        return null;
                                                     }
 
                                                     return (
@@ -198,11 +196,11 @@ export default function Cronograma() {
                                                                         src={teamMember.avatar_url}
                                                                         alt={person}
                                                                         className="team-avatar-medium avatar-small"
-                                                                        style={{ border: `2px solid #fff`, objectFit: 'cover', marginLeft: index > 0 ? '-8px' : '0', width: 20, height: 20 }}
+                                                                        style={{ border: `2px solid hsl(var(--color-surface))`, objectFit: 'cover', marginLeft: index > 0 ? '-8px' : '0', width: 24, height: 24, borderRadius: '50%' }}
                                                                         title={person}
                                                                     />
                                                                 ) : (
-                                                                    <div key={person} className="avatar-placeholder team-avatar-medium avatar-small" style={{ border: `2px solid #fff`, fontSize: '0.65rem', marginLeft: index > 0 ? '-8px' : '0', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title={person}>
+                                                                    <div key={person} className="avatar-placeholder team-avatar-medium avatar-small" style={{ border: `2px solid hsl(var(--color-surface))`, fontSize: '0.65rem', marginLeft: index > 0 ? '-8px' : '0', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }} title={person}>
                                                                         {person.charAt(0)}
                                                                     </div>
                                                                 );

@@ -89,46 +89,44 @@ export default function Agenda() {
                                                 )}
                                             </div>
 
-                                            <div className="card-footer" style={{ borderTop: 'none', paddingTop: 0, marginTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <div className="event-time" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--color-text-muted)', background: 'var(--color-bg-tertiary)', padding: '4px 8px', borderRadius: '12px' }}>
+                                            <div className="card-footer" style={{ borderTop: 'none', paddingTop: 0, marginTop: '12px' }}>
+                                                <div className="event-time" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--color-text-muted)', background: 'var(--color-bg-tertiary)', padding: '4px 8px', borderRadius: '12px', width: 'fit-content' }}>
                                                     <Clock size={12} /> {task.pauta_horario || 'Horário a definir'}
                                                 </div>
-                                                
-                                                <div className="event-team">
-                                                    {(() => {
-                                                        const creatorsArray = task.creator ? task.creator.split(',').map(s => s.trim()).filter(Boolean) : [];
-                                                        const assigneesArray = task.assignees || [];
-                                                        const allPeople = Array.from(new Set([...creatorsArray, ...assigneesArray]));
+                                            </div>
 
-                                                        if (allPeople.length === 0) {
-                                                            return (
-                                                                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Equipe não definida</span>
-                                                            );
-                                                        }
+                                            <div className="event-team" style={{ marginTop: '0.75rem', borderTop: '1px solid var(--color-border)', paddingTop: '0.75rem', display: 'flex', alignItems: 'center' }}>
+                                                {(() => {
+                                                    const creatorsArray = task.creator ? task.creator.split(',').map(s => s.trim()).filter(Boolean) : [];
+                                                    const assigneesArray = task.assignees || [];
+                                                    const allPeople = Array.from(new Set([...creatorsArray, ...assigneesArray]));
 
-                                                        return (
-                                                            <div className="team-avatars" style={{ display: 'flex', flexDirection: 'row' }}>
-                                                                {allPeople.map((person, index) => {
-                                                                    const teamMember = team.find(m => m.name === person);
-                                                                    return teamMember?.avatar_url ? (
-                                                                        <img
-                                                                            key={person}
-                                                                            src={teamMember.avatar_url}
-                                                                            alt={person}
-                                                                            className="team-avatar-medium avatar-small"
-                                                                            style={{ border: `2px solid #fff`, objectFit: 'cover', marginLeft: index > 0 ? '-8px' : '0', width: 20, height: 20 }}
-                                                                            title={person}
-                                                                        />
-                                                                    ) : (
-                                                                        <div key={person} className="avatar-placeholder team-avatar-medium avatar-small" style={{ border: `2px solid #fff`, fontSize: '0.65rem', marginLeft: index > 0 ? '-8px' : '0', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }} title={person}>
-                                                                            {person.charAt(0)}
-                                                                        </div>
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                        );
-                                                    })()}
-                                                </div>
+                                                    if (allPeople.length === 0) {
+                                                        return null;
+                                                    }
+
+                                                    return (
+                                                        <div className="team-avatars" style={{ display: 'flex', flexDirection: 'row' }}>
+                                                            {allPeople.map((person, index) => {
+                                                                const teamMember = team.find(m => m.name === person);
+                                                                return teamMember?.avatar_url ? (
+                                                                    <img
+                                                                        key={person}
+                                                                        src={teamMember.avatar_url}
+                                                                        alt={person}
+                                                                        className="team-avatar-medium avatar-small"
+                                                                        style={{ border: `2px solid hsl(var(--color-surface))`, objectFit: 'cover', marginLeft: index > 0 ? '-8px' : '0', width: 24, height: 24, borderRadius: '50%' }}
+                                                                        title={person}
+                                                                    />
+                                                                ) : (
+                                                                    <div key={person} className="avatar-placeholder team-avatar-medium avatar-small" style={{ border: `2px solid hsl(var(--color-surface))`, fontSize: '0.65rem', marginLeft: index > 0 ? '-8px' : '0', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }} title={person}>
+                                                                        {person.charAt(0)}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    );
+                                                })()}
                                             </div>
                                         </div>
                                         );
