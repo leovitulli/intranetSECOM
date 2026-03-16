@@ -315,11 +315,11 @@ export default function Dashboard() {
                                                                         src={member.avatar_url} 
                                                                         alt={person} 
                                                                         className="avatar-small" 
-                                                                        style={{ border: `2px solid hsl(var(--color-surface))`, objectFit: 'cover', marginLeft: index > 0 ? '-8px' : '0', width: 24, height: 24, borderRadius: '50%' }}
+                                                                        style={{ border: `2px solid hsl(var(--color-surface))`, objectFit: 'cover', marginLeft: index > 0 ? '-8px' : '0', width: 28, height: 28, borderRadius: '50%' }}
                                                                         title={person} 
                                                                     />
                                                                 ) : (
-                                                                    <div key={person} className="avatar-placeholder avatar-small" style={{ border: `2px solid hsl(var(--color-surface))`, fontSize: '0.65rem', marginLeft: index > 0 ? '-8px' : '0', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }} title={person}>
+                                                                    <div key={person} className="avatar-placeholder avatar-small" style={{ border: `2px solid hsl(var(--color-surface))`, fontSize: '0.75rem', marginLeft: index > 0 ? '-8px' : '0', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }} title={person}>
                                                                         {person.charAt(0)}
                                                                     </div>
                                                                 );
