@@ -277,10 +277,8 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
 
     return (
         <div className="modal-overlay">
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
-                <button className="modal-close" onClick={onClose}>
-                    <X size={20} />
-                </button>
+            <div className="modal-content nova-pauta-modal" onClick={e => e.stopPropagation()}>
+                
 
                 <div className="modal-header">
                     <div className="modal-header-actions">
@@ -301,7 +299,8 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
 
                         <div className="priority-selector">
                             <select
-                                className={`priority-select priority-${editedTask.priority}`}
+                                className={`select-premium`}
+                                style={{ width: 'auto', padding: '4px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, border: '1.5px solid #f59e0b', color: '#b45309', background: '#fef3c7' }}
                                 value={editedTask.priority}
                                 onChange={(e) => handleFieldChange('priority', e.target.value as any)}
                             >
@@ -359,19 +358,19 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                 </div>
 
                 <div className="modal-body">
-                    <div className="modal-main-col-premium">
+                    <div className="modal-main-col-premium" style={{ gap: "0" }}>
                         <div className="modal-section-group-premium">
-                            <div className="section-header-premium">
-                                <span className="section-number-premium">01</span>
-                                <h3>Descrição</h3>
+                            <div className="section-header-premium" style={{ justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                    <span className="section-number-premium">01</span>
+                                    <h3>Descrição</h3>
+                                </div>
                                 {!isEditingDesc && !isAutoInaugDesc && (
                                     <button className="btn-edit-premium" onClick={() => setIsEditingDesc(true)}>Editar</button>
                                 )}
                             </div>
 
-                            {isAutoInaugDesc ? (
-                                <p className="empty-state">Os detalhes desta inauguração estão na seção abaixo.</p>
-                            ) : isEditingDesc ? (
+                            { isEditingDesc ? (
                                 <div className="edit-desc-form">
                                     <textarea
                                         rows={4}
@@ -391,22 +390,22 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                     </div>
                                 </div>
                             ) : (
-                                <p className="task-description">{editedTask.description}</p>
+                                <p className="task-description" style={{ fontSize: "0.95rem", color: "#475569" }}>{editedTask.description}</p>
                             )}
                         </div>
 
                         {/* Inauguration-specific section */}
-                        {task.status === 'inauguracao' && (
-                            <div className="modal-section-group-premium inuag-premium-bg">
+                        {true && (
+                            <div className="modal-section-group-premium ">
                                 <div className="section-header-premium">
                                     <span className="section-number-premium">02</span>
-                                    <h3>Dados da Inauguração</h3>
+                                    <h3>Dados da Cobertura</h3>
                                     {!isEditingInaug && (
                                         <button className="btn-edit-premium" onClick={() => setIsEditingInaug(true)}>Editar</button>
                                     )}
                                 </div>
 
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.25rem' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '0' }}>
                                     {isEditingInaug ? (
                                         <div className="inaug-edit-grid" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                             <div className="form-group-premium">
@@ -588,9 +587,11 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                         )}
 
                         <div className="modal-section-group-premium">
-                            <div className="section-header-premium">
-                                <span className="section-number-premium">03</span>
-                                <h3>Anexos ({task.attachments.length})</h3>
+                            <div className="section-header-premium" style={{ justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                    <span className="section-number-premium">03</span>
+                                    <h3>Anexos ({task.attachments.length})</h3>
+                                </div>
                                 <input
                                     type="file"
                                     multiple
@@ -598,7 +599,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                     style={{ display: 'none' }}
                                     onChange={handleFileUpload}
                                 />
-                                <button className="btn-edit-premium" onClick={() => fileInputRef.current?.click()} disabled={uploadingAttachments}>
+                                <button className="btn-edit-premium" style={{ gap: '6px' }} onClick={() => fileInputRef.current?.click()} disabled={uploadingAttachments}>
                                     {uploadingAttachments ? (
                                         <><span style={{ display: 'inline-block', width: 12, height: 12, border: '2px solid rgba(0,0,0,0.2)', borderTopColor: 'inherit', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} /> Enviando...</>
                                     ) : (
@@ -646,7 +647,9 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                         </div>
 
                         <div className="modal-section-group-premium alternate-bg-premium">
-                            <h3>Comentários e Atualizações</h3>
+                            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1e293b' }}>Comentários e Atualizações</h3>
+                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b', fontStyle: 'italic', marginBottom: '1.5rem' }}>Nenhum comentário ainda. Seja o primeiro a interagir!</p>
+
 
                             <div className="comments-list">
                                 {editedTask.comments.length > 0 ? (
@@ -669,9 +672,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                             )}
                                         </div>
                                     ))
-                                ) : (
-                                    <p className="empty-state">Nenhum comentário ainda. Seja o primeiro a interagir!</p>
-                                )}
+                                ) : null}
                             </div>
 
                             <form onSubmit={handleAddComment} className="comment-input-area">
@@ -723,13 +724,13 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                         </div>
                     </div>
 
-                    <div className="modal-side-col-premium">
+                    <div className="modal-side-col-premium" style={{ borderLeft: "1px solid #e2e8f0", padding: "2rem 1.5rem" }}>
                         <div className="side-section-premium">
                             <h3 className="side-title-premium">Detalhes da Cobertura</h3>
 
                             {/* Secretaria */}
                             <div className="detail-item-premium">
-                                <label className="detail-label-premium">Departamentos / Secretarias</label>
+                                <label className="detail-label-premium">DEPARTAMENTOS / SECRETARIAS</label>
                                 <SecretariasMultiSelect
                                     selected={editedTask.inauguracao_secretarias || []}
                                     onChange={(newSecs) => handleFieldChange('inauguracao_secretarias', newSecs)}
@@ -774,7 +775,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                             {/* Data da Pauta */}
                             <div className="detail-item-premium">
                                 <div className="label-with-hint-premium">
-                                    <label className="detail-label-premium">Data da Pauta</label>
+                                    <label className="detail-label-premium">DATA DA PAUTA</label>
                                     {editedTask.pauta_data && (
                                         <span className="side-day-hint-premium">
                                             {format(new Date(editedTask.pauta_data + 'T12:00:00'), "EEEE", { locale: ptBR })}
@@ -791,7 +792,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
 
                             {/* Horários */}
                             <div className="detail-item-premium">
-                                <label className="detail-label-premium">Horário da Cobertura</label>
+                                <label className="detail-label-premium">HORÁRIO DA COBERTURA</label>
                                 <div className="time-range-group-premium">
                                     <input
                                         type="time"
@@ -829,7 +830,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
 
                             {/* Endereço */}
                             <div className="detail-item-premium">
-                                <label className="detail-label-premium">Endereço</label>
+                                <label className="detail-label-premium">ENDEREÇO</label>
                                 <div className="address-input-wrapper-premium">
                                     <input
                                         type="text"
@@ -858,8 +859,8 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
 
                             {/* Material */}
                             <div className="detail-item-premium">
-                                <label className="detail-label-premium">Tipos de Material</label>
-                                <div className="material-pills-premium side">
+                                <label className="detail-label-premium">TIPOS DE MATERIAL</label>
+                                <div className="material-pills-premium side" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
                                     {[
                                         { id: 'release', label: 'Release' },
                                         { id: 'post', label: 'Post' },
@@ -882,7 +883,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                         </div>
 
                         <div className="side-section-premium alternate">
-                            <h3 className="side-title-premium">Ações</h3>
+                            <h3 className="side-title-premium" style={{ marginTop: "1rem" }}>AÇÕES</h3>
                             <div className="side-footer-actions-premium">
                                 <button className="btn-side-action-premium" onClick={() => {
                                     const newStatus = prompt('Digite o novo status (solicitado, producao, correcao, aprovado, publicado, cancelado):');
