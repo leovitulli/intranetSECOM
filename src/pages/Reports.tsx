@@ -64,7 +64,7 @@ export default function Reports() {
     const totalAbertas = filteredTasks.length;
     const totalConcluidas = filteredTasks.filter(t => t.status === 'publicado' || isInaugurationFinished(t)).length;
     const totalAndamento = filteredTasks.filter(t => 
-        ['solicitado', 'producao', 'correcao'].includes(t.status) || 
+        ['solicitado', 'producao', 'correcao', 'aprovado'].includes(t.status) || 
         (t.status === 'inauguracao' && !isInaugurationFinished(t))
     ).length;
     const totalInauguracoes = filteredTasks.filter(t => t.type.includes('inauguracao') || t.status === 'inauguracao').length;
@@ -123,7 +123,7 @@ export default function Reports() {
         return filteredTasks.filter(t => {
             if (activeFilter.type === 'status') {
                 if (activeFilter.value === 'andamento') {
-                    return ['solicitado', 'producao', 'correcao'].includes(t.status) || 
+                    return ['solicitado', 'producao', 'correcao', 'aprovado'].includes(t.status) || 
                            (t.status === 'inauguracao' && !isInaugurationFinished(t));
                 }
                 if (activeFilter.value === 'concluida') {

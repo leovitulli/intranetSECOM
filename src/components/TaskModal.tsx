@@ -824,8 +824,8 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                             <h3 className="side-title-premium">Ações</h3>
                             <div className="side-footer-actions-premium">
                                 <button className="btn-side-action-premium" onClick={() => {
-                                    const newStatus = prompt('Digite o novo status (solicitado, andamento, aprovacao, publicado):');
-                                    if (newStatus && ['solicitado', 'andamento', 'aprovacao', 'publicado'].includes(newStatus.toLowerCase())) {
+                                    const newStatus = prompt('Digite o novo status (solicitado, producao, correcao, aprovado, publicado, cancelado):');
+                                    if (newStatus && ['solicitado', 'producao', 'correcao', 'aprovado', 'publicado', 'cancelado'].includes(newStatus.toLowerCase())) {
                                         handleFieldChange('status', newStatus.toLowerCase());
                                     }
                                 }}>Mover Cartão</button>

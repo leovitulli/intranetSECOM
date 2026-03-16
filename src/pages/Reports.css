@@ -368,6 +368,12 @@
 }
 
 .stat-correcao {
+    background: hsla(270, 80%, 60%, 0.1);
+    color: hsl(270, 80%, 55%);
+    border-color: hsla(270, 80%, 60%, 0.2);
+}
+
+.stat-aprovado {
     background: hsla(280, 80%, 60%, 0.1);
     color: hsl(280, 80%, 55%);
     border-color: hsla(280, 80%, 60%, 0.2);
@@ -377,6 +383,12 @@
     background: hsla(160, 80%, 40%, 0.1);
     color: hsl(160, 80%, 35%);
     border-color: hsla(160, 80%, 40%, 0.2);
+}
+
+.stat-cancelado {
+    background: hsla(0, 80%, 55%, 0.1);
+    color: hsl(0, 80%, 50%);
+    border-color: hsla(0, 80%, 55%, 0.2);
 }
 
 .stat-inauguracao {

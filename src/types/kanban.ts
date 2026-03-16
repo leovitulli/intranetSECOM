@@ -1,4 +1,4 @@
-export type TaskStatus = 'solicitado' | 'producao' | 'correcao' | 'publicado' | 'inauguracao';
+export type TaskStatus = 'solicitado' | 'producao' | 'correcao' | 'aprovado' | 'publicado' | 'cancelado' | 'inauguracao';
 export type TaskType = 'release' | 'arte' | 'video' | 'foto' | 'post' | 'inauguracao';
 export type TaskPriority = 'baixa' | 'media' | 'alta';
 

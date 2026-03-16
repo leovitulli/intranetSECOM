@@ -17,7 +17,9 @@
   --status-solicitado: 225 75% 55%;
   --status-producao: 250 70% 60%;
   --status-correcao: 270 70% 60%;
+  --status-aprovado: 280 70% 55%;
   --status-publicado: 290 70% 55%;
+  --status-cancelado: 0 70% 55%;
   --status-inauguracao: 310 75% 55%;
 
   /* Typography */

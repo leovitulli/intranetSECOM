@@ -128,11 +128,19 @@
 }
 
 .column-header[data-status="correcao"]::before {
-    background: linear-gradient(to right, hsl(var(--status-correcao)), hsl(var(--status-publicado)));
+    background: linear-gradient(to right, hsl(var(--status-correcao)), hsl(var(--status-aprovado)));
+}
+
+.column-header[data-status="aprovado"]::before {
+    background: linear-gradient(to right, hsl(var(--status-aprovado)), hsl(var(--status-publicado)));
 }
 
 .column-header[data-status="publicado"]::before {
-    background: linear-gradient(to right, hsl(var(--status-publicado)), hsl(var(--status-inauguracao)));
+    background: linear-gradient(to right, hsl(var(--status-publicado)), hsl(var(--status-cancelado)));
+}
+
+.column-header[data-status="cancelado"]::before {
+    background: linear-gradient(to right, hsl(var(--status-cancelado)), hsl(var(--status-inauguracao)));
 }
 
 .column-header[data-status="inauguracao"]::before {

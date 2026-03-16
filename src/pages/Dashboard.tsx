@@ -10,11 +10,13 @@ import CreateInaugurationModal from '../components/CreateInaugurationModal';
 import './Dashboard.css';
 
 const COLUMNS: { id: TaskStatus; title: string }[] = [
-    { id: 'solicitado', title: 'Solicitado' },
+    { id: 'solicitado', title: 'Solicitação' },
     { id: 'producao', title: 'Em Produção' },
-    { id: 'correcao', title: 'Correção / Aprovação' },
+    { id: 'correcao', title: 'Correção/Aprovação' },
+    { id: 'aprovado', title: 'Aprovado' },
     { id: 'publicado', title: 'Publicado' },
-    { id: 'inauguracao', title: 'Inaugurações' }
+    { id: 'cancelado', title: 'Reprovado/Cancelado' },
+    { id: 'inauguracao', title: 'Inauguração' }
 ];
 
 export default function Dashboard() {
