@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Task, Comment } from '../types/kanban';
-import { X, Send, Paperclip, FileText, Image as ImageIcon, Video, File, Activity, Archive, MapPin, Award, Building2, CheckSquare, Calendar, RotateCcw } from 'lucide-react';
+import { X, Send, Paperclip, FileText, Image as ImageIcon, Video, File, Activity, Archive, MapPin, Award, Building2, CheckSquare, Calendar, RotateCcw, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '../lib/supabaseClient';
@@ -66,6 +66,49 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
         await onUpdateTask(editedTask);
         setHasUnsavedChanges(false);
         onClose();
+    };
+
+    const handleRemoveAttachment = async (e: React.MouseEvent, att: Attachment) => {
+        e.stopPropagation();
+        
+        const confirmDelete = window.confirm(`Deseja realmente excluir o anexo "${att.name}"?`);
+        if (!confirmDelete) return;
+
+        try {
+            // Extract the path from the URL. The URL format is roughly:
+            // .../storage/v1/object/public/task-attachments/12345678-abcd.jpg
+            const urlParts = att.url.split('/task-attachments/');
+            if (urlParts.length === 2) {
+                const filePath = urlParts[1];
+                
+                // Excluir do storage do supabase
+                const { error: storageError } = await supabase.storage
+                    .from('task-attachments')
+                    .remove([filePath]);
+
+                if (storageError) {
+                    console.error('Error removing file from storage:', storageError);
+                    alert("Aviso: Houve um erro ao excluir o arquivo físico do servidor, mas ele será removido da pauta.");
+                }
+            }
+
+            // Atualizar o estado da tarefa
+            const updatedAttachments = (editedTask.attachments || []).filter(a => a.id !== att.id);
+            
+            setEditedTask(prev => ({
+                ...prev,
+                attachments: updatedAttachments
+            }));
+            
+            onUpdateTask({
+                ...task,
+                attachments: updatedAttachments
+            });
+
+        } catch (err) {
+            console.error('Failed to process attachment removal:', err);
+            alert("Erro inesperado ao excluir anexo.");
+        }
     };
 
     useEffect(() => {
@@ -577,12 +620,23 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                             key={att.id}
                                             className="attachment-item clickable"
                                             onClick={() => setViewingFile(att)}
+                                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
                                         >
-                                            {getFileIcon(att.type)}
-                                            <div className="att-info">
-                                                <span className="att-name">{att.name}</span>
-                                                <span className="att-size">{att.size}</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                {getFileIcon(att.type)}
+                                                <div className="att-info">
+                                                    <span className="att-name">{att.name}</span>
+                                                    <span className="att-size">{att.size}</span>
+                                                </div>
                                             </div>
+                                            <button 
+                                                className="icon-btn-small" 
+                                                onClick={(e) => handleRemoveAttachment(e, att)}
+                                                style={{ color: 'var(--color-danger)', opacity: 0.7 }}
+                                                title="Excluir Anexo"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
                                         </div>
                                     ))}
                                 </div>
