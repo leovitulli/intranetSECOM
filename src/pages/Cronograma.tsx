@@ -43,7 +43,7 @@ export default function Cronograma() {
                             let badgeClass = '';
                             let filterLabel = f.label;
                             if (f.id === 'todos') {
-                                badgeClass = 'badge-tag';
+                                badgeClass = 'badge-tag badge-todos';
                             } else {
                                 const typeMap: Record<string, string> = {
                                     'foto': 'foto',
@@ -71,8 +71,7 @@ export default function Cronograma() {
                                         padding: '0.4rem 1rem',
                                         fontSize: '0.85rem',
                                         transition: 'all 0.2s',
-                                        boxShadow: isActive ? '0 0 10px rgba(255,255,255,0.1)' : 'none',
-                                        ...(f.id === 'todos' ? { background: 'rgba(255,255,255,0.1)', color: '#fff' } : {})
+                                        boxShadow: isActive ? '0 0 10px rgba(255,255,255,0.1)' : 'none'
                                     }}
                                     onClick={() => setActiveFilter(f.id)}
                                 >

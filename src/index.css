@@ -320,3 +320,13 @@ h6 {
   background-color: #f4eafa;
   color: #a23eda;
 }
+
+.badge-todos {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.badge-sistema {
+  background-color: #f8fafc;
+  color: #64748b;
+}

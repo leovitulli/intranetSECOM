@@ -223,8 +223,10 @@ export default function CalendarPage() {
                             const isActive = f.id === 'all' ? isAllSelected : selectedFilters.includes(f.id);
                             
                             let badgeClass = '';
-                            if (f.id === 'all' || f.id === 'sistema') {
-                                badgeClass = 'badge-tag';
+                            if (f.id === 'all') {
+                                badgeClass = 'badge-tag badge-todos';
+                            } else if (f.id === 'sistema') {
+                                badgeClass = 'badge-tag badge-sistema';
                             } else {
                                 const typeMap: Record<string, string> = {
                                     'foto': 'foto', 'video': 'video', 'release': 'texto', 'inauguracao': 'inauguracao', 'arte': 'arte'
@@ -243,8 +245,7 @@ export default function CalendarPage() {
                                         padding: '0.4rem 1rem',
                                         fontSize: '0.85rem',
                                         transition: 'all 0.2s',
-                                        boxShadow: isActive ? '0 0 10px rgba(255,255,255,0.1)' : 'none',
-                                        ...(f.id === 'all' || f.id === 'sistema' ? { background: 'rgba(255,255,255,0.1)', color: '#fff' } : {})
+                                        boxShadow: isActive ? '0 0 10px rgba(255,255,255,0.1)' : 'none'
                                     }}
                                     onClick={() => {
                                         if (f.id === 'all') {
