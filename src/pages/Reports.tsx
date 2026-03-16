@@ -298,7 +298,7 @@ export default function Reports() {
                                 <BarChart data={rankingSecretarias} layout="vertical" margin={{ top: 10, right: 30, left: 40, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="var(--color-border)" />
                                     <XAxis type="number" fontSize={12} stroke="var(--color-text-muted)" allowDecimals={false} />
-                                    <YAxis dataKey="name" type="category" width={140} fontSize={12} stroke="var(--color-text-muted)" />
+                                    <YAxis dataKey="name" type="category" width={190} fontSize={11} stroke="var(--color-text-muted)" />
                                     <Tooltip
                                         cursor={{ fill: 'rgba(0,0,0,0.04)' }}
                                         contentStyle={{ backgroundColor: 'hsl(var(--color-surface))', color: 'hsl(var(--color-text))', borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
@@ -372,9 +372,23 @@ export default function Reports() {
                                             dataKey="name" 
                                             fontSize={11} 
                                             stroke="var(--color-text-muted)" 
-                                            angle={-35} 
-                                            textAnchor="end"
                                             interval={0}
+                                            tick={(props: any) => {
+                                                const { x, y, payload } = props;
+                                                const words = payload.value.split('/');
+                                                return (
+                                                    <g transform={`translate(${x},${y})`}>
+                                                        <text x={0} y={0} dy={16} textAnchor="middle" fill="var(--color-text-muted)" fontSize={11}>
+                                                            {words[0]}
+                                                        </text>
+                                                        {words.length > 1 && (
+                                                            <text x={0} y={0} dy={28} textAnchor="middle" fill="var(--color-text-muted)" fontSize={11}>
+                                                                /{words[1]}
+                                                            </text>
+                                                        )}
+                                                    </g>
+                                                );
+                                            }}
                                         />
                                         <YAxis fontSize={12} stroke="var(--color-text-muted)" allowDecimals={false} />
                                         <Tooltip
