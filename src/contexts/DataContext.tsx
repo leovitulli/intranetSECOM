@@ -328,9 +328,20 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                     let safeType = taskData.type;
                     if (error.message.includes('enum')) safeType = safeType.filter(t => t !== 'post' && t !== 'inauguracao');
 
+                    let appendedDescription = taskData.description || '';
+                    const lostDataInfo = [];
+                    if ((taskData as any).pauta_data) lostDataInfo.push(`📅 Data da Pauta: ${new Date((taskData as any).pauta_data).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}`);
+                    if ((taskData as any).pauta_horario) lostDataInfo.push(`⏰ Horário: ${(taskData as any).pauta_horario}`);
+                    if ((taskData as any).pauta_saida) lostDataInfo.push(`🚗 Saída do Paço: ${(taskData as any).pauta_saida}`);
+                    if ((taskData as any).is_pauta_externa) lostDataInfo.push(`📍 Pauta Externa: Sim`);
+
+                    if (lostDataInfo.length > 0) {
+                        appendedDescription += `\n\n🕒 [Dados Recorrigidos pelo Sistema]\n` + lostDataInfo.join('\n');
+                    }
+
                     const safeTaskData = {
                         title: taskData.title,
-                        description: taskData.description,
+                        description: appendedDescription,
                         status: taskData.status,
                         type: safeType,
                         creator: taskData.creator,

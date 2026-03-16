@@ -277,7 +277,6 @@ export default function Dashboard() {
                                         })() : (
                                             <p className="card-desc">{task.description}</p>
                                         )}
-
                                         <div className="card-footer">
                                             <div className="card-meta">
                                                 {formatDueDate(task.dueDate)}
@@ -292,27 +291,41 @@ export default function Dashboard() {
                                                     </span>
                                                 )}
                                             </div>
-
                                             <div className="card-assignee">
-                                                {task.assignees && task.assignees.length > 0 ? (
-                                                    <div className="team-avatars">
-                                                        {task.assignees.map(assignee => {
-                                                            const member = team.find(m => m.name === assignee);
-                                                            const avatarSrc = member?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(assignee)}&background=random`;
-                                                            return (
-                                                                <img
-                                                                    key={assignee}
-                                                                    src={avatarSrc}
-                                                                    alt={assignee}
-                                                                    title={assignee}
-                                                                    className="avatar-small"
-                                                                />
-                                                            );
-                                                        })}
-                                                    </div>
-                                                ) : (
-                                                    <div className="unassigned-avatar" title="Não atribuído">?</div>
-                                                )}
+                                                {(() => {
+                                                    const creatorsArray = task.creator ? task.creator.split(',').map(s => s.trim()).filter(Boolean) : [];
+                                                    const assigneesArray = task.assignees || [];
+                                                    const allPeople = Array.from(new Set([...creatorsArray, ...assigneesArray]));
+
+                                                    if (allPeople.length === 0) {
+                                                        return (
+                                                            <div className="unassigned">
+                                                                Equipe não definida
+                                                            </div>
+                                                        );
+                                                    }
+
+                                                    return (
+                                                        <div className="team-avatars">
+                                                            {allPeople.map(person => {
+                                                                const member = team.find(m => m.name === person);
+                                                                return member?.avatar_url ? (
+                                                                    <img 
+                                                                        key={person} 
+                                                                        src={member.avatar_url} 
+                                                                        alt={person} 
+                                                                        className="avatar-small" 
+                                                                        title={person} 
+                                                                    />
+                                                                ) : (
+                                                                    <div key={person} className="avatar-placeholder avatar-small" title={person}>
+                                                                        {person.charAt(0)}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    );
+                                                })()}
                                             </div>
                                         </div>
                                     </div>
