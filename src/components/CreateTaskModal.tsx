@@ -58,7 +58,7 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
         if (!title.trim()) return;
 
         const newTask: Task = {
-            id: Date.now().toString(),
+            id: crypto.randomUUID(),
             title,
             description: description || '',
             status: 'solicitado',

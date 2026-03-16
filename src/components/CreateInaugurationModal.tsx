@@ -60,7 +60,7 @@ export default function CreateInaugurationModal({ onClose, onCreate }: CreateIna
         const inaugDate = new Date(dataInauguracao + 'T12:00:00');
 
         const newTask: Task = {
-            id: Date.now().toString(),
+            id: crypto.randomUUID(),
             title: nome.toUpperCase(),
             description: `**Nome:** ${nome}\n**Endereço:** ${endereco || '—'}\n**Secretarias:** ${secretarias.join(', ')}\n**Tipo:** ${tipo === 'simples' ? 'Inauguração Simples' : 'Inauguração Master'}`,
             status: 'inauguracao',
