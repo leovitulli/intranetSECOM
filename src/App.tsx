@@ -19,11 +19,7 @@ const Profile = lazy(() => import('./pages/Profile'));
 const SendNotification = lazy(() => import('./pages/SendNotification'));
 const Cronograma = lazy(() => import('./pages/Cronograma'));
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated } = useAuth();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  return <>{children}</>;
-};
+
 
 function AppRoutes() {
   const { user } = useAuth();

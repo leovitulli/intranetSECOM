@@ -120,14 +120,48 @@ export default function Cronograma() {
                                             onClick={() => setSelectedTask(task)}
                                             style={{ borderLeft: `4px solid var(--status-${task.status})` }}
                                         >
-                                            <div className="event-time">
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                    <Clock size={14} /> {task.pauta_horario || 'Horário a definir'}
+                                            <div className="card-header" style={{ marginBottom: '8px' }}>
+                                                <div className="task-badges-container" style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                                    {task.type?.includes('inauguracao' as any) && (
+                                                        <span className="badge-tag badge-inauguracao">
+                                                            <Building2 size={12} /> Inauguração
+                                                        </span>
+                                                    )}
+                                                    {task.type?.includes('video' as any) && (
+                                                        <span className="badge-tag badge-video">🎬 Vídeo</span>
+                                                    )}
+                                                    {task.type?.includes('foto' as any) && (
+                                                        <span className="badge-tag badge-foto">📸 Fotos</span>
+                                                    )}
+                                                    {task.type?.includes('texto' as any) && (
+                                                        <span className="badge-tag badge-texto">📝 Release</span>
+                                                    )}
+                                                    {task.type?.includes('arte' as any) && (
+                                                        <span className="badge-tag badge-arte">🎨 Arte Gráfica</span>
+                                                    )}
                                                 </div>
-                                                <ExternalLink size={14} style={{ opacity: 0.5 }} />
+                                                <button className="icon-btn-small" style={{ opacity: 0.5, border: 'none', background: 'transparent', cursor: 'pointer' }}>
+                                                    <ExternalLink size={14} />
+                                                </button>
                                             </div>
 
-                                            <h4 className="event-title">{task.title}</h4>
+                                            <h4 className="card-title event-title" style={{ margin: '0 0 8px 0', fontSize: '0.95rem' }}>{task.title}</h4>
+
+                                            {/* Pílula de Secretaria */}
+                                            {task.inauguracao_secretarias && task.inauguracao_secretarias.length > 0 && task.status !== 'inauguracao' && (
+                                                <div style={{ marginBottom: '8px' }}>
+                                                    <span style={{
+                                                        display: 'inline-flex', alignItems: 'center', gap: 3,
+                                                        fontSize: '0.72rem', fontWeight: 600,
+                                                        padding: '2px 8px', borderRadius: '99px',
+                                                        background: 'hsl(var(--color-primary) / 0.08)',
+                                                        color: 'hsl(var(--color-primary))',
+                                                        border: '1px solid hsl(var(--color-primary) / 0.2)'
+                                                    }}>
+                                                        🏛️ {task.inauguracao_secretarias.join(', ')}
+                                                    </span>
+                                                </div>
+                                            )}
 
                                             {task.description && (
                                                 <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
@@ -135,48 +169,11 @@ export default function Cronograma() {
                                                 </div>
                                             )}
 
-                                            {/* Exibição de Tags de Mídia (Seguindo estilo colorido dos filtros/calendário) */}
-                                            {task.type && task.type.length > 0 && (
-                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '0.75rem' }}>
-                                                    {task.type.includes('inauguracao' as any) && (
-                                                        <span className="badge-tag badge-inauguracao">
-                                                            <Building2 size={12} /> Inauguração
-                                                        </span>
-                                                    )}
-                                                    {task.type.includes('video' as any) && (
-                                                        <span className="badge-tag badge-video">
-                                                            🎬 Vídeo
-                                                        </span>
-                                                    )}
-                                                    {task.type.includes('foto' as any) && (
-                                                        <span className="badge-tag badge-foto">
-                                                            📸 Fotos
-                                                        </span>
-                                                    )}
-                                                    {task.type.includes('texto' as any) && (
-                                                        <span className="badge-tag badge-texto">
-                                                            📝 Release
-                                                        </span>
-                                                    )}
-                                                    {task.type.includes('arte' as any) && (
-                                                        <span className="badge-tag badge-arte">
-                                                            🎨 Arte Gráfica
-                                                        </span>
-                                                    )}
+                                            <div className="card-footer" style={{ borderTop: 'none', paddingTop: 0, marginTop: '8px' }}>
+                                                <div className="event-time" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--color-text-muted)', background: 'var(--color-bg-tertiary)', padding: '4px 8px', borderRadius: '12px' }}>
+                                                    <Clock size={12} /> {task.pauta_horario || 'Horário a definir'}
                                                 </div>
-                                            )}
-
-                                            {/* Exibição das Secretarias */}
-                                            {task.inauguracao_secretarias && task.inauguracao_secretarias.length > 0 && (
-                                                <div className="event-details" style={{ marginBottom: '0.5rem' }}>
-                                                    <div className="event-location" title="Secretarias Envolvidas">
-                                                        <Building2 size={12} style={{ marginTop: '2px', flexShrink: 0 }} /> 
-                                                        <span style={{ fontSize: '0.75rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                                            {task.inauguracao_secretarias.join(', ')}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            )}
+                                            </div>
 
                                             <div className="event-team" style={{ marginTop: '0.75rem' }}>
                                                 <Users size={14} />
