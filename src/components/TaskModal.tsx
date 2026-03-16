@@ -21,7 +21,7 @@ interface TaskModalProps {
 
 export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: TaskModalProps) {
     const { user } = useAuth();
-    const { team, archiveTask, unarchiveTask, tasks, deleteTask } = useData();
+    const { archiveTask, unarchiveTask, tasks, deleteTask } = useData();
     const uniqueAddresses = Array.from(new Set(tasks?.map((t: Task) => t.pauta_endereco).filter(Boolean)));
     const [newComment, setNewComment] = useState('');
     const [viewingFile, setViewingFile] = useState<Attachment | null>(null);
@@ -678,16 +678,11 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                             {/* Responsável pela Pauta */}
                             <div className="detail-item-premium">
                                 <label className="detail-label-premium">Responsável pela Pauta</label>
-                                <select
-                                    className="select-premium"
-                                    value={editedTask.creator || ''}
-                                    onChange={e => handleFieldChange('creator', e.target.value)}
-                                >
-                                    <option value="">Selecione...</option>
-                                    {team.map(m => (
-                                        <option key={m.id} value={m.name}>{m.name}</option>
-                                    ))}
-                                </select>
+                                <TeamMultiSelect
+                                    selected={(editedTask.creator || '').split(',').map(s => s.trim()).filter(Boolean)}
+                                    onChange={(newCreators) => handleFieldChange('creator', newCreators.join(', '))}
+                                    placeholder="Selecione..."
+                                />
                             </div>
 
                             {/* Pauta Externa Toggle */}

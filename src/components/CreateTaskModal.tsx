@@ -16,7 +16,7 @@ interface CreateTaskModalProps {
 
 export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalProps) {
     const { user } = useAuth();
-    const { team, tasks } = useData();
+    const { tasks } = useData();
     const uniqueAddresses = Array.from(new Set(tasks.map((t: Task) => t.pauta_endereco).filter(Boolean)));
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -24,7 +24,7 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
     const [priority, setPriority] = useState<TaskPriority>('media');
     const [assignees, setAssignees] = useState<string[]>([]);
     const [secretarias, setSecretarias] = useState<string[]>([]);
-    const [creator, setCreator] = useState(user?.name || '');
+    const [creators, setCreators] = useState<string[]>(user?.name ? [user.name] : []);
 
     // Form fields
     const [pautaData, setPautaData] = useState('');
@@ -63,7 +63,7 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
             description: description || '',
             status: 'solicitado',
             type: types,
-            creator: creator || (user ? user.name : 'Unknown User'),
+            creator: creators.length > 0 ? creators.join(', ') : (user?.name || 'Sistema'),
             priority,
             assignees,
             dueDate: pautaData ? new Date(pautaData) : null,
@@ -247,16 +247,11 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                             </div>
                             <div className="nova-pauta-field-premium">
                                 <label className="field-label-premium">Responsável pela Pauta</label>
-                                <select
-                                    className="input-premium select-premium"
-                                    value={creator}
-                                    onChange={e => setCreator(e.target.value)}
-                                >
-                                    <option value="">Selecione um responsável...</option>
-                                    {team.map(m => (
-                                        <option key={m.id} value={m.name}>{m.name}</option>
-                                    ))}
-                                </select>
+                                <TeamMultiSelect
+                                    selected={creators}
+                                    onChange={setCreators}
+                                    placeholder="Busque e selecione os responsáveis pela pauta..."
+                                />
                             </div>
                         </div>
 
