@@ -62,12 +62,14 @@ export default function Reports() {
 
     // Top Level Metrics (General Overview)
     const totalAbertas = filteredTasks.length;
-    const totalConcluidas = filteredTasks.filter(t => t.status === 'publicado' || isInaugurationFinished(t)).length;
+    const totalConcluidas = filteredTasks.filter(t => t.status === 'publicado' || t.status === 'cancelado' || isInaugurationFinished(t)).length;
     const totalAndamento = filteredTasks.filter(t => 
-        ['solicitado', 'producao', 'correcao', 'aprovado'].includes(t.status) || 
+        ['solicitado', 'producao', 'correcao'].includes(t.status) || 
         (t.status === 'inauguracao' && !isInaugurationFinished(t))
     ).length;
     const totalInauguracoes = filteredTasks.filter(t => t.type.includes('inauguracao') || t.status === 'inauguracao').length;
+    const totalAprovadas = filteredTasks.filter(t => t.status === 'aprovado').length;
+    const totalCanceladas = filteredTasks.filter(t => t.status === 'cancelado').length;
 
     // Chart Data: Tipos de Material
     const materialData = useMemo(() => {
@@ -147,11 +149,11 @@ export default function Reports() {
         return filteredTasks.filter(t => {
             if (activeFilter.type === 'status') {
                 if (activeFilter.value === 'andamento') {
-                    return ['solicitado', 'producao', 'correcao', 'aprovado'].includes(t.status) || 
+                    return ['solicitado', 'producao', 'correcao'].includes(t.status) || 
                            (t.status === 'inauguracao' && !isInaugurationFinished(t));
                 }
                 if (activeFilter.value === 'concluida') {
-                    return t.status === 'publicado' || isInaugurationFinished(t);
+                    return t.status === 'publicado' || t.status === 'cancelado' || isInaugurationFinished(t);
                 }
                 return t.status === activeFilter.value;
             }
@@ -249,7 +251,7 @@ export default function Reports() {
                     <div className="kpi-content">
                         <h3>Concluídas</h3>
                         <div className="kpi-value">{totalConcluidas}</div>
-                        <p className="kpi-label">Pautas publicadas/finalizadas</p>
+                        <p className="kpi-label">Pautas publicadas e/ou canceladas</p>
                     </div>
                 </div>
 
@@ -280,6 +282,36 @@ export default function Reports() {
                         <h3>Inaugurações</h3>
                         <div className="kpi-value">{totalInauguracoes}</div>
                         <p className="kpi-label">Eventos mapeados no período</p>
+                    </div>
+                </div>
+
+                <div
+                    className={`kpi-card kpi-aprovado ${activeFilter?.value === 'aprovado' ? 'active-kpi' : ''}`}
+                    onClick={() => setActiveFilter({ type: 'status', value: 'aprovado' })}
+                    style={{ cursor: 'pointer' }}
+                >
+                    <div className="kpi-icon-wrapper">
+                        <CheckCircle2 size={24} />
+                    </div>
+                    <div className="kpi-content">
+                        <h3>Aprovadas</h3>
+                        <div className="kpi-value">{totalAprovadas}</div>
+                        <p className="kpi-label">Aguardando publicação</p>
+                    </div>
+                </div>
+
+                <div
+                    className={`kpi-card kpi-cancelado ${activeFilter?.value === 'cancelado' ? 'active-kpi' : ''}`}
+                    onClick={() => setActiveFilter({ type: 'status', value: 'cancelado' })}
+                    style={{ cursor: 'pointer' }}
+                >
+                    <div className="kpi-icon-wrapper">
+                        <Target size={24} />
+                    </div>
+                    <div className="kpi-content">
+                        <h3>Reprovadas</h3>
+                        <div className="kpi-value">{totalCanceladas}</div>
+                        <p className="kpi-label">Canceladas ou reprovadas</p>
                     </div>
                 </div>
             </div>

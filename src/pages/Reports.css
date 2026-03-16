@@ -142,6 +142,22 @@
     box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05);
 }
 
+.kpi-aprovado .kpi-icon-wrapper {
+    background: hsla(280, 70%, 55%, 0.1);
+    color: hsl(280, 70%, 55%);
+}
+.kpi-aprovado .kpi-value {
+    color: hsl(280, 70%, 55%);
+}
+
+.kpi-cancelado .kpi-icon-wrapper {
+    background: hsla(0, 70%, 55%, 0.1);
+    color: hsl(0, 70%, 55%);
+}
+.kpi-cancelado .kpi-value {
+    color: hsl(0, 70%, 55%);
+}
+
 .kpi-icon-wrapper {
     width: 48px;
     height: 48px;
@@ -248,9 +264,8 @@
 
 .chart-body {
     padding: 0 1rem 1.5rem 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 100%;
+    display: block;
 }
 
 .empty-chart {
