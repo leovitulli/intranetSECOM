@@ -4,7 +4,8 @@ import { format, addDays, startOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useData } from '../contexts/DataContext';
 import TaskModal from '../components/TaskModal';
-import type { Task } from '../types/kanban';
+import FileViewer from '../components/FileViewer';
+import type { Task, Attachment } from '../types/kanban';
 import './Agenda.css';
 import './Cronograma.css';
 
@@ -14,6 +15,7 @@ export default function Cronograma() {
     const { tasks, team, loading, updateTask } = useData();
     const [currentDate] = useState(new Date());
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+    const [viewingFile, setViewingFile] = useState<Attachment | null>(null);
     const [activeFilter, setActiveFilter] = useState<FilterType>('todos');
 
     const startOfCurrentWeek = startOfWeek(currentDate, { weekStartsOn: 1 }); // Segunda-feira
@@ -220,7 +222,7 @@ export default function Cronograma() {
                                                     className="attachment-side-preview"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        window.open(firstImage.url, '_blank');
+                                                        setViewingFile(firstImage);
                                                     }}
                                                     style={{ 
                                                         width: '130px', 
@@ -255,6 +257,13 @@ export default function Cronograma() {
                     task={selectedTask}
                     onClose={() => setSelectedTask(null)}
                     onUpdateTask={(updatedTask) => updateTask(updatedTask)}
+                />
+            )}
+
+            {viewingFile && (
+                <FileViewer
+                    attachment={viewingFile}
+                    onClose={() => setViewingFile(null)}
                 />
             )}
         </div>
