@@ -22,7 +22,12 @@ const Cronograma = lazy(() => import('./pages/Cronograma'));
 
 
 function AppRoutes() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
+  
+  if (isLoading) {
+      return <LoadingScreen />
+  }
+
   return (
     <NotificationProvider>
       <DataProvider>
