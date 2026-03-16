@@ -67,34 +67,44 @@ export default function Agenda() {
                                                 </button>
                                             </div>
 
-                                            <h4 className="card-title event-title" style={{ margin: '0 0 8px 0', fontSize: '0.95rem' }}>{task.title}</h4>
+                                            <h3 className="card-title">{task.title}</h3>
 
-                                            {task.description && (
-                                                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                                    {task.description}
-                                                </div>
+                                            {task.inauguracao_secretarias && task.inauguracao_secretarias.length > 0 && task.status !== 'inauguracao' && (
+                                                <span style={{
+                                                    display: 'inline-flex', alignItems: 'center', gap: 3,
+                                                    fontSize: '0.72rem', fontWeight: 600,
+                                                    padding: '2px 8px', borderRadius: '99px',
+                                                    background: 'hsl(var(--color-primary) / 0.08)',
+                                                    color: 'hsl(var(--color-primary))',
+                                                    border: '1px solid hsl(var(--color-primary) / 0.2)',
+                                                    marginBottom: '8px'
+                                                }}>
+                                                    🏛️ {task.inauguracao_secretarias.join(', ')}
+                                                </span>
                                             )}
 
-                                            <div className="event-details" style={{ marginBottom: '8px' }}>
+                                            <div className="event-details" style={{ marginBottom: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                                 {task.pauta_endereco && (
-                                                    <div className="event-location" title="Localização">
-                                                        <MapPin size={14} style={{ flexShrink: 0 }} /> 
-                                                        <span style={{ fontSize: '0.75rem' }}>{task.pauta_endereco}</span>
+                                                    <div className="event-location" title="Localização" style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', color: 'var(--color-text-muted)' }}>
+                                                        <MapPin size={14} style={{ flexShrink: 0, marginTop: '2px' }} /> 
+                                                        <span style={{ fontSize: '0.75rem', lineHeight: 1.2 }}>{task.pauta_endereco}</span>
                                                     </div>
                                                 )}
                                                 {task.pauta_saida && (
-                                                    <div className="event-departure" title="Horário de Saída do Paço">
+                                                    <div className="event-departure" title="Horário de Saída do Paço" style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
                                                         <span>🚗</span> Saída: {task.pauta_saida}
                                                     </div>
                                                 )}
                                             </div>
 
-                                            <div className="card-footer" style={{ borderTop: 'none', paddingTop: 0, marginTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <div className="event-time" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--color-text-muted)', background: 'var(--color-bg-tertiary)', padding: '4px 8px', borderRadius: '12px' }}>
-                                                    <Clock size={12} /> {task.pauta_horario || 'Horário a definir'}
+                                            <div className="card-footer" style={{ marginTop: 'auto' }}>
+                                                <div className="card-meta">
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--color-text-muted)', background: 'var(--color-bg-tertiary)', padding: '2px 6px', borderRadius: '12px' }}>
+                                                        <Clock size={12} /> {task.pauta_horario || 'Horário a definir'}
+                                                    </div>
                                                 </div>
-                                                
-                                                <div className="event-team">
+
+                                                <div className="card-assignee">
                                                     {(() => {
                                                         const creatorsArray = task.creator ? task.creator.split(',').map(s => s.trim()).filter(Boolean) : [];
                                                         const assigneesArray = task.assignees || [];
@@ -116,11 +126,11 @@ export default function Agenda() {
                                                                             src={teamMember.avatar_url}
                                                                             alt={person}
                                                                             className="team-avatar-medium avatar-small"
-                                                                            style={{ border: `2px solid #fff`, objectFit: 'cover', marginLeft: index > 0 ? '-8px' : '0' }}
+                                                                            style={{ border: `2px solid #fff`, objectFit: 'cover', marginLeft: index > 0 ? '-8px' : '0', width: 24, height: 24 }}
                                                                             title={person}
                                                                         />
                                                                     ) : (
-                                                                        <div key={person} className="avatar-placeholder team-avatar-medium avatar-small" style={{ border: `2px solid #fff`, fontSize: '0.65rem', marginLeft: index > 0 ? '-8px' : '0' }} title={person}>
+                                                                        <div key={person} className="avatar-placeholder team-avatar-medium avatar-small" style={{ border: `2px solid #fff`, fontSize: '0.65rem', marginLeft: index > 0 ? '-8px' : '0', width: 24, height: 24 }} title={person}>
                                                                             {person.charAt(0)}
                                                                         </div>
                                                                     );

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, Clock, Image as ImageIcon, Video, FileText, Building2, AlignEndHorizontal, ExternalLink } from 'lucide-react';
+import { Clock, Image as ImageIcon, Video, FileText, Building2, AlignEndHorizontal, ExternalLink } from 'lucide-react';
 import { format, addDays, startOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useData } from '../contexts/DataContext';
@@ -119,85 +119,82 @@ export default function Cronograma() {
                                     !loading && dayTasks.map(task => (
                                         <div
                                             key={task.id}
-                                            className="event-card clickable"
+                                            className={`kanban-card priority-${task.priority}`}
                                             onClick={() => setSelectedTask(task)}
-                                            style={{ borderLeft: `4px solid var(--status-${task.status})` }}
+                                            style={{ cursor: 'pointer' }}
                                         >
-                                            <div className="card-header" style={{ marginBottom: '8px' }}>
-                                                <div className="task-badges-container" style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                                                    {task.type?.includes('video' as any) && (
-                                                        <span className="badge-tag badge-video">🎬 Vídeo</span>
-                                                    )}
-                                                    {task.type?.includes('foto' as any) && (
-                                                        <span className="badge-tag badge-foto">📸 Fotos</span>
-                                                    )}
-                                                    {task.type?.includes('release' as any) && (
-                                                        <span className="badge-tag badge-release">📝 Release</span>
-                                                    )}
-                                                    {task.type?.includes('post' as any) && (
-                                                        <span className="badge-tag badge-post">📱 Post</span>
-                                                    )}
-                                                    {task.type?.includes('arte' as any) && (
-                                                        <span className="badge-tag badge-arte">🎨 Arte Gráfica</span>
-                                                    )}
+                                            <div className="card-header">
+                                                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                                    {task.type?.includes('inauguracao' as any) && <span className="badge-tag badge-inauguracao">Inauguração</span>}
+                                                    {task.type?.includes('video' as any) && <span className="badge-tag badge-video">🎬 Vídeo</span>}
+                                                    {task.type?.includes('foto' as any) && <span className="badge-tag badge-foto">📸 Fotos</span>}
+                                                    {task.type?.includes('release' as any) && <span className="badge-tag badge-release">📝 Release</span>}
+                                                    {task.type?.includes('post' as any) && <span className="badge-tag badge-post">📱 Post</span>}
+                                                    {task.type?.includes('arte' as any) && <span className="badge-tag badge-arte">🎨 Arte</span>}
                                                 </div>
-                                                <button className="icon-btn-small" style={{ opacity: 0.5, border: 'none', background: 'transparent', cursor: 'pointer' }}>
+                                                <button className="icon-btn-small" style={{ opacity: 0.5 }}>
                                                     <ExternalLink size={14} />
                                                 </button>
                                             </div>
 
-                                            <h4 className="card-title event-title" style={{ margin: '0 0 8px 0', fontSize: '0.95rem' }}>{task.title}</h4>
+                                            <h3 className="card-title">{task.title}</h3>
 
-                                            {/* Pílula de Secretaria */}
                                             {task.inauguracao_secretarias && task.inauguracao_secretarias.length > 0 && task.status !== 'inauguracao' && (
-                                                <div style={{ marginBottom: '8px' }}>
-                                                    <span style={{
-                                                        display: 'inline-flex', alignItems: 'center', gap: 3,
-                                                        fontSize: '0.72rem', fontWeight: 600,
-                                                        padding: '2px 8px', borderRadius: '99px',
-                                                        background: 'hsl(var(--color-primary) / 0.08)',
-                                                        color: 'hsl(var(--color-primary))',
-                                                        border: '1px solid hsl(var(--color-primary) / 0.2)'
-                                                    }}>
-                                                        🏛️ {task.inauguracao_secretarias.join(', ')}
-                                                    </span>
-                                                </div>
+                                                <span style={{
+                                                    display: 'inline-flex', alignItems: 'center', gap: 3,
+                                                    fontSize: '0.72rem', fontWeight: 600,
+                                                    padding: '2px 8px', borderRadius: '99px',
+                                                    background: 'hsl(var(--color-primary) / 0.08)',
+                                                    color: 'hsl(var(--color-primary))',
+                                                    border: '1px solid hsl(var(--color-primary) / 0.2)',
+                                                    marginBottom: '8px'
+                                                }}>
+                                                    🏛️ {task.inauguracao_secretarias.join(', ')}
+                                                </span>
                                             )}
 
-                                            {task.description && (
-                                                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                                    {task.description}
-                                                </div>
-                                            )}
-
-                                            <div className="card-footer" style={{ borderTop: 'none', paddingTop: 0, marginTop: '8px' }}>
-                                                <div className="event-time" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--color-text-muted)', background: 'var(--color-bg-tertiary)', padding: '4px 8px', borderRadius: '12px' }}>
-                                                    <Clock size={12} /> {task.pauta_horario || 'Horário a definir'}
-                                                </div>
-                                            </div>
-
-                                            <div className="event-team" style={{ marginTop: '0.75rem' }}>
-                                                <Users size={14} />
-                                                {task.assignees && task.assignees.length > 0 ? (
-                                                    <div className="team-avatars">
-                                                        {task.assignees.map(assigneeName => {
-                                                            const teamMember = team.find(m => m.name === assigneeName);
-                                                            const avatarSrc = teamMember?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(assigneeName)}&background=random`;
-                                                            return (
-                                                                <img
-                                                                    key={assigneeName}
-                                                                    src={avatarSrc}
-                                                                    alt={assigneeName}
-                                                                    className="team-avatar-medium"
-                                                                    style={{ border: `2px solid ${teamMember?.color || '#fff'}`, objectFit: 'cover' }}
-                                                                    title={assigneeName}
-                                                                />
-                                                            );
-                                                        })}
+                                            <div className="card-footer" style={{ marginTop: 'auto' }}>
+                                                <div className="card-meta">
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--color-text-muted)', background: 'var(--color-bg-tertiary)', padding: '2px 6px', borderRadius: '12px' }}>
+                                                        <Clock size={12} /> {task.pauta_horario || 'Horário a definir'}
                                                     </div>
-                                                ) : (
-                                                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Equipe não definida</span>
-                                                )}
+                                                </div>
+
+                                                <div className="card-assignee">
+                                                    {(() => {
+                                                        const creatorsArray = task.creator ? task.creator.split(',').map(s => s.trim()).filter(Boolean) : [];
+                                                        const assigneesArray = task.assignees || [];
+                                                        const allPeople = Array.from(new Set([...creatorsArray, ...assigneesArray]));
+
+                                                        if (allPeople.length === 0) {
+                                                            return (
+                                                                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Equipe não definida</span>
+                                                            );
+                                                        }
+
+                                                        return (
+                                                            <div className="team-avatars" style={{ display: 'flex', flexDirection: 'row' }}>
+                                                                {allPeople.map((person, index) => {
+                                                                    const teamMember = team.find(m => m.name === person);
+                                                                    return teamMember?.avatar_url ? (
+                                                                        <img
+                                                                            key={person}
+                                                                            src={teamMember.avatar_url}
+                                                                            alt={person}
+                                                                            className="team-avatar-medium avatar-small"
+                                                                            style={{ border: `2px solid #fff`, objectFit: 'cover', marginLeft: index > 0 ? '-8px' : '0', width: 24, height: 24 }}
+                                                                            title={person}
+                                                                        />
+                                                                    ) : (
+                                                                        <div key={person} className="avatar-placeholder team-avatar-medium avatar-small" style={{ border: `2px solid #fff`, fontSize: '0.65rem', marginLeft: index > 0 ? '-8px' : '0', width: 24, height: 24 }} title={person}>
+                                                                            {person.charAt(0)}
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        );
+                                                    })()}
+                                                </div>
                                             </div>
                                         </div>
                                     ))
