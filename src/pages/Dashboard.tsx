@@ -319,7 +319,7 @@ export default function Dashboard() {
                                                                         title={person} 
                                                                     />
                                                                 ) : (
-                                                                    <div key={person} className="avatar-placeholder avatar-small" style={{ border: `2px solid hsl(var(--color-surface))`, fontSize: '0.75rem', marginLeft: index > 0 ? '-8px' : '0', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }} title={person}>
+                                                                    <div key={person} className="avatar-placeholder avatar-small" style={{ border: `2px solid hsl(var(--color-surface))`, background: 'linear-gradient(135deg, hsl(var(--color-primary)), hsl(var(--color-accent)))', color: '#fff', fontSize: '0.75rem', marginLeft: index > 0 ? '-8px' : '0', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }} title={person}>
                                                                         {person.charAt(0)}
                                                                     </div>
                                                                 );
