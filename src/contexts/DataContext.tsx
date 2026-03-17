@@ -66,6 +66,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                     pauta_data, pauta_horario, pauta_endereco, pauta_saida, is_pauta_externa,
                     video_captacao_equipe, video_captacao_data, video_edicao_equipe, video_edicao_data, video_briefing, video_necessidades, video_entrega_data,
                     arte_tipo_pecas, arte_entrega_data,
+                    post_criacao_texto, post_criacao_corrigido, post_aprovado, post_alterado_texto, post_reprovado, post_reprovado_comentario, post_material_solicitado,
                     attachments, comments,
                     task_assignees ( users ( name ) )
                 `).order('created_at', { ascending: false }),
@@ -153,6 +154,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                     video_entrega_data: t.video_entrega_data ? new Date(t.video_entrega_data) : undefined,
                     arte_tipo_pecas: t.arte_tipo_pecas || undefined,
                     arte_entrega_data: t.arte_entrega_data ? new Date(t.arte_entrega_data) : undefined,
+                    post_criacao_texto: t.post_criacao_texto || undefined,
+                    post_criacao_corrigido: t.post_criacao_corrigido || false,
+                    post_aprovado: t.post_aprovado || false,
+                    post_alterado_texto: t.post_alterado_texto || undefined,
+                    post_reprovado: t.post_reprovado || false,
+                    post_reprovado_comentario: t.post_reprovado_comentario || undefined,
+                    post_material_solicitado: t.post_material_solicitado || [],
                 });
                 setTasks(finalTasksData.filter((t: any) => !t.archived).map(formatTask));
                 setArchivedTasks(finalTasksData.filter((t: any) => t.archived).map(formatTask));
@@ -262,6 +270,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 video_entrega_data: updatedTask.video_entrega_data?.toISOString() || null,
                 arte_tipo_pecas: updatedTask.arte_tipo_pecas || null,
                 arte_entrega_data: updatedTask.arte_entrega_data?.toISOString() || null,
+                post_criacao_texto: updatedTask.post_criacao_texto || null,
+                post_criacao_corrigido: updatedTask.post_criacao_corrigido || false,
+                post_aprovado: updatedTask.post_aprovado || false,
+                post_alterado_texto: updatedTask.post_alterado_texto || null,
+                post_reprovado: updatedTask.post_reprovado || false,
+                post_reprovado_comentario: updatedTask.post_reprovado_comentario || null,
+                post_material_solicitado: updatedTask.post_material_solicitado || [],
                 comments: updatedTask.comments || [],
                 attachments: updatedTask.attachments || [],
             })
@@ -355,7 +370,14 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 p_video_necessidades: taskData.video_necessidades || [],
                 p_video_entrega_data: taskData.video_entrega_data?.toISOString().split('T')[0] || null,
                 p_arte_tipo_pecas: taskData.arte_tipo_pecas || null,
-                p_arte_entrega_data: taskData.arte_entrega_data?.toISOString().split('T')[0] || null
+                p_arte_entrega_data: taskData.arte_entrega_data?.toISOString().split('T')[0] || null,
+                p_post_criacao_texto: taskData.post_criacao_texto || null,
+                p_post_criacao_corrigido: taskData.post_criacao_corrigido || false,
+                p_post_aprovado: taskData.post_aprovado || false,
+                p_post_alterado_texto: taskData.post_alterado_texto || null,
+                p_post_reprovado: taskData.post_reprovado || false,
+                p_post_reprovado_comentario: taskData.post_reprovado_comentario || null,
+                p_post_material_solicitado: taskData.post_material_solicitado || []
             });
 
             if (error) {
@@ -743,6 +765,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                             pauta_endereco: t.pauta_endereco || undefined,
                             pauta_saida: t.pauta_saida || undefined,
                             is_pauta_externa: t.is_pauta_externa || false,
+                            post_criacao_texto: t.post_criacao_texto || undefined,
+                            post_criacao_corrigido: t.post_criacao_corrigido || false,
+                            post_aprovado: t.post_aprovado || false,
+                            post_alterado_texto: t.post_alterado_texto || undefined,
+                            post_reprovado: t.post_reprovado || false,
+                            post_reprovado_comentario: t.post_reprovado_comentario || undefined,
+                            post_material_solicitado: t.post_material_solicitado || [],
                         });
                         setTasks(tasksData.filter((t: any) => !t.archived).map(formatTask));
                         setArchivedTasks(tasksData.filter((t: any) => t.archived).map(formatTask));

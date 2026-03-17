@@ -20,7 +20,7 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
     const uniqueAddresses = Array.from(new Set(tasks.map((t: Task) => t.pauta_endereco).filter(Boolean)));
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [types] = useState<TaskType[]>(['release']);
+    const [types, setTypes] = useState<TaskType[]>(['release']);
     const [priority, setPriority] = useState<TaskPriority>('media');
     const [assignees, setAssignees] = useState<string[]>([]);
     const [secretarias, setSecretarias] = useState<string[]>([]);
@@ -72,6 +72,14 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
     // Arte Tab States
     const [arteTipoPecas, setArteTipoPecas] = useState('');
     const [arteEntregaData, setArteEntregaData] = useState('');
+
+    // Post Tab States
+    const [postCriacaoTexto, setPostCriacaoTexto] = useState('');
+    const [postCriacaoCorrigido, setPostCriacaoCorrigido] = useState(false);
+    const [postAprovado, setPostAprovado] = useState(false);
+    const [postAlteradoTexto, setPostAlteradoTexto] = useState('');
+    const [postReprovado, setPostReprovado] = useState(false);
+    const [postReprovadoComentario, setPostReprovadoComentario] = useState('');
 
 
     const getDayOfWeek = (dateStr: string) => {
@@ -132,7 +140,19 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                 video_entrega_data: videoEntregaData ? new Date(videoEntregaData) : undefined,
                 arte_tipo_pecas: arteTipoPecas || undefined,
                 arte_entrega_data: arteEntregaData ? new Date(arteEntregaData) : undefined,
-            };
+                // Post production data
+                post_criacao_texto: postCriacaoTexto || undefined,
+                post_criacao_corrigido: postCriacaoCorrigido,
+                post_aprovado: postAprovado,
+                post_alterado_texto: postAlteradoTexto || undefined,
+                post_reprovado: postReprovado,
+            post_reprovado_comentario: postReprovadoComentario,
+            post_material_solicitado: types.map(t => {
+                if (t === 'video') return 'Vídeo';
+                if (t === 'foto') return 'Foto';
+                return t.charAt(0).toUpperCase() + t.slice(1);
+            })
+        };
 
             const success = await onCreate(newTask);
             if (success) {
@@ -395,10 +415,164 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                     )}
 
                     {activeTab === 'post' && (
-                        <div className="modal-section-group-premium" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
-                            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📱</div>
-                            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>Estratégia de Post</h3>
-                            <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>Definições de rede social, legenda sugerida e formatos (Reels, Story, Feed) ficarão nesta aba.</p>
+                        <div className="modal-section-group-premium">
+                            <div className="section-header-premium">
+                                <span className="section-number-premium">📱</span>
+                                <h3>Estratégia de Post</h3>
+                            </div>
+
+                            <div className="nova-pauta-field-premium" style={{ marginBottom: '1.5rem' }}>
+                                <label className="field-label-premium">CRIAÇÃO DO TEXTO (DESCRIÇÃO)</label>
+                                <textarea
+                                    className="input-premium-textarea"
+                                    rows={4}
+                                    placeholder="Escreva a legenda sugerida para o post..."
+                                    value={postCriacaoTexto}
+                                    onChange={e => setPostCriacaoTexto(e.target.value)}
+                                />
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginTop: '0.75rem' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={postCriacaoCorrigido}
+                                        onChange={e => setPostCriacaoCorrigido(e.target.checked)}
+                                        style={{ width: '18px', height: '18px', accentColor: '#3b82f6' }}
+                                    />
+                                    Texto de Criação Corrigido
+                                </label>
+                            </div>
+
+                            <div className="modal-section-group-premium alternate-bg-premium" style={{ margin: '0 -2rem', padding: '1.5rem 2rem' }}>
+                                <div className="section-header-premium">
+                                    <span className="section-number-premium" style={{ background: '#f0f9ff', color: '#0ea5e9' }}>✓</span>
+                                    <h3>Controle de Aprovação</h3>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+                                    {/* Aprovado */}
+                                    <div className={`pauta-externa-toggle-card-premium ${postAprovado ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setPostAprovado(!postAprovado);
+                                            if (!postAprovado) {
+                                                setPostReprovado(false);
+                                            }
+                                        }}>
+                                        <div className="toggle-info-premium">
+                                            <span className="toggle-title-premium">Post Aprovado</span>
+                                            <span className="toggle-description-premium">Pronto para publicação</span>
+                                        </div>
+                                        <div className={`toggle-switch-premium ${postAprovado ? 'on' : ''}`}>
+                                            <div className="toggle-knob-premium"></div>
+                                        </div>
+                                    </div>
+
+                                    {/* Alterado / Corrigido */}
+                                    <div style={{ background: 'white', padding: '1.25rem', borderRadius: '12px', border: '1.5px solid #e2e8f0' }}>
+                                        <div className="nova-pauta-field-premium">
+                                            <label className="field-label-premium">FOI ALTERADO / CORRIGIDO?</label>
+                                            <textarea
+                                                className="input-premium-textarea"
+                                                rows={2}
+                                                placeholder="Descreva o que foi alterado ou o que precisa ser corrigido..."
+                                                value={postAlteradoTexto}
+                                                onChange={e => setPostAlteradoTexto(e.target.value)}
+                                                style={{ fontSize: '0.85rem' }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Reprovado / Cancelado */}
+                                    <div style={{ background: postReprovado ? '#fff1f2' : 'white', padding: '1.25rem', borderRadius: '12px', border: postReprovado ? '1.5px solid #fda4af' : '1.5px solid #e2e8f0', transition: 'all 0.2s' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: postReprovado ? '1rem' : '0' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                <span style={{ fontSize: '0.9rem', fontWeight: 700, color: postReprovado ? '#be123c' : '#1e293b' }}>Post Reprovado / Cancelado</span>
+                                                <span style={{ fontSize: '0.75rem', color: postReprovado ? '#e11d48' : '#64748b' }}>Marcar se o material foi descartado</span>
+                                            </div>
+                                            <div 
+                                                className={`toggle-switch-premium ${postReprovado ? 'on' : ''}`} 
+                                                onClick={() => {
+                                                    setPostReprovado(!postReprovado);
+                                                    if (!postReprovado) setPostAprovado(false);
+                                                }}
+                                                style={{ background: postReprovado ? '#e11d48' : undefined }}
+                                            >
+                                                <div className="toggle-knob-premium"></div>
+                                            </div>
+                                        </div>
+                                        {postReprovado && (
+                                            <div className="nova-pauta-field-premium">
+                                                <label className="field-label-premium" style={{ color: '#be123c' }}>MOTIVO DO CANCELAMENTO</label>
+                                                <textarea
+                                                    className="input-premium-textarea"
+                                                    rows={2}
+                                                    placeholder="Por que este post foi reprovado ou cancelado?"
+                                                    value={postReprovadoComentario}
+                                                    onChange={e => setPostReprovadoComentario(e.target.value)}
+                                                    style={{ fontSize: '0.85rem', borderColor: '#fda4af' }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="modal-section-group-premium" style={{ marginTop: '1.5rem' }}>
+                                <div className="section-header-premium">
+                                    <span className="section-number-premium">📦</span>
+                                    <h3>Material Solicitado</h3>
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+                                    {[
+                                        { id: 'release', label: 'Release' },
+                                        { id: 'post', label: 'Post' },
+                                        { id: 'video', label: 'Vídeo' },
+                                        { id: 'foto', label: 'Foto' },
+                                        { id: 'arte', label: 'Arte' },
+                                        { id: 'inauguracao', label: 'Inauguração' }
+                                    ].map(mat => {
+                                        const typeId = mat.id as TaskType;
+                                        const isActive = types.includes(typeId);
+                                        return (
+                                            <button 
+                                                key={mat.id}
+                                                type="button" 
+                                                onClick={() => {
+                                                    setTypes(prev => 
+                                                        prev.includes(typeId) 
+                                                            ? prev.filter(m => m !== typeId) 
+                                                            : [...prev, typeId]
+                                                    );
+                                                }}
+                                                className={`prio-pill-premium ${isActive ? 'active' : ''}`}
+                                                style={{ 
+                                                    padding: '1rem', 
+                                                    fontSize: '1rem', 
+                                                    fontWeight: 700,
+                                                    display: 'flex',
+                                                    justifyContent: 'center',
+                                                    alignItems: 'center',
+                                                    background: isActive ? '#1e293b' : 'white',
+                                                    color: isActive ? 'white' : '#475569',
+                                                    border: '1.5px solid',
+                                                    borderColor: isActive ? '#1e293b' : '#e2e8f0',
+                                                    boxShadow: isActive ? '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' : 'none',
+                                                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                {mat.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <div style={{ marginTop: '1rem' }}>
+                                    <button type="button" className="btn-edit-premium" style={{ borderRadius: '20px', padding: '0.5rem 1rem', width: 'auto' }}>
+                                        <Plus size={14} /> Novo Formato
+                                    </button>
+                                </div>
+                                <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.75rem', fontStyle: 'italic' }}>
+                                    💡 Selecione os formatos previstos para esta estratégia de post.
+                                </p>
+                            </div>
                         </div>
                     )}
 
