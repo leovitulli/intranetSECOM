@@ -54,4 +54,10 @@ export interface Task {
     pauta_endereco?: string;
     pauta_saida?: string;
     is_pauta_externa?: boolean;
+    // Video-specific fields
+    video_captacao_equipe?: string[];
+    video_captacao_data?: Date | null;
+    video_edicao_equipe?: string[];
+    video_edicao_data?: Date | null;
+    video_entrega_data?: Date | null;
 }

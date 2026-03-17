@@ -60,6 +60,13 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
     const [pautaEndereco, setPautaEndereco] = useState('');
     const [isPautaExterna, setIsPautaExterna] = useState(false);
 
+    // Video production fields
+    const [videoCaptacaoEquipe, setVideoCaptacaoEquipe] = useState<string[]>([]);
+    const [videoCaptacaoData, setVideoCaptacaoData] = useState('');
+    const [videoEdicaoEquipe, setVideoEdicaoEquipe] = useState<string[]>([]);
+    const [videoEdicaoData, setVideoEdicaoData] = useState('');
+    const [videoEntregaData, setVideoEntregaData] = useState('');
+
 
     const getDayOfWeek = (dateStr: string) => {
         if (!dateStr) return '';
@@ -108,7 +115,13 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                 pauta_horario: (pautaHorarioStart && pautaHorarioEnd) ? `${pautaHorarioStart} às ${pautaHorarioEnd}` : (pautaHorarioStart || pautaHorarioEnd || ''),
                 pauta_saida: pautaSaida,
                 pauta_endereco: pautaEndereco,
-                is_pauta_externa: isPautaExterna
+                is_pauta_externa: isPautaExterna,
+                // Video production data
+                video_captacao_equipe: videoCaptacaoEquipe.length > 0 ? videoCaptacaoEquipe : undefined,
+                video_captacao_data: videoCaptacaoData ? new Date(videoCaptacaoData) : undefined,
+                video_edicao_equipe: videoEdicaoEquipe.length > 0 ? videoEdicaoEquipe : undefined,
+                video_edicao_data: videoEdicaoData ? new Date(videoEdicaoData) : undefined,
+                video_entrega_data: videoEntregaData ? new Date(videoEntregaData) : undefined,
             };
 
             await onCreate(newTask);
@@ -376,11 +389,94 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                     )}
 
                     {activeTab === 'video' && (
-                        <div className="modal-section-group-premium" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
-                            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🎬</div>
-                            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>Briefing de Vídeo</h3>
-                            <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>Roteiro, trilha sugerida e referências de edição para a equipe de vídeo.</p>
-                        </div>
+                        <>
+                            <div className="modal-section-group-premium">
+                                <div className="section-header-premium">
+                                    <span className="section-number-premium" style={{ background: 'hsla(210, 80%, 96%, 1)', color: 'hsl(210, 70%, 50%)' }}><Plus size={14} /></span>
+                                    <h3>Equipe de Produção (Vídeo)</h3>
+                                </div>
+                                <div className="fields-grid-2-premium">
+                                    <div className="nova-pauta-field-premium">
+                                        <label className="field-label-premium">Captação (Imagens)</label>
+                                        <TeamMultiSelect
+                                            selected={videoCaptacaoEquipe}
+                                            onChange={setVideoCaptacaoEquipe}
+                                            placeholder="Quem vai gravar?"
+                                        />
+                                    </div>
+                                    <div className="nova-pauta-field-premium">
+                                        <label className="field-label-premium">Data da Captação</label>
+                                        <input
+                                            type="date"
+                                            className="input-premium"
+                                            value={videoCaptacaoData}
+                                            onChange={e => setVideoCaptacaoData(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="fields-grid-2-premium mt-1-premium">
+                                    <div className="nova-pauta-field-premium">
+                                        <label className="field-label-premium">Edição / Finalização</label>
+                                        <TeamMultiSelect
+                                            selected={videoEdicaoEquipe}
+                                            onChange={setVideoEdicaoEquipe}
+                                            placeholder="Quem vai editar?"
+                                        />
+                                    </div>
+                                    <div className="nova-pauta-field-premium">
+                                        <label className="field-label-premium">Previsão de Edição</label>
+                                        <input
+                                            type="date"
+                                            className="input-premium"
+                                            value={videoEdicaoData}
+                                            onChange={e => setVideoEdicaoData(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="modal-section-group-premium alternate-bg-premium">
+                                <div className="section-header-premium">
+                                    <span className="section-number-premium">🎬</span>
+                                    <h3>Controle de Entrega</h3>
+                                </div>
+                                <div className="fields-grid-2-premium">
+                                    <div className="nova-pauta-field-premium">
+                                        <label className="field-label-premium">Prazo Máximo de Entrega</label>
+                                        <input
+                                            type="date"
+                                            className="input-premium"
+                                            value={videoEntregaData}
+                                            onChange={(e) => {
+                                                setVideoEntregaData(e.target.value);
+                                                // Automação: sincroniza com a data principal da pauta se estiver vazia
+                                                if (!pautaData) setPautaData(e.target.value);
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="nova-pauta-field-premium">
+                                        <label className="field-label-premium">Prioridade de Ilha</label>
+                                        <div className="prio-pills-container-premium">
+                                            {['baixa', 'media', 'alta'].map(p => (
+                                                <button
+                                                    key={p}
+                                                    type="button"
+                                                    onClick={() => setPriority(p as TaskPriority)}
+                                                    className={`prio-pill-premium ${p} ${priority === p ? 'active' : ''}`}
+                                                    style={{ flex: 1 }}
+                                                >
+                                                    {p.charAt(0).toUpperCase() + p.slice(1)}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                                <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '1rem', fontStyle: 'italic' }}>
+                                    💡 No checkout, o status da pauta será definido como "Em Produção" se houver equipe de vídeo vinculada.
+                                </p>
+                            </div>
+                        </>
                     )}
 
                     {activeTab === 'foto' && (

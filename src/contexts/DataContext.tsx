@@ -64,6 +64,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                     id, title, description, status, type, creator, priority, due_date, archived, archived_at,
                     inauguracao_nome, inauguracao_endereco, inauguracao_secretarias, inauguracao_tipo, inauguracao_checklist, inauguracao_data,
                     pauta_data, pauta_horario, pauta_endereco, pauta_saida, is_pauta_externa,
+                    video_captacao_equipe, video_captacao_data, video_edicao_equipe, video_edicao_data, video_entrega_data,
                     attachments, comments,
                     task_assignees ( users ( name ) )
                 `).order('created_at', { ascending: false }),
@@ -142,6 +143,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                         return t.inauguracao_checklist;
                     })(),
                     inauguracao_data: t.inauguracao_data ? new Date(t.inauguracao_data.includes('T') ? t.inauguracao_data : t.inauguracao_data + 'T12:00:00') : undefined,
+                    video_captacao_equipe: t.video_captacao_equipe,
+                    video_captacao_data: t.video_captacao_data ? new Date(t.video_captacao_data) : undefined,
+                    video_edicao_equipe: t.video_edicao_equipe,
+                    video_edicao_data: t.video_edicao_data ? new Date(t.video_edicao_data) : undefined,
+                    video_entrega_data: t.video_entrega_data ? new Date(t.video_entrega_data) : undefined,
                 });
                 setTasks(finalTasksData.filter((t: any) => !t.archived).map(formatTask));
                 setArchivedTasks(finalTasksData.filter((t: any) => t.archived).map(formatTask));
@@ -314,7 +320,17 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 pauta_endereco: (taskData as any).pauta_endereco || null,
                 pauta_saida: (taskData as any).pauta_saida || null,
                 is_pauta_externa: (taskData as any).is_pauta_externa || false,
+                video_captacao_equipe: taskData.video_captacao_equipe || null,
+                video_captacao_data: taskData.video_captacao_data?.toISOString().split('T')[0] || null,
+                video_edicao_equipe: taskData.video_edicao_equipe || null,
+                video_edicao_data: taskData.video_edicao_data?.toISOString().split('T')[0] || null,
+                video_entrega_data: taskData.video_entrega_data?.toISOString().split('T')[0] || null,
             };
+
+            // Automação: Se tem equipe de vídeo, status vira 'producao'
+            if (taskData.video_captacao_equipe && taskData.video_captacao_equipe.length > 0) {
+                payload.status = 'producao';
+            }
 
             const { data, error } = await supabase
                 .from('tasks')
@@ -411,6 +427,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             pauta_horario: data.pauta_horario || undefined,
             pauta_endereco: data.pauta_endereco || undefined,
             is_pauta_externa: data.is_pauta_externa || false,
+            video_captacao_equipe: data.video_captacao_equipe || undefined,
+            video_captacao_data: data.video_captacao_data ? new Date(data.video_captacao_data) : undefined,
+            video_edicao_equipe: data.video_edicao_equipe || undefined,
+            video_edicao_data: data.video_edicao_data ? new Date(data.video_edicao_data) : undefined,
+            video_entrega_data: data.video_entrega_data ? new Date(data.video_entrega_data) : undefined,
         };
 
         // 2. Atualizar estado local IMEDIATAMENTE (Otimista)
