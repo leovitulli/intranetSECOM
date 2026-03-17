@@ -25,17 +25,29 @@ export default function ProfileTeamTab() {
         const tempId = 'new-' + Date.now();
         setBusy(tempId, true);
         try {
+            // 1. Verificar se o e-mail já existe na tabela users antes de qualquer coisa
+            if (member.email) {
+                const { data: existingUser } = await supabase
+                    .from('users')
+                    .select('id')
+                    .eq('email', member.email)
+                    .single();
+                
+                if (existingUser) {
+                    throw new Error(`O e-mail "${member.email}" já está cadastrado no sistema.`);
+                }
+            }
+
             let authUserId: string | undefined;
 
             if (member.hasLogin && member.email && password) {
                 console.log('🏁 Iniciando Auth para:', member.email);
-                // signUp sends a confirmation email to the user automatically
-                // Using supabaseAdmin (persistSession: false) to prevent auto-login
                 const { data: signUpData, error: signUpError } = await getSupabaseAdmin().auth.signUp({
                     email: member.email,
                     password,
                     options: { data: { name: member.name } }
                 });
+                
                 if (signUpError) throw signUpError;
                 authUserId = signUpData.user?.id;
                 console.log('✅ Auth criado. ID:', authUserId);
@@ -57,12 +69,16 @@ export default function ProfileTeamTab() {
             
             if (insertError) {
                 console.error('Database insert error:', insertError);
-                throw new Error(`Auth OK, mas erro no Banco: ${insertError.message}`);
+                // Se o Auth foi criado mas o banco falhou, o usuário fica órfão.
+                const errorMsg = authUserId 
+                    ? `O login foi criado, mas houve um erro ao salvar o perfil no banco: ${insertError.message}. Por favor, contate o administrador para remover o usuário "${member.email}" do Auth.`
+                    : `Erro ao salvar no Banco: ${insertError.message}`;
+                throw new Error(errorMsg);
             }
 
             console.log('🎉 Tudo pronto!');
             setIsModalOpen(false);
-            alert(`✅ ${member.name} cadastrado com sucesso!\n\nO perfil aparecerá na lista em instantes.`);
+            alert(`✅ ${member.name} cadastrado com sucesso!`);
         } catch (err: any) {
             console.error('Create member error:', err);
             const msg = err.message || '';
