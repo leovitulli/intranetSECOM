@@ -121,9 +121,9 @@ export default function Cronograma() {
                                     !loading && dayTasks.map(task => (
                                         <div
                                             key={task.id}
-                                            className="event-card clickable"
+                                            className={`event-card clickable priority-${task.priority}`}
                                             onClick={() => setSelectedTask(task)}
-                                            style={{ borderLeft: `4px solid var(--status-${task.status})`, padding: 0, display: 'flex', flexDirection: 'row', overflow: 'hidden' }}
+                                            style={{ padding: 0, display: 'flex', flexDirection: 'row', overflow: 'hidden' }}
                                         >
                                             <div style={{ flex: 1, padding: '1.25rem', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                                                 <div className="card-header" style={{ marginBottom: '8px' }}>

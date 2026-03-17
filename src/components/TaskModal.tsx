@@ -31,6 +31,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
     // Buffer edits locally
     const [editedTask, setEditedTask] = useState<Task>(task);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const [activeTab, setActiveTab] = useState<'geral' | 'release' | 'post' | 'video' | 'foto' | 'arte' | 'inauguracao'>('geral');
 
     useEffect(() => {
         setEditedTask(task);
@@ -280,83 +281,108 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
             <div className="modal-content nova-pauta-modal" onClick={e => e.stopPropagation()}>
                 
 
-                <div className="modal-header">
-                    <div className="modal-header-actions">
-                        <div className="task-badges-container">
-                            {editedTask.type.map(t => {
-                                if (t === 'inauguracao') return null;
-                                return (
-                                    <span key={t} className={`badge-tag badge-${t}`}>
-                                        {t === 'release' && '📝 Release'}
-                                        {t === 'post' && '📱 Post'}
-                                        {t === 'arte' && '🎨 Arte Gráfica'}
-                                        {t === 'video' && '🎬 Vídeo'}
-                                        {t === 'foto' && '📸 Fotos'}
-                                    </span>
-                                );
-                            })}
+                {/* ── Header Premium (padrão) ── */}
+                <div className="nova-pauta-header-premium">
+                    <div className="header-left-premium">
+                        <div className="header-icon-premium">
+                            <FileText size={20} />
                         </div>
-
-                        <div className="priority-selector">
-                            <select
-                                className={`select-premium`}
-                                style={{ width: 'auto', padding: '4px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, border: '1.5px solid #f59e0b', color: '#b45309', background: '#fef3c7' }}
-                                value={editedTask.priority}
-                                onChange={(e) => handleFieldChange('priority', e.target.value as any)}
-                            >
-                                <option value="baixa">Prioridade: Baixa</option>
-                                <option value="media">Prioridade: Média</option>
-                                <option value="alta">Prioridade: Alta</option>
-                            </select>
+                        <div className="header-titles-premium">
+                            <span className="header-subtitle-premium">Gestão da Pauta</span>
+                            {isEditingTitle ? (
+                                <h2 style={{ margin: 0 }}>
+                                    <input
+                                        type="text"
+                                        className="edit-textarea"
+                                        style={{ fontSize: '1.25rem', fontWeight: 700, border: '1px solid #cbd5e1', borderRadius: '6px', padding: '2px 8px', width: '100%', minWidth: '300px' }}
+                                        value={editTitleContent}
+                                        onChange={e => setEditTitleContent(e.target.value)}
+                                        onBlur={() => {
+                                            setIsEditingTitle(false);
+                                            if (editTitleContent.trim() && editTitleContent !== editedTask.title) {
+                                                handleFieldChange('title', editTitleContent.trim());
+                                            } else {
+                                                setEditTitleContent(editedTask.title);
+                                            }
+                                        }}
+                                        onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+                                        autoFocus
+                                    />
+                                </h2>
+                            ) : (
+                                <h2 onClick={() => setIsEditingTitle(true)} style={{ cursor: 'pointer', margin: 0 }} title="Clique para editar o título">
+                                    {editedTask.title}
+                                </h2>
+                            )}
                         </div>
-
-                        <div className="status-indicator">
-                            <span className="label">Status:</span>
-                            <span className="value">{editedTask.status.toUpperCase()}</span>
-                        </div>
-
-                        <button
-                            className="btn-archive-header"
-                            onClick={async () => {
-                                if (confirm('Arquivar esta pauta? Ela ficará visível na aba de Histórico.')) {
-                                    await archiveTask(task.id);
-                                    if (onArchive) onArchive();
-                                    onClose();
-                                }
-                            }}
-                        >
-                            <Archive size={14} /> Arquivar
-                        </button>
                     </div>
-                    {isEditingTitle ? (
-                        <div className="edit-title-form" style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '10px' }}>
-                            <input
-                                type="text"
-                                className="edit-textarea"
-                                style={{ flex: 1, fontSize: '1.5rem', fontWeight: 700 }}
-                                value={editTitleContent}
-                                onChange={e => setEditTitleContent(e.target.value)}
-                                onBlur={() => {
-                                    setIsEditingTitle(false);
-                                    if (editTitleContent.trim() && editTitleContent !== editedTask.title) {
-                                        handleFieldChange('title', editTitleContent.trim());
-                                    } else {
-                                        setEditTitleContent(editedTask.title);
-                                    }
-                                }}
-                                onKeyDown={e => {
-                                    if (e.key === 'Enter') e.currentTarget.blur();
-                                }}
-                                autoFocus
-                            />
-                        </div>
-                    ) : (
-                        <h2 className="modal-title" onClick={() => setIsEditingTitle(true)} style={{ cursor: 'pointer', outline: 'none' }} title="Clique para editar">
-                            {editedTask.title}
-                        </h2>
-                    )}
+                    <button className="close-btn-premium" onClick={onClose} title="Fechar">
+                        <X size={20} />
+                    </button>
                 </div>
 
+                {/* ── Faixa de Status e Ações ── */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.75rem', padding: '0.5rem 2rem', borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }}>
+                    <select
+                        className="select-premium"
+                        style={{ 
+                            width: 'auto', 
+                            padding: '4px 12px', 
+                            borderRadius: '20px', 
+                            fontSize: '0.7rem', 
+                            fontWeight: 700, 
+                            border: `1.5px solid ${
+                                editedTask.priority === 'baixa' ? '#16a34a' : 
+                                editedTask.priority === 'media' ? '#f59e0b' : '#dc2626'
+                            }`, 
+                            color: `${
+                                editedTask.priority === 'baixa' ? '#15803d' : 
+                                editedTask.priority === 'media' ? '#b45309' : '#b91c1c'
+                            }`, 
+                            background: `${
+                                editedTask.priority === 'baixa' ? '#f0fdf4' : 
+                                editedTask.priority === 'media' ? '#fef3c7' : '#fef2f2'
+                            }` 
+                        }}
+                        value={editedTask.priority}
+                        onChange={(e) => handleFieldChange('priority', e.target.value as any)}
+                    >
+                        <option value="baixa">Baixa</option>
+                        <option value="media">Média</option>
+                        <option value="alta">Alta</option>
+                    </select>
+
+                    <span style={{ fontSize: '0.7rem', fontWeight: 600, padding: '4px 10px', borderRadius: '20px', background: '#e2e8f0', color: '#475569' }}>
+                        {editedTask.status.toUpperCase()}
+                    </span>
+
+                    <button
+                        className="btn-archive-header"
+                        style={{ fontSize: '0.7rem', padding: '4px 10px' }}
+                        onClick={async () => {
+                            if (confirm('Arquivar esta pauta? Ela ficará visível na aba de Histórico.')) {
+                                await archiveTask(task.id);
+                                if (onArchive) onArchive();
+                                onClose();
+                            }
+                        }}
+                    >
+                        <Archive size={12} /> Arquivar
+                    </button>
+                </div>
+
+                {/* --- Barra de Abas --- */}
+                <div className="tabs-bar-premium" style={{ padding: '0 2rem', borderBottom: '1px solid #e2e8f0', margin: 0, position: 'sticky', top: 0, background: '#fff', zIndex: 10, flexShrink: 0, display: 'flex', overflowX: 'auto' }}>
+                    <button type="button" className={`tab-btn-premium ${activeTab === 'geral' ? 'active' : ''}`} onClick={() => setActiveTab('geral')}>Geral</button>
+                    <button type="button" data-tab="release" className={`tab-btn-premium ${activeTab === 'release' ? 'active' : ''} ${editedTask.type.includes('release') ? 'has-type' : ''}`} onClick={() => setActiveTab('release')}>📝 Release</button>
+                    <button type="button" data-tab="post" className={`tab-btn-premium ${activeTab === 'post' ? 'active' : ''} ${editedTask.type.includes('post') ? 'has-type' : ''}`} onClick={() => setActiveTab('post')}>📱 Post</button>
+                    <button type="button" data-tab="video" className={`tab-btn-premium ${activeTab === 'video' ? 'active' : ''} ${editedTask.type.includes('video') ? 'has-type' : ''}`} onClick={() => setActiveTab('video')}>🎬 Vídeo</button>
+                    <button type="button" data-tab="foto" className={`tab-btn-premium ${activeTab === 'foto' ? 'active' : ''} ${editedTask.type.includes('foto') ? 'has-type' : ''}`} onClick={() => setActiveTab('foto')}>📸 Foto</button>
+                    <button type="button" data-tab="arte" className={`tab-btn-premium ${activeTab === 'arte' ? 'active' : ''} ${editedTask.type.includes('arte') ? 'has-type' : ''}`} onClick={() => setActiveTab('arte')}>🎨 Arte</button>
+                    <button type="button" data-tab="inauguracao" className={`tab-btn-premium ${activeTab === 'inauguracao' ? 'active' : ''} ${editedTask.type.includes('inauguracao') ? 'has-type' : ''}`} onClick={() => setActiveTab('inauguracao')}>🏛️ Inauguração</button>
+                </div>
+
+                {activeTab === 'geral' && (
                 <div className="modal-body">
                     <div className="modal-main-col-premium" style={{ gap: "0" }}>
                         <div className="modal-section-group-premium">
@@ -954,6 +980,67 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                         )}
                     </div>
                 </div>
+                )}
+
+                {activeTab === 'release' && (
+                    <div className="modal-body" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem' }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📝</div>
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>Aba de Release</h3>
+                            <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>Os campos dedicados para produção de Release serão construídos aqui em breve.</p>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'post' && (
+                    <div className="modal-body" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem' }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📱</div>
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>Aba de Post</h3>
+                            <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>Os campos dedicados para produção de Posts serão construídos aqui em breve.</p>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'video' && (
+                    <div className="modal-body" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem' }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🎬</div>
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>Aba de Vídeo</h3>
+                            <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>Os campos dedicados para produção de Vídeos serão construídos aqui em breve.</p>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'foto' && (
+                    <div className="modal-body" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem' }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📸</div>
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>Aba de Foto</h3>
+                            <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>Os campos dedicados para produção de Fotos serão construídos aqui em breve.</p>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'arte' && (
+                    <div className="modal-body" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem' }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🎨</div>
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>Aba de Arte Gráfica</h3>
+                            <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>Os campos dedicados para produção de Artes Gráficas serão construídos aqui em breve.</p>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'inauguracao' && (
+                    <div className="modal-body" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem' }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🏛️</div>
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>Aba de Inauguração</h3>
+                            <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>Os campos específicos de inauguração serão migrados para cá em breve.</p>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {viewingFile && (

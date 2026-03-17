@@ -336,9 +336,9 @@
 }
 
 .prio-pill-premium.active.baixa {
-    background: #dbeafe;
-    border-color: #3b82f6;
-    color: #1d4ed8;
+    background: #f0fdf4;
+    border-color: #16a34a;
+    color: #15803d;
 }
 
 .material-pill-premium.active {
@@ -407,6 +407,66 @@
     border-radius: 6px;
     text-transform: lowercase;
 }
+
+/* ── Tab bar ── */
+.tabs-bar-premium {
+    display: flex;
+    gap: 0;
+    padding: 0 2rem;
+    border-bottom: 1px solid #e2e8f0;
+    margin: 0;
+    overflow-x: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    position: sticky;
+    top: 0;
+    background: #ffffff;
+    z-index: 10;
+    flex-shrink: 0;
+}
+
+.tabs-bar-premium::-webkit-scrollbar {
+    display: none;
+}
+
+.tab-btn-premium {
+    padding: 0.85rem 1.25rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    background: none;
+    border: none;
+    border-bottom: 2.5px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+}
+
+.tab-btn-premium:hover {
+    color: #475569;
+}
+
+.tab-btn-premium.active {
+    color: hsl(var(--color-primary));
+    border-bottom-color: hsl(var(--color-primary));
+}
+
+/* Cores individuais por legenda */
+.tab-btn-premium[data-tab="release"].active { color: #0f7ddb; border-bottom-color: #0f7ddb; background: #eaf4fc; border-radius: 8px 8px 0 0; }
+.tab-btn-premium[data-tab="post"].active { color: #ca8a04; border-bottom-color: #ca8a04; background: #fef9e7; border-radius: 8px 8px 0 0; }
+.tab-btn-premium[data-tab="video"].active { color: #e040a3; border-bottom-color: #e040a3; background: #fdf0f8; border-radius: 8px 8px 0 0; }
+.tab-btn-premium[data-tab="foto"].active { color: #16a34a; border-bottom-color: #16a34a; background: #f0fdf4; border-radius: 8px 8px 0 0; }
+.tab-btn-premium[data-tab="arte"].active { color: #7c3aed; border-bottom-color: #7c3aed; background: #f5f3ff; border-radius: 8px 8px 0 0; }
+.tab-btn-premium[data-tab="inauguracao"].active { color: hsl(330, 55%, 55%); border-bottom-color: hsl(330, 55%, 55%); background: hsla(330, 60%, 96%, 1); border-radius: 8px 8px 0 0; }
+
+/* Legendas ativas no card (has-type) - cor suave quando NÃO selecionada */
+.tab-btn-premium[data-tab="release"].has-type:not(.active) { color: #0f7ddb; background: #eaf4fc; border-radius: 8px 8px 0 0; font-weight: 600; }
+.tab-btn-premium[data-tab="post"].has-type:not(.active) { color: #ca8a04; background: #fef9e7; border-radius: 8px 8px 0 0; font-weight: 600; }
+.tab-btn-premium[data-tab="video"].has-type:not(.active) { color: #e040a3; background: #fdf0f8; border-radius: 8px 8px 0 0; font-weight: 600; }
+.tab-btn-premium[data-tab="foto"].has-type:not(.active) { color: #16a34a; background: #f0fdf4; border-radius: 8px 8px 0 0; font-weight: 600; }
+.tab-btn-premium[data-tab="arte"].has-type:not(.active) { color: #7c3aed; background: #f5f3ff; border-radius: 8px 8px 0 0; font-weight: 600; }
+.tab-btn-premium[data-tab="inauguracao"].has-type:not(.active) { color: hsl(330, 55%, 55%); background: hsla(330, 60%, 96%, 1); border-radius: 8px 8px 0 0; font-weight: 600; }
 
 /* Responsive adjustments */
 @media (max-width: 640px) {

@@ -246,7 +246,6 @@
 .online-avatar-wrapper:first-child {
     margin-left: 0;
 }
-
 .online-avatar-wrapper:hover {
     transform: translateY(-4px);
     z-index: 10;
@@ -354,7 +353,6 @@
     z-index: 90;
     backdrop-filter: blur(2px);
 }
-
 @media (max-width: 768px) {
     /* Mostrar hamburguer */
     .hamburger-btn {

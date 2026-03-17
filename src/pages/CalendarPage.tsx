@@ -26,6 +26,7 @@ interface CalendarEvent {
     title: string;
     type: 'pauta' | 'feriado' | 'comemorativa' | 'inauguracao';
     date: Date;
+    priority?: string;
 }
 
 
@@ -59,7 +60,8 @@ export default function CalendarPage() {
                 id: `task-${t.id}`,
                 title: t.status === 'inauguracao' ? (t.inauguracao_nome || t.title) : t.title,
                 type: t.status === 'inauguracao' ? 'inauguracao' : 'pauta',
-                date: t.dueDate!
+                date: t.dueDate!,
+                priority: t.priority
             }));
 
         const mappedAgenda: CalendarEvent[] = agendaEvents
@@ -179,7 +181,7 @@ export default function CalendarPage() {
                             {dayEvents.map(evt => (
                                 <div
                                     key={evt.id}
-                                    className={`calendar-event-bar type-${evt.type}`}
+                                    className={`calendar-event-bar type-${evt.type} ${evt.priority ? `priority-${evt.priority}` : ''}`}
                                     title={evt.title}
                                     onClick={() => handleEventClick(evt)}
                                 >

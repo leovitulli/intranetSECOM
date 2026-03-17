@@ -47,9 +47,8 @@ export default function Agenda() {
                                         return (
                                         <div
                                             key={task.id}
-                                            className="event-card clickable"
+                                            className={`event-card clickable priority-${task.priority}`}
                                             onClick={() => setSelectedTask(task)}
-                                            style={{ borderLeft: `4px solid var(--status-${task.status})` }}
                                         >
                                             <div className="card-header" style={{ marginBottom: '8px' }}>
                                                 <div className="task-badges-container" style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>

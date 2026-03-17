@@ -337,3 +337,16 @@ h6 {
   background-color: #f8fafc;
   color: #64748b;
 }
+
+/* Global Priority Indicators */
+.priority-baixa {
+  border-left: 4px solid hsl(140, 70%, 45%) !important;
+}
+
+.priority-media {
+  border-left: 4px solid hsl(35, 100%, 50%) !important;
+}
+
+.priority-alta {
+  border-left: 4px solid hsl(350, 80%, 55%) !important;
+}

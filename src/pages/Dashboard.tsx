@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, MoreHorizontal, MessageSquare, Paperclip, Clock, Archive, RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useAuth } from '../contexts/AuthContext';
 import type { Task, TaskStatus, TaskType } from '../types/kanban';
 import { useData } from '../contexts/DataContext';
 import TaskModal from '../components/TaskModal';
@@ -151,10 +152,10 @@ export default function Dashboard() {
 
     return (
         <div className="dashboard-container">
-            <div className="page-header">
+            <div className="page-header dashboard-header-premium">
                 <div>
-                    <h1>Gestão de Pautas</h1>
-                    <p className="subtitle">Gerencie o fluxo completo das publicações e demandas da SECOM.</p>
+                    <h1 className="title">Gestão de Pautas</h1>
+                    <p className="subtitle">Acompanhe e organize as demandas da SECOM</p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <button className="btn-primary" onClick={() => setIsCreateModalOpen(true)}>

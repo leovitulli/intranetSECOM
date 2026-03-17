@@ -1,5 +1,5 @@
-/* Dashboard.css */
 .dashboard-container {
+    padding: 2rem;
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -358,18 +358,7 @@
     border: 2px dashed hsl(var(--color-primary));
 }
 
-/* Priority indicators for cards */
-.kanban-card.priority-baixa {
-    border-left: 4px solid hsl(140, 70%, 45%);
-}
-
-.kanban-card.priority-media {
-    border-left: 4px solid hsl(35, 100%, 50%);
-}
-
-.kanban-card.priority-alta {
-    border-left: 4px solid hsl(350, 80%, 55%);
-}/* Archived History Styles */
+/* Archived History Styles */
 .archived-task-item-premium {
     display: flex;
     justify-content: space-between;
