@@ -139,14 +139,16 @@ export default function Dashboard() {
         if (selectedTask?.id === updatedTask.id) setSelectedTask(updatedTask);
     };
 
-    const handleCreateTask = async (newTask: Task) => {
+    const handleCreateTask = async (newTask: Task): Promise<boolean> => {
         const success = await addTask(newTask);
         if (success) setIsCreateModalOpen(false);
+        return success;
     };
 
-    const handleCreateInaugTask = async (newTask: Task) => {
+    const handleCreateInaugTask = async (newTask: Task): Promise<boolean> => {
         const success = await addTask(newTask);
         if (success) setIsCreateInaugModalOpen(false);
+        return success;
     };
 
     return (

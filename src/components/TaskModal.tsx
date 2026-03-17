@@ -151,15 +151,17 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
             author: user.name,
             avatar: user.avatar,
             text: newComment,
-            date: new Date()
+            date: new Date(),
+            tab: activeTab !== 'geral' ? activeTab : undefined
         };
 
         // Instantly save comments
+        const updatedComments = [...task.comments, comment];
         onUpdateTask({
             ...task,
-            comments: [...task.comments, comment]
+            comments: updatedComments
         });
-        setEditedTask(prev => ({ ...prev, comments: [...prev.comments, comment] }));
+        setEditedTask(prev => ({ ...prev, comments: updatedComments }));
         setNewComment('');
     };
 
@@ -275,6 +277,59 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
     // The creator to display in side panel
     // Whether the description is the auto-generated inauguration markdown (hide it)
     const isAutoInaugDesc = isInauguracao && task.description?.startsWith('**Nome:**');
+
+    const renderCommentsByTab = (tabName?: string) => {
+        const filteredComments = editedTask.comments.filter(c => 
+            tabName === 'geral' ? (!c.tab || c.tab === 'geral') : c.tab === tabName
+        );
+
+        return (
+            <>
+                <div className="comments-list">
+                    {filteredComments.length > 0 ? (
+                        filteredComments.map(comment => (
+                            <div key={comment.id} className="comment">
+                                <img src={comment.avatar} alt={comment.author} className="comment-avatar" />
+                                <div className="comment-bubble">
+                                    <div className="comment-meta">
+                                        <span className="comment-author">{comment.author}</span>
+                                        <span className="comment-date">
+                                            {format(comment.date, "d 'de' MMM 'às' HH:mm", { locale: ptBR })}
+                                        </span>
+                                    </div>
+                                    <p className="comment-text">{comment.text}</p>
+                                </div>
+                                {(user?.role === 'admin' || user?.role === 'desenvolvedor' || user?.name === comment.author) && (
+                                    <div className="comment-actions" style={{ marginLeft: '10px', display: 'flex', gap: '5px', opacity: 0.5, alignItems: 'center' }}>
+                                        <button className="icon-btn-small" title="Excluir (em breve)" style={{ cursor: 'not-allowed' }}><X size={14} /></button>
+                                    </div>
+                                )}
+                            </div>
+                        ))
+                    ) : (
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b', fontStyle: 'italic', marginBottom: '1.5rem' }}>
+                            Nenhum comentário nesta aba ainda.
+                        </p>
+                    )}
+                </div>
+
+                <form onSubmit={handleAddComment} className="comment-input-area">
+                    <img src={user?.avatar} alt="You" className="comment-avatar" />
+                    <div className="input-wrapper">
+                        <input
+                            type="text"
+                            placeholder={tabName === 'geral' ? "Escreva um comentário geral..." : `Comentar sobre ${tabName}...`}
+                            value={newComment}
+                            onChange={e => setNewComment(e.target.value)}
+                        />
+                        <button type="submit" disabled={!newComment.trim()}>
+                            <Send size={18} />
+                        </button>
+                    </div>
+                </form>
+            </>
+        );
+    };
 
     return (
         <div className="modal-overlay">
@@ -673,81 +728,10 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                         </div>
 
                         <div className="modal-section-group-premium alternate-bg-premium">
-                            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1e293b' }}>Comentários e Atualizações</h3>
-                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b', fontStyle: 'italic', marginBottom: '1.5rem' }}>Nenhum comentário ainda. Seja o primeiro a interagir!</p>
-
-
-                            <div className="comments-list">
-                                {editedTask.comments.length > 0 ? (
-                                    editedTask.comments.map(comment => (
-                                        <div key={comment.id} className="comment">
-                                            <img src={comment.avatar} alt={comment.author} className="comment-avatar" />
-                                            <div className="comment-bubble">
-                                                <div className="comment-meta">
-                                                    <span className="comment-author">{comment.author}</span>
-                                                    <span className="comment-date">
-                                                        {format(comment.date, "d 'de' MMM 'às' HH:mm", { locale: ptBR })}
-                                                    </span>
-                                                </div>
-                                                <p className="comment-text">{comment.text}</p>
-                                            </div>
-                                            {(user?.role === 'admin' || user?.role === 'desenvolvedor' || user?.name === comment.author) && (
-                                                <div className="comment-actions" style={{ marginLeft: '10px', display: 'flex', gap: '5px', opacity: 0.5, alignItems: 'center' }}>
-                                                    <button className="icon-btn-small" title="Excluir (em breve)" style={{ cursor: 'not-allowed' }}><X size={14} /></button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))
-                                ) : null}
-                            </div>
-
-                            <form onSubmit={handleAddComment} className="comment-input-area">
-                                <img src={user?.avatar} alt="You" className="comment-avatar" />
-                                <div className="input-wrapper">
-                                    <input
-                                        type="text"
-                                        placeholder="Escreva um comentário ou atualização..."
-                                        value={newComment}
-                                        onChange={e => setNewComment(e.target.value)}
-                                    />
-                                    <button type="submit" disabled={!newComment.trim()}>
-                                        <Send size={18} />
-                                    </button>
-                                </div>
-                            </form>
+                            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1e293b' }}>Discussão Geral</h3>
+                            {renderCommentsByTab('geral')}
                         </div>
 
-                        <div className="modal-section activity-section" style={{ marginTop: '2rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
-                            <div className="section-header" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--color-text-muted)' }}>
-                                <Activity size={16} />
-                                <h3>Histórico de Atividades</h3>
-                            </div>
-                            <div className="activity-list" style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '8px',
-                                maxHeight: '200px',
-                                overflowY: 'auto',
-                                background: 'hsl(var(--color-background) / 0.5)',
-                                border: '1px solid hsl(var(--color-border))',
-                                borderRadius: 'var(--radius-md)',
-                                padding: '0.75rem'
-                            }}>
-                                {activityLogs.length > 0 ? (
-                                    activityLogs.map(log => (
-                                        <div key={log.id} className="activity-item" style={{ fontSize: '0.82rem', display: 'flex', gap: '8px', flexWrap: 'wrap', paddingBottom: '6px', borderBottom: '1px solid hsl(var(--color-border) / 0.5)' }}>
-                                            <span style={{ fontWeight: 600, color: 'var(--color-primary)' }}>{log.user_name}</span>
-                                            <span style={{ color: 'var(--color-text)', flex: 1 }}>{log.details}</span>
-                                            <span style={{ color: 'var(--color-text-muted)', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
-                                                {format(new Date(log.created_at), "d/MM HH:mm", { locale: ptBR })}
-                                            </span>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="empty-state text-muted" style={{ fontSize: '0.85rem' }}>Nenhum histórico registrado.</p>
-                                )}
-                            </div>
-                        </div>
                     </div>
 
                     <div className="modal-side-col-premium" style={{ borderLeft: "1px solid #e2e8f0", padding: "2rem 1.5rem" }}>
@@ -959,6 +943,35 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                             </div>
                         </div>
 
+                        {/* Histórico de Atividades - Global na Lateral */}
+                        <div className="side-section-premium" style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem', marginTop: 'auto' }}>
+                            <div className="side-title-premium" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748b' }}>
+                                <Activity size={14} /> HISTÓRICO
+                            </div>
+                            <div className="activity-list" style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '10px',
+                                maxHeight: '250px',
+                                overflowY: 'auto',
+                                paddingRight: '5px'
+                            }}>
+                                {activityLogs.length > 0 ? (
+                                    activityLogs.map(log => (
+                                        <div key={log.id} style={{ fontSize: '0.75rem', borderLeft: '2px solid #e2e8f0', paddingLeft: '10px', paddingBottom: '2px' }}>
+                                            <div style={{ fontWeight: 700, color: '#475569' }}>{log.user_name}</div>
+                                            <div style={{ color: '#64748b', margin: '2px 0' }}>{log.details}</div>
+                                            <div style={{ color: '#94a3b8', fontSize: '0.65rem' }}>
+                                                {format(new Date(log.created_at), "d/MM HH:mm", { locale: ptBR })}
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p style={{ fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic' }}>Nenhum registro.</p>
+                                )}
+                            </div>
+                        </div>
+
                         {/* Save Actions Banner */}
                         {hasUnsavedChanges && (
                             <div className="save-banner-premium">
@@ -983,51 +996,230 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                 )}
 
                 {activeTab === 'release' && (
-                    <div className="modal-body" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem' }}>
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📝</div>
-                            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>Aba de Release</h3>
-                            <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>Os campos dedicados para produção de Release serão construídos aqui em breve.</p>
+                    <div className="modal-body">
+                        <div className="modal-main-col-premium" style={{ gap: "0" }}>
+                            <div className="modal-section-group-premium">
+                                <div className="section-header-premium">
+                                    <span className="section-number-premium">📝</span>
+                                    <h3>Produção de Release</h3>
+                                </div>
+                                <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Os campos dedicados para produção de Release serão construídos aqui em breve.</p>
+                            </div>
+                            
+                            <section className="modal-section-group-premium">
+                                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1e293b', marginBottom: '1.5rem' }}>Discussão do Release</h3>
+                                {renderCommentsByTab('release')}
+                            </section>
                         </div>
                     </div>
                 )}
 
                 {activeTab === 'post' && (
-                    <div className="modal-body" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem' }}>
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📱</div>
-                            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>Aba de Post</h3>
-                            <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>Os campos dedicados para produção de Posts serão construídos aqui em breve.</p>
+                    <div className="modal-body">
+                        <div className="modal-main-col-premium" style={{ gap: "0" }}>
+                            <div className="modal-section-group-premium">
+                                <div className="section-header-premium">
+                                    <span className="section-number-premium">📱</span>
+                                    <h3>Estratégia de Social Media</h3>
+                                </div>
+                                <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Os campos dedicados para produção de Posts serão construídos aqui em breve.</p>
+                            </div>
+                            
+                            <section className="modal-section-group-premium">
+                                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1e293b', marginBottom: '1.5rem' }}>Discussão do Post</h3>
+                                {renderCommentsByTab('post')}
+                            </section>
                         </div>
                     </div>
                 )}
 
                 {activeTab === 'video' && (
-                    <div className="modal-body" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem' }}>
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🎬</div>
-                            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>Aba de Vídeo</h3>
-                            <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>Os campos dedicados para produção de Vídeos serão construídos aqui em breve.</p>
+                    <div className="modal-body">
+                        <div className="modal-main-col-premium" style={{ gap: "0" }}>
+                            <div className="modal-section-group-premium">
+                                <div className="section-header-premium">
+                                    <span className="section-number-premium">🎬</span>
+                                    <h3>Planejamento de Vídeo</h3>
+                                </div>
+                                <div className="nova-pauta-field-premium">
+                                    <label className="field-label-premium">Resumo da Pauta / Briefing de Vídeo</label>
+                                    <textarea
+                                        className="input-premium-textarea"
+                                        rows={6}
+                                        placeholder="Objetivo do vídeo, roteiro básico..."
+                                        value={editedTask.video_briefing || ''}
+                                        onChange={e => handleFieldChange('video_briefing', e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="modal-section-group-premium alternate-bg-premium">
+                                <div className="section-header-premium">
+                                    <span className="section-number-premium">02</span>
+                                    <h3>Equipe e Prazos (Vídeo)</h3>
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                                    <div className="detail-item-premium">
+                                        <label className="detail-label-premium">Captação (Imagens)</label>
+                                        <TeamMultiSelect
+                                            selected={editedTask.video_captacao_equipe || []}
+                                            onChange={val => handleFieldChange('video_captacao_equipe', val)}
+                                        />
+                                    </div>
+                                    <div className="detail-item-premium">
+                                        <label className="detail-label-premium">Data Captação</label>
+                                        <input
+                                            type="date"
+                                            className="input-premium"
+                                            value={editedTask.video_captacao_data ? new Date(editedTask.video_captacao_data).toISOString().split('T')[0] : ''}
+                                            onChange={e => handleFieldChange('video_captacao_data', e.target.value ? new Date(e.target.value + 'T12:00:00') : null)}
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginTop: '1.5rem' }}>
+                                    <div className="detail-item-premium">
+                                        <label className="detail-label-premium">Edição / Finalização</label>
+                                        <TeamMultiSelect
+                                            selected={editedTask.video_edicao_equipe || []}
+                                            onChange={val => handleFieldChange('video_edicao_equipe', val)}
+                                        />
+                                    </div>
+                                    <div className="detail-item-premium">
+                                        <label className="detail-label-premium">Previsão de Edição</label>
+                                        <input
+                                            type="date"
+                                            className="input-premium"
+                                            value={editedTask.video_edicao_data ? new Date(editedTask.video_edicao_data).toISOString().split('T')[0] : ''}
+                                            onChange={e => handleFieldChange('video_edicao_data', e.target.value ? new Date(e.target.value + 'T12:00:00') : null)}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="modal-section-group-premium">
+                                <div className="section-header-premium">
+                                    <span className="section-number-premium">03</span>
+                                    <h3>O que precisa ser feito?</h3>
+                                </div>
+                                <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', background: 'white', padding: '1rem', borderRadius: '12px', border: '1.5px solid #e2e8f0' }}>
+                                    {[
+                                        { id: 'cobertura', label: 'Cobertura (Imagens)' },
+                                        { id: 'depoimentos', label: 'Depoimentos' },
+                                        { id: 'drone', label: 'Imagens Aéreas (Drone)' }
+                                    ].map(item => (
+                                        <label key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, color: '#475569' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={(editedTask.video_necessidades || []).includes(item.id)}
+                                                onChange={e => {
+                                                    const current = editedTask.video_necessidades || [];
+                                                    if (e.target.checked) handleFieldChange('video_necessidades', [...current, item.id]);
+                                                    else handleFieldChange('video_necessidades', current.filter(x => x !== item.id));
+                                                }}
+                                                style={{ width: '18px', height: '18px', accentColor: '#3b82f6' }}
+                                            />
+                                            {item.label}
+                                        </label>
+                                    ))}
+                                </div>
+                                {(editedTask.video_necessidades || []).includes('depoimentos') && (
+                                    <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '6px', color: '#dc2626', fontSize: '0.75rem', fontWeight: 700 }}>
+                                        <span style={{ background: '#fee2e2', padding: '2px 6px', borderRadius: '4px' }}>💡 AVISO:</span>
+                                        Não esqueça de levar o microfone!
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="modal-section-group-premium alternate-bg-premium">
+                                <div className="section-header-premium">
+                                    <span className="section-number-premium">🎬</span>
+                                    <h3>Controle de Entrega</h3>
+                                </div>
+                                <div style={{ maxWidth: '300px' }}>
+                                    <div className="detail-item-premium">
+                                        <label className="detail-label-premium">Prazo Máximo de Entrega</label>
+                                        <input
+                                            type="date"
+                                            className="input-premium"
+                                            value={editedTask.video_entrega_data ? new Date(editedTask.video_entrega_data).toISOString().split('T')[0] : ''}
+                                            onChange={e => handleFieldChange('video_entrega_data', e.target.value ? new Date(e.target.value + 'T12:00:00') : null)}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Comentários da Aba */}
+                            <section className="modal-section-group-premium">
+                                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1e293b', marginBottom: '1.5rem' }}>Discussão da Produção (Vídeo)</h3>
+                                {renderCommentsByTab('video')}
+                            </section>
                         </div>
                     </div>
                 )}
 
                 {activeTab === 'foto' && (
-                    <div className="modal-body" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem' }}>
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📸</div>
-                            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>Aba de Foto</h3>
-                            <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>Os campos dedicados para produção de Fotos serão construídos aqui em breve.</p>
+                    <div className="modal-body">
+                        <div className="modal-main-col-premium" style={{ gap: "0" }}>
+                            <div className="modal-section-group-premium">
+                                <div className="section-header-premium">
+                                    <span className="section-number-premium">📸</span>
+                                    <h3>Produção de Fotografia</h3>
+                                </div>
+                                <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Os campos dedicados para produção de Fotos serão construídos aqui em breve.</p>
+                            </div>
+                            
+                            <section className="modal-section-group-premium">
+                                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1e293b', marginBottom: '1.5rem' }}>Discussão da Fotografia</h3>
+                                {renderCommentsByTab('foto')}
+                            </section>
                         </div>
                     </div>
                 )}
 
                 {activeTab === 'arte' && (
-                    <div className="modal-body" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem' }}>
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🎨</div>
-                            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>Aba de Arte Gráfica</h3>
-                            <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>Os campos dedicados para produção de Artes Gráficas serão construídos aqui em breve.</p>
+                    <div className="modal-body">
+                        <div className="modal-main-col-premium" style={{ gap: "0" }}>
+                            <div className="modal-section-group-premium">
+                                <div className="section-header-premium">
+                                    <span className="section-number-premium">🎨</span>
+                                    <h3>Pedido de Arte</h3>
+                                </div>
+                                
+                                <div className="nova-pauta-field-premium" style={{ marginBottom: '1.5rem' }}>
+                                    <label className="field-label-premium">TIPO DE PEÇAS</label>
+                                    <textarea
+                                        className="input-premium-textarea"
+                                        rows={4}
+                                        placeholder="Descreva as peças necessárias (ex: Banner 120x80, Arte para Instagram, Card de convite...)"
+                                        value={editedTask.arte_tipo_pecas || ''}
+                                        onChange={e => handleFieldChange('arte_tipo_pecas', e.target.value)}
+                                    />
+                                </div>
+
+                                <div className="fields-grid-2-premium">
+                                    <div className="nova-pauta-field-premium">
+                                        <label className="field-label-premium">PRAZO DE ENTREGA</label>
+                                        <input
+                                            type="date"
+                                            className="input-premium"
+                                            value={editedTask.arte_entrega_data ? new Date(editedTask.arte_entrega_data).toISOString().split('T')[0] : ''}
+                                            onChange={e => handleFieldChange('arte_entrega_data', e.target.value ? new Date(e.target.value + 'T12:00:00') : null)}
+                                        />
+                                    </div>
+                                    <div className="nova-pauta-field-premium">
+                                        <label className="field-label-premium">ANEXOS / REFERÊNCIAS</label>
+                                        <div style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: '12px', border: '1.5px dashed #e2e8f0', textAlign: 'center' }}>
+                                            <p style={{ fontSize: '0.8rem', color: '#64748b' }}>Utilize a seção de anexos abaixo para gerenciar as imagens desta arte.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <section className="modal-section-group-premium">
+                                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1e293b', marginBottom: '1.5rem' }}>Discussão da Arte</h3>
+                                {renderCommentsByTab('arte')}
+                            </section>
                         </div>
                     </div>
                 )}

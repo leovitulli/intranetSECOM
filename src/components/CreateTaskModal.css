@@ -1,8 +1,8 @@
 /* CreateTaskModal.css - Premium Overhaul */
 
 .nova-pauta-modal {
-    max-width: 720px;
-    /* Wider for better alignment */
+    max-width: 1000px;
+    /* Wider for better alignment with multiple tabs content */
     width: 95%;
     max-height: 95vh;
     background: #ffffff;

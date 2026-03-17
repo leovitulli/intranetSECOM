@@ -11,7 +11,7 @@ import { ptBR } from 'date-fns/locale';
 
 interface CreateTaskModalProps {
     onClose: () => void;
-    onCreate: (task: Task) => Promise<void>;
+    onCreate: (task: Task) => Promise<boolean>;
 }
 
 export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalProps) {
@@ -65,7 +65,13 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
     const [videoCaptacaoData, setVideoCaptacaoData] = useState('');
     const [videoEdicaoEquipe, setVideoEdicaoEquipe] = useState<string[]>([]);
     const [videoEdicaoData, setVideoEdicaoData] = useState('');
+    const [videoBriefing, setVideoBriefing] = useState('');
+    const [videoNecessidades, setVideoNecessidades] = useState<string[]>([]);
     const [videoEntregaData, setVideoEntregaData] = useState('');
+    
+    // Arte Tab States
+    const [arteTipoPecas, setArteTipoPecas] = useState('');
+    const [arteEntregaData, setArteEntregaData] = useState('');
 
 
     const getDayOfWeek = (dateStr: string) => {
@@ -121,12 +127,20 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                 video_captacao_data: videoCaptacaoData ? new Date(videoCaptacaoData) : undefined,
                 video_edicao_equipe: videoEdicaoEquipe.length > 0 ? videoEdicaoEquipe : undefined,
                 video_edicao_data: videoEdicaoData ? new Date(videoEdicaoData) : undefined,
+                video_briefing: videoBriefing || undefined,
+                video_necessidades: videoNecessidades.length > 0 ? videoNecessidades : undefined,
                 video_entrega_data: videoEntregaData ? new Date(videoEntregaData) : undefined,
+                arte_tipo_pecas: arteTipoPecas || undefined,
+                arte_entrega_data: arteEntregaData ? new Date(arteEntregaData) : undefined,
             };
 
-            await onCreate(newTask);
+            const success = await onCreate(newTask);
+            if (success) {
+                onClose();
+            }
         } catch (error) {
             console.error("Erro ao criar pauta: ", error);
+            alert("Erro ao criar pauta. Verifique sua conexão.");
         } finally {
             setIsSubmitting(false);
         }
@@ -393,8 +407,50 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                             <div className="modal-section-group-premium">
                                 <div className="section-header-premium">
                                     <span className="section-number-premium" style={{ background: 'hsla(210, 80%, 96%, 1)', color: 'hsl(210, 70%, 50%)' }}><Plus size={14} /></span>
-                                    <h3>Equipe de Produção (Vídeo)</h3>
+                                    <h3>Planejamento e Captação (Vídeo)</h3>
                                 </div>
+
+                                <div className="nova-pauta-field-premium" style={{ marginBottom: '1.5rem' }}>
+                                    <label className="field-label-premium">Resumo da Pauta / Briefing de Vídeo</label>
+                                    <textarea
+                                        className="input-premium-textarea"
+                                        rows={4}
+                                        placeholder="Objetivo do vídeo, roteiro básico, referências e observações para a equipe de captação e edição..."
+                                        value={videoBriefing}
+                                        onChange={e => setVideoBriefing(e.target.value)}
+                                    />
+                                </div>
+
+                                <div className="nova-pauta-field-premium" style={{ marginBottom: '1.5rem' }}>
+                                    <label className="field-label-premium">O que precisa ser feito?</label>
+                                    <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', background: 'white', padding: '1rem', borderRadius: '12px', border: '1.5px solid #e2e8f0' }}>
+                                        {[
+                                            { id: 'cobertura', label: 'Cobertura (Imagens)' },
+                                            { id: 'depoimentos', label: 'Depoimentos' },
+                                            { id: 'drone', label: 'Imagens Aéreas (Drone)' }
+                                        ].map(item => (
+                                            <label key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, color: '#475569' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={videoNecessidades.includes(item.id)}
+                                                    onChange={e => {
+                                                        if (e.target.checked) setVideoNecessidades([...videoNecessidades, item.id]);
+                                                        else setVideoNecessidades(videoNecessidades.filter(x => x !== item.id));
+                                                    }}
+                                                    style={{ width: '18px', height: '18px', accentColor: '#3b82f6' }}
+                                                />
+                                                {item.label}
+                                            </label>
+                                        ))}
+                                    </div>
+                                    {videoNecessidades.includes('depoimentos') && (
+                                        <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '6px', color: '#dc2626', fontSize: '0.75rem', fontWeight: 700 }}>
+                                            <span style={{ background: '#fee2e2', padding: '2px 6px', borderRadius: '4px' }}>💡 AVISO:</span>
+                                            Não esqueça de levar o microfone!
+                                        </div>
+                                    )}
+                                </div>
+
                                 <div className="fields-grid-2-premium">
                                     <div className="nova-pauta-field-premium">
                                         <label className="field-label-premium">Captação (Imagens)</label>
@@ -488,10 +544,40 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                     )}
 
                     {activeTab === 'arte' && (
-                        <div className="modal-section-group-premium" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
-                            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🎨</div>
-                            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>Pedido de Arte</h3>
-                            <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>Identidade visual, textos obrigatórios e dimensões para a equipe de criação.</p>
+                        <div className="modal-section-group-premium">
+                            <div className="section-header-premium">
+                                <span className="section-number-premium">🎨</span>
+                                <h3>Pedido de Arte</h3>
+                            </div>
+                            
+                            <div className="nova-pauta-field-premium" style={{ marginBottom: '1.5rem' }}>
+                                <label className="field-label-premium">TIPO DE PEÇAS</label>
+                                <textarea
+                                    className="input-premium-textarea"
+                                    rows={4}
+                                    placeholder="Descreva as peças necessárias (ex: Banner 120x80, Arte para Instagram, Card de convite...)"
+                                    value={arteTipoPecas}
+                                    onChange={e => setArteTipoPecas(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="fields-grid-2-premium">
+                                <div className="nova-pauta-field-premium">
+                                    <label className="field-label-premium">PRAZO DE ENTREGA</label>
+                                    <input
+                                        type="date"
+                                        className="input-premium"
+                                        value={arteEntregaData}
+                                        onChange={e => setArteEntregaData(e.target.value)}
+                                    />
+                                </div>
+                                <div className="nova-pauta-field-premium">
+                                    <label className="field-label-premium">ANEXOS / REFERÊNCIAS</label>
+                                    <div style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: '12px', border: '1.5px dashed #e2e8f0', textAlign: 'center' }}>
+                                        <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.5rem' }}>Os anexos podem ser adicionados após a criação da pauta através do botão de arquivos.</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     )}
 

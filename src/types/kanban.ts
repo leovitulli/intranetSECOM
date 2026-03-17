@@ -8,6 +8,7 @@ export interface Comment {
     avatar: string;
     text: string;
     date: Date;
+    tab?: string; // Para segmentação de comentários por aba
 }
 
 export interface Attachment {
@@ -59,5 +60,9 @@ export interface Task {
     video_captacao_data?: Date | null;
     video_edicao_equipe?: string[];
     video_edicao_data?: Date | null;
+    video_briefing?: string;
+    video_necessidades?: string[];
     video_entrega_data?: Date | null;
+    arte_tipo_pecas?: string;
+    arte_entrega_data?: Date | null;
 }

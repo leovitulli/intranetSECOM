@@ -4,6 +4,8 @@ ADD COLUMN IF NOT EXISTS video_captacao_equipe text[] DEFAULT '{}',
 ADD COLUMN IF NOT EXISTS video_captacao_data date,
 ADD COLUMN IF NOT EXISTS video_edicao_equipe text[] DEFAULT '{}',
 ADD COLUMN IF NOT EXISTS video_edicao_data date,
+ADD COLUMN IF NOT EXISTS video_briefing text,
+ADD COLUMN IF NOT EXISTS video_necessidades text[] DEFAULT '{}',
 ADD COLUMN IF NOT EXISTS video_entrega_data date;
 
 COMMENT ON COLUMN tasks.video_captacao_equipe IS 'Equipe responsável pela captação das imagens';

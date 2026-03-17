@@ -53,32 +53,13 @@ export default function ProfileTeamTab() {
                 console.log('✅ Auth criado. ID:', authUserId);
             }
 
-            const profileId = authUserId || crypto.randomUUID();
-            const payload = {
-                id: profileId,
-                name: member.name,
-                email: member.email,
-                role: member.role,
-                phone: member.phone || null,
-                job_titles: member.job_titles || [],
-                has_login: member.hasLogin
-            };
-
-            console.log('💾 Salvando no banco (tabela users)...');
-            const { error: insertError } = await supabase.from('users').insert([payload]);
+            // Com a nova Arquitetura Atômica (Migração 09), o Trigger SQL 'on_auth_user_created'
+            // criará automaticamente o perfil na tabela public.users assim que o auth.signUp for concluído.
+            // Isso garante transacionalidade e evita usuários "fantasma".
             
-            if (insertError) {
-                console.error('Database insert error:', insertError);
-                // Se o Auth foi criado mas o banco falhou, o usuário fica órfão.
-                const errorMsg = authUserId 
-                    ? `O login foi criado, mas houve um erro ao salvar o perfil no banco: ${insertError.message}. Por favor, contate o administrador para remover o usuário "${member.email}" do Auth.`
-                    : `Erro ao salvar no Banco: ${insertError.message}`;
-                throw new Error(errorMsg);
-            }
-
-            console.log('🎉 Tudo pronto!');
+            console.log('🎉 Auth concluído. O Trigger do banco criará o perfil automaticamente.');
             setIsModalOpen(false);
-            alert(`✅ ${member.name} cadastrado com sucesso!`);
+            alert(`✅ Solicitação de cadastro para ${member.name} enviada com sucesso!\n\nO perfil será ativado automaticamente em instantes.`);
         } catch (err: any) {
             console.error('Create member error:', err);
             const msg = err.message || '';

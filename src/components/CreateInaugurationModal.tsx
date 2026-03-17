@@ -8,7 +8,7 @@ import './CreateInaugurationModal.css';
 
 interface CreateInaugurationModalProps {
     onClose: () => void;
-    onCreate: (task: Task) => void;
+    onCreate: (task: Task) => Promise<boolean>;
 }
 
 const CHECKLIST_SIMPLES: Omit<InaugurationChecklistItem, 'done'>[] = [
@@ -48,7 +48,7 @@ export default function CreateInaugurationModal({ onClose, onCreate }: CreateIna
     };
 
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!nome.trim() || secretarias.length === 0 || !dataInauguracao) return;
 
@@ -80,7 +80,10 @@ export default function CreateInaugurationModal({ onClose, onCreate }: CreateIna
             createdAt: new Date(),
         };
 
-        onCreate(newTask);
+        const success = await onCreate(newTask);
+        if (success) {
+            onClose();
+        }
     };
 
     const allDone = checklist.every(item => item.done);

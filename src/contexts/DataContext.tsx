@@ -64,7 +64,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                     id, title, description, status, type, creator, priority, due_date, archived, archived_at,
                     inauguracao_nome, inauguracao_endereco, inauguracao_secretarias, inauguracao_tipo, inauguracao_checklist, inauguracao_data,
                     pauta_data, pauta_horario, pauta_endereco, pauta_saida, is_pauta_externa,
-                    video_captacao_equipe, video_captacao_data, video_edicao_equipe, video_edicao_data, video_entrega_data,
+                    video_captacao_equipe, video_captacao_data, video_edicao_equipe, video_edicao_data, video_briefing, video_necessidades, video_entrega_data,
+                    arte_tipo_pecas, arte_entrega_data,
                     attachments, comments,
                     task_assignees ( users ( name ) )
                 `).order('created_at', { ascending: false }),
@@ -147,7 +148,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                     video_captacao_data: t.video_captacao_data ? new Date(t.video_captacao_data) : undefined,
                     video_edicao_equipe: t.video_edicao_equipe,
                     video_edicao_data: t.video_edicao_data ? new Date(t.video_edicao_data) : undefined,
+                    video_briefing: t.video_briefing || undefined,
+                    video_necessidades: t.video_necessidades,
                     video_entrega_data: t.video_entrega_data ? new Date(t.video_entrega_data) : undefined,
+                    arte_tipo_pecas: t.arte_tipo_pecas || undefined,
+                    arte_entrega_data: t.arte_entrega_data ? new Date(t.arte_entrega_data) : undefined,
                 });
                 setTasks(finalTasksData.filter((t: any) => !t.archived).map(formatTask));
                 setArchivedTasks(finalTasksData.filter((t: any) => t.archived).map(formatTask));
@@ -248,6 +253,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 pauta_endereco: updatedTask.pauta_endereco || null,
                 pauta_saida: updatedTask.pauta_saida || null,
                 is_pauta_externa: updatedTask.is_pauta_externa || false,
+                video_captacao_equipe: updatedTask.video_captacao_equipe || null,
+                video_captacao_data: updatedTask.video_captacao_data?.toISOString() || null,
+                video_edicao_equipe: updatedTask.video_edicao_equipe || null,
+                video_edicao_data: updatedTask.video_edicao_data?.toISOString() || null,
+                video_briefing: updatedTask.video_briefing || null,
+                video_necessidades: updatedTask.video_necessidades || null,
+                video_entrega_data: updatedTask.video_entrega_data?.toISOString() || null,
+                arte_tipo_pecas: updatedTask.arte_tipo_pecas || null,
+                arte_entrega_data: updatedTask.arte_entrega_data?.toISOString() || null,
                 comments: updatedTask.comments || [],
                 attachments: updatedTask.attachments || [],
             })
@@ -299,170 +313,70 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
     const addTask = async (taskData: Omit<Task, 'id' | 'comments' | 'attachments'>): Promise<boolean> => {
         try {
-            console.log("🚀 Iniciando criação de pauta:", taskData.title);
+            console.log("🚀 Iniciando criação Atômica de Pauta...");
             
-            const payload = {
-                title: taskData.title,
-                description: taskData.description,
-                status: taskData.status,
-                type: taskData.type,
-                creator: taskData.creator,
-                priority: taskData.priority,
-                due_date: taskData.dueDate?.toISOString() || null,
-                inauguracao_nome: taskData.inauguracao_nome || null,
-                inauguracao_endereco: taskData.inauguracao_endereco || null,
-                inauguracao_secretarias: taskData.inauguracao_secretarias || null,
-                inauguracao_tipo: taskData.inauguracao_tipo || null,
-                inauguracao_checklist: taskData.inauguracao_checklist || null,
-                inauguracao_data: taskData.inauguracao_data?.toISOString().split('T')[0] || null,
-                pauta_data: (taskData as any).pauta_data || null,
-                pauta_horario: (taskData as any).pauta_horario || null,
-                pauta_endereco: (taskData as any).pauta_endereco || null,
-                pauta_saida: (taskData as any).pauta_saida || null,
-                is_pauta_externa: (taskData as any).is_pauta_externa || false,
-                video_captacao_equipe: taskData.video_captacao_equipe || null,
-                video_captacao_data: taskData.video_captacao_data?.toISOString().split('T')[0] || null,
-                video_edicao_equipe: taskData.video_edicao_equipe || null,
-                video_edicao_data: taskData.video_edicao_data?.toISOString().split('T')[0] || null,
-                video_entrega_data: taskData.video_entrega_data?.toISOString().split('T')[0] || null,
-            };
+            // 1. Mapear nomes de responsáveis para IDs (Necessário para a RPC)
+            const assigneeIds = (taskData.assignees || [])
+                .map(name => team.find(m => m.name === name)?.id)
+                .filter(Boolean) as string[];
 
-            // Automação: Se tem equipe de vídeo, status vira 'producao'
+            // 2. Preparar Status Automático
+            let finalStatus = taskData.status;
             if (taskData.video_captacao_equipe && taskData.video_captacao_equipe.length > 0) {
-                payload.status = 'producao';
+                finalStatus = 'producao';
             }
 
-            const { data, error } = await supabase
-                .from('tasks')
-                .insert([payload])
-                .select()
-                .single();
+            // 3. Chamar a Super-Função (RPC) no banco
+            const { data, error } = await supabase.rpc('create_task_atomic', {
+                p_title: taskData.title,
+                p_description: taskData.description,
+                p_status: finalStatus,
+                p_priority: taskData.priority,
+                p_type: taskData.type,
+                p_creator: taskData.creator,
+                p_due_date: taskData.dueDate?.toISOString() || null,
+                p_assignee_ids: assigneeIds,
+                p_inauguracao_nome: taskData.inauguracao_nome || null,
+                p_inauguracao_endereco: taskData.inauguracao_endereco || null,
+                p_inauguracao_secretarias: taskData.inauguracao_secretarias || null,
+                p_inauguracao_tipo: taskData.inauguracao_tipo || null,
+                p_inauguracao_checklist: taskData.inauguracao_checklist || null,
+                p_inauguracao_data: taskData.inauguracao_data?.toISOString().split('T')[0] || null,
+                p_pauta_data: (taskData as any).pauta_data || null,
+                p_pauta_horario: (taskData as any).pauta_horario || null,
+                p_pauta_endereco: (taskData as any).pauta_endereco || null,
+                p_pauta_saida: (taskData as any).pauta_saida || null,
+                p_is_pauta_externa: (taskData as any).is_pauta_externa || false,
+                p_video_captacao_equipe: taskData.video_captacao_equipe || [],
+                p_video_captacao_data: taskData.video_captacao_data?.toISOString().split('T')[0] || null,
+                p_video_edicao_equipe: taskData.video_edicao_equipe || [],
+                p_video_edicao_data: taskData.video_edicao_data?.toISOString().split('T')[0] || null,
+                p_video_briefing: taskData.video_briefing || null,
+                p_video_necessidades: taskData.video_necessidades || [],
+                p_video_entrega_data: taskData.video_entrega_data?.toISOString().split('T')[0] || null,
+                p_arte_tipo_pecas: taskData.arte_tipo_pecas || null,
+                p_arte_entrega_data: taskData.arte_entrega_data?.toISOString().split('T')[0] || null
+            });
 
             if (error) {
-                console.error("❌ Erro Supabase (tasks):", error);
-
-                // Modo Safe Recovery para schema desatualizado
-                if (error.code === '42703' || error.message.includes('does not exist') || error.message.includes('invalid input value for enum')) {
-                    console.warn("⚠️ Mismatch de schema! Tentando modo de segurança...");
-                    
-                    let safeType = taskData.type;
-                    if (error.message.includes('enum')) {
-                        safeType = taskData.type.filter(t => !['post', 'inauguracao'].includes(t));
-                    }
-
-                    let safeDesc = taskData.description || '';
-                    const extra = [];
-                    if ((taskData as any).pauta_data) extra.push(`Data: ${new Date((taskData as any).pauta_data).toLocaleDateString('pt-BR')}`);
-                    if ((taskData as any).pauta_horario) extra.push(`Hora: ${(taskData as any).pauta_horario}`);
-                    
-                    if (extra.length > 0) safeDesc += `\n\n[DADOS RECUPERADOS]\n` + extra.join('\n');
-
-                    const safePayload = {
-                        title: taskData.title,
-                        description: safeDesc,
-                        status: taskData.status,
-                        type: safeType,
-                        creator: taskData.creator,
-                        priority: taskData.priority,
-                        due_date: taskData.dueDate?.toISOString() || null,
-                        created_at: new Date().toISOString(),
-                    };
-
-                    const { data: retryData, error: retryError } = await supabase.from('tasks').insert([safePayload]).select().single();
-                    
-                    if (retryError) {
-                        console.error("🔥 Erro Crítico no Retry:", retryError);
-                        alert(`Erro ao salvar pauta (Safe Mode): ${retryError.message}`);
-                        return false;
-                    }
-
-                    if (retryData) {
-                        await processNewTaskData(retryData, taskData);
-                        return true;
-                    }
-                }
-
-                alert(`Não foi possível salvar a pauta: ${error.message}`);
+                console.error("❌ Erro RPC (create_task_atomic):", error);
+                alert(`Erro Crítico ao salvar pauta: ${error.message}`);
                 return false;
             }
 
             if (data) {
-                await processNewTaskData(data, taskData);
+                console.log("✅ Pauta criada atomicamente com sucesso!");
+                // O estado local será atualizado automaticamente via Realtime (postgres_changes)
+                // Mas podemos forçar uma atualização otimista aqui se necessário.
                 return true;
             }
             
             return false;
         } catch (err: any) {
-            console.error("💥 Erro Inesperado (addTask):", err);
+            console.error("💥 Erro Inesperado (addTask Atomic):", err);
             alert(`Ocorreu um erro inesperado: ${err.message}`);
             return false;
         }
-    };
-
-    const processNewTaskData = async (data: any, taskData: Omit<Task, 'id' | 'comments' | 'attachments'>) => {
-        if (!data) return;
-
-        // 1. Preparar o objeto local com o ID real do banco
-        const newTask: Task = {
-            id: data.id,
-            title: data.title,
-            description: data.description || '',
-            status: data.status as Task['status'],
-            type: data.type as Task['type'],
-            creator: data.creator,
-            priority: data.priority as Task['priority'],
-            dueDate: data.due_date ? new Date(data.due_date) : null,
-            assignees: taskData.assignees,
-            comments: [],
-            attachments: [],
-            inauguracao_nome: data.inauguracao_nome || undefined,
-            inauguracao_endereco: data.inauguracao_endereco || undefined,
-            inauguracao_secretarias: data.inauguracao_secretarias || undefined,
-            inauguracao_tipo: data.inauguracao_tipo || undefined,
-            inauguracao_checklist: data.inauguracao_checklist || undefined,
-            inauguracao_data: data.inauguracao_data ? new Date(data.inauguracao_data) : undefined,
-            createdAt: new Date(),
-            pauta_saida: data.pauta_saida || undefined,
-            pauta_data: data.pauta_data || undefined,
-            pauta_horario: data.pauta_horario || undefined,
-            pauta_endereco: data.pauta_endereco || undefined,
-            is_pauta_externa: data.is_pauta_externa || false,
-            video_captacao_equipe: data.video_captacao_equipe || undefined,
-            video_captacao_data: data.video_captacao_data ? new Date(data.video_captacao_data) : undefined,
-            video_edicao_equipe: data.video_edicao_equipe || undefined,
-            video_edicao_data: data.video_edicao_data ? new Date(data.video_edicao_data) : undefined,
-            video_entrega_data: data.video_entrega_data ? new Date(data.video_entrega_data) : undefined,
-        };
-
-        // 2. Atualizar estado local IMEDIATAMENTE (Otimista)
-        setTasks(prev => {
-            // Evita duplicidade se o Realtime já tiver disparado
-            if (prev.some(t => t.id === data.id)) return prev;
-            return [newTask, ...prev];
-        });
-
-        // 3. Vincular Responsáveis (Aguardar conclusão para evitar pautas órfãs de equipe)
-        if (taskData.assignees && taskData.assignees.length > 0 && team.length > 0) {
-            const userIds = team
-                .filter(m => taskData.assignees.includes(m.name))
-                .map(m => m.id);
-
-            if (userIds.length > 0) {
-                const assigneesToInsert = userIds.map(uid => ({
-                    task_id: data.id,
-                    user_id: uid
-                }));
-                
-                const { error: assignError } = await supabase.from('task_assignees').insert(assigneesToInsert);
-                if (assignError) {
-                    console.error("⚠️ Erro ao vincular equipe:", assignError);
-                    // Não falha a criação da pauta, mas avisa
-                }
-            }
-        }
-
-        // 4. Log de atividade
-        await logActivity(data.id, 'create', `Criou a pauta "${data.title}"`);
     };
 
     const addSuggestion = async (title: string, description: string, department: string, author: string, attachmentUrls: string[] = []) => {
