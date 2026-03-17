@@ -31,10 +31,19 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
 
--- 2. GARANTIR COLUNAS DE SEGURANÇA
+-- 2. GARANTIR COLUNAS DE SEGURANÇA E ESTRUTURA (Vídeo/Arte/Agenda)
 ALTER TABLE public.tasks 
 ADD COLUMN IF NOT EXISTS pauta_saida TEXT,
-ADD COLUMN IF NOT EXISTS is_pauta_externa BOOLEAN DEFAULT FALSE;
+ADD COLUMN IF NOT EXISTS is_pauta_externa BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS video_captacao_equipe TEXT[] DEFAULT '{}',
+ADD COLUMN IF NOT EXISTS video_captacao_data DATE,
+ADD COLUMN IF NOT EXISTS video_edicao_equipe TEXT[] DEFAULT '{}',
+ADD COLUMN IF NOT EXISTS video_edicao_data DATE,
+ADD COLUMN IF NOT EXISTS video_briefing TEXT,
+ADD COLUMN IF NOT EXISTS video_necessidades TEXT[] DEFAULT '{}',
+ADD COLUMN IF NOT EXISTS video_entrega_data DATE,
+ADD COLUMN IF NOT EXISTS arte_tipo_pecas TEXT,
+ADD COLUMN IF NOT EXISTS arte_entrega_data DATE;
 
 
 -- 3. FUNÇÃO DE CRIAÇÃO ATÔMICA DE PAUTA (RPC) - FLEXÍVEL
