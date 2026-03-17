@@ -84,12 +84,12 @@ export default function Reports() {
         });
 
         return [
-            { name: 'Release', value: counts.release, color: '#4F46E5', filter: 'release' },
-            { name: 'Post', value: counts.post, color: '#D97706', filter: 'post' },
-            { name: 'Vídeo', value: counts.video, color: '#EC4899', filter: 'video' },
-            { name: 'Foto', value: counts.foto, color: '#10B981', filter: 'foto' },
-            { name: 'Arte', value: counts.arte, color: '#8B5CF6', filter: 'arte' },
-            { name: 'Inauguração', value: counts.inauguracao, color: '#F59E0B', filter: 'inauguracao' },
+            { name: 'Release', value: counts.release, color: '#0f7ddb', filter: 'release' },
+            { name: 'Post', value: counts.post, color: '#ca8a04', filter: 'post' },
+            { name: 'Vídeo', value: counts.video, color: '#e040a3', filter: 'video' },
+            { name: 'Foto', value: counts.foto, color: '#157a6e', filter: 'foto' },
+            { name: 'Arte', value: counts.arte, color: '#a23eda', filter: 'arte' },
+            { name: 'Inauguração', value: counts.inauguracao, color: '#d61f43', filter: 'inauguracao' },
         ].filter(d => d.value > 0);
     }, [filteredTasks]);
 
