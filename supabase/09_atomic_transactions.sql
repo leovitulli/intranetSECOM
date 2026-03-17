@@ -2,7 +2,6 @@
 -- Esse script garante que pautas e usuários sejam criados de forma íntegra (Tudo ou Nada).
 
 -- 1. SINCRONIZAÇÃO AUTOMÁTICA DE USUÁRIOS (Trigger)
--- Garante que se um login existir no Auth, o perfil existirá na tabela public.users.
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -26,31 +25,28 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Remove o gatilho se já existir para evitar erros
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
 
--- 2. GARANTIR COLUNAS DE SEGURANÇA (Caso falte alguma)
+-- 2. GARANTIR COLUNAS DE SEGURANÇA
 ALTER TABLE public.tasks 
 ADD COLUMN IF NOT EXISTS pauta_saida TEXT,
 ADD COLUMN IF NOT EXISTS is_pauta_externa BOOLEAN DEFAULT FALSE;
 
 
--- 3. FUNÇÃO DE CRIAÇÃO ATÔMICA DE PAUTA (RPC)
--- Executa Pauta + Equipe + Log em uma única transação no servidor.
+-- 3. FUNÇÃO DE CRIAÇÃO ATÔMICA DE PAUTA (RPC) - FLEXÍVEL
 CREATE OR REPLACE FUNCTION public.create_task_atomic(
     p_title TEXT,
-    p_description TEXT,
-    p_status TEXT,
-    p_priority TEXT,
-    p_type TEXT[],
-    p_creator TEXT,
-    p_due_date TIMESTAMPTZ,
-    p_assignee_ids UUID[],
+    p_description TEXT DEFAULT '',
+    p_status TEXT DEFAULT 'solicitacao',
+    p_priority TEXT DEFAULT 'baixa',
+    p_type TEXT[] DEFAULT '{}',
+    p_creator TEXT DEFAULT 'Sistema',
+    p_due_date TIMESTAMPTZ DEFAULT NULL,
+    p_assignee_ids UUID[] DEFAULT '{}',
     p_inauguracao_nome TEXT DEFAULT NULL,
     p_inauguracao_endereco TEXT DEFAULT NULL,
     p_inauguracao_secretarias TEXT[] DEFAULT '{}',
@@ -76,10 +72,8 @@ DECLARE
     v_task public.tasks;
     v_user_name TEXT;
 BEGIN
-    -- Busca o nome do usuário que está criando para o log
     SELECT name INTO v_user_name FROM public.users WHERE id = auth.uid();
 
-    -- A. Inserir a Pauta
     INSERT INTO public.tasks (
         title, description, status, priority, type, creator, due_date,
         inauguracao_nome, inauguracao_endereco, inauguracao_secretarias, inauguracao_tipo, inauguracao_checklist, inauguracao_data,
@@ -88,21 +82,29 @@ BEGIN
         arte_tipo_pecas, arte_entrega_data
     )
     VALUES (
-        p_title, p_description, p_status, p_priority, p_type, p_creator, p_due_date,
+        p_title, 
+        COALESCE(p_description, ''), 
+        COALESCE(p_status, 'solicitacao'), 
+        COALESCE(p_priority, 'baixa'), 
+        COALESCE(p_type, '{}'), 
+        COALESCE(p_creator, 'Sistema'), 
+        p_due_date,
         p_inauguracao_nome, p_inauguracao_endereco, p_inauguracao_secretarias, p_inauguracao_tipo, p_inauguracao_checklist, p_inauguracao_data,
         p_pauta_data, p_pauta_horario, p_pauta_endereco, p_pauta_saida, p_is_pauta_externa,
-        p_video_captacao_equipe, p_video_captacao_data, p_video_edicao_equipe, p_video_edicao_data, p_video_briefing, p_video_necessidades, p_video_entrega_data,
+        COALESCE(p_video_captacao_equipe, '{}'), p_video_captacao_data, 
+        COALESCE(p_video_edicao_equipe, '{}'), p_video_edicao_data, 
+        p_video_briefing, 
+        COALESCE(p_video_necessidades, '{}'), 
+        p_video_entrega_data,
         p_arte_tipo_pecas, p_arte_entrega_data
     )
     RETURNING * INTO v_task;
 
-    -- B. Inserir Equipe (Se houver)
     IF p_assignee_ids IS NOT NULL AND array_length(p_assignee_ids, 1) > 0 THEN
         INSERT INTO public.task_assignees (task_id, user_id)
         SELECT v_task.id, unnest(p_assignee_ids);
     END IF;
 
-    -- C. Inserir Log de Atividade
     INSERT INTO public.task_logs (task_id, user_id, user_name, action_type, details)
     VALUES (v_task.id, auth.uid(), COALESCE(v_user_name, 'Sistema'), 'create', 'Pauta criada via RPC Atômica (Confiabilidade Total)');
 
