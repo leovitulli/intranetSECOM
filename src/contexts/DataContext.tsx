@@ -387,9 +387,54 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             }
 
             if (data) {
-                console.log("✅ Pauta criada atomicamente com sucesso!");
-                // O estado local será atualizado automaticamente via Realtime (postgres_changes)
-                // Mas podemos forçar uma atualização otimista aqui se necessário.
+                console.log("✅ Pauta criada atomicamente com sucesso!", data);
+                
+                // Formatação otimista imediata para o estado local
+                const newTask: Task = {
+                    id: data.id,
+                    title: taskData.title,
+                    description: taskData.description || '',
+                    status: finalStatus as Task['status'],
+                    type: taskData.type as Task['type'],
+                    creator: taskData.creator || 'Sistema',
+                    priority: taskData.priority as Task['priority'],
+                    dueDate: taskData.dueDate,
+                    createdAt: new Date(),
+                    assignees: taskData.assignees || [],
+                    comments: [],
+                    attachments: [],
+                    archived: false,
+                    archived_at: null,
+                    inauguracao_nome: taskData.inauguracao_nome,
+                    inauguracao_endereco: taskData.inauguracao_endereco,
+                    inauguracao_secretarias: taskData.inauguracao_secretarias,
+                    inauguracao_tipo: taskData.inauguracao_tipo,
+                    inauguracao_checklist: taskData.inauguracao_checklist,
+                    inauguracao_data: taskData.inauguracao_data,
+                    pauta_data: (taskData as any).pauta_data,
+                    pauta_horario: (taskData as any).pauta_horario,
+                    pauta_endereco: (taskData as any).pauta_endereco,
+                    pauta_saida: (taskData as any).pauta_saida,
+                    is_pauta_externa: (taskData as any).is_pauta_externa || false,
+                    video_captacao_equipe: taskData.video_captacao_equipe,
+                    video_captacao_data: taskData.video_captacao_data,
+                    video_edicao_equipe: taskData.video_edicao_equipe,
+                    video_edicao_data: taskData.video_edicao_data,
+                    video_briefing: taskData.video_briefing,
+                    video_necessidades: taskData.video_necessidades,
+                    video_entrega_data: taskData.video_entrega_data,
+                    arte_tipo_pecas: taskData.arte_tipo_pecas,
+                    arte_entrega_data: taskData.arte_entrega_data,
+                    post_criacao_texto: taskData.post_criacao_texto,
+                    post_criacao_corrigido: taskData.post_criacao_corrigido,
+                    post_aprovado: taskData.post_aprovado,
+                    post_alterado_texto: taskData.post_alterado_texto,
+                    post_reprovado: taskData.post_reprovado,
+                    post_reprovado_comentario: taskData.post_reprovado_comentario,
+                    post_material_solicitado: taskData.post_material_solicitado,
+                };
+
+                setTasks(prev => [newTask, ...prev]);
                 return true;
             }
             
@@ -715,8 +760,12 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                     // Se for um evento de INSERT, verificamos se já temos a pauta localmente
                     // (previne o efeito de 'sumir e voltar' do Realtime vs Local)
                     if (payload.eventType === 'INSERT') {
+                        // Prevenir duplicidade se já foi inserido via Optimistic Update
                         const exists = tasks.some(t => t.id === payload.new.id);
-                        if (exists) return;
+                        if (exists) {
+                            console.log("🔄 Realtime: Pauta já existe localmente (Optimistic Update), pulando refetch.");
+                            return;
+                        }
                     }
 
                     // Refetch tasks data para garantir consistência total
