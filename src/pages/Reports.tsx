@@ -63,8 +63,8 @@ export default function Reports() {
     // Top Level Metrics (General Overview)
     const totalAbertas = filteredTasks.length;
     const totalConcluidas = filteredTasks.filter(t => t.status === 'publicado' || t.status === 'cancelado' || isInaugurationFinished(t)).length;
-    const totalAndamento = filteredTasks.filter(t => 
-        ['solicitado', 'producao', 'correcao'].includes(t.status) || 
+    const totalAndamento = filteredTasks.filter(t =>
+        ['solicitado', 'producao', 'correcao'].includes(t.status) ||
         (t.status === 'inauguracao' && !isInaugurationFinished(t))
     ).length;
     const totalInauguracoes = filteredTasks.filter(t => t.type.includes('inauguracao') || t.status === 'inauguracao').length;
@@ -106,12 +106,11 @@ export default function Reports() {
         };
 
         filteredTasks.forEach(task => {
-            if (counts[task.status] !== undefined) {
-                counts[task.status]++;
+            if (counts[task.status as keyof typeof counts] !== undefined) {
+                counts[task.status as keyof typeof counts]++;
             }
         });
 
-        // Use standard CSS variables indirectly via hsl raw values approximating the css vars for recharts
         return [
             { name: 'Solicitação', value: counts.solicitado, color: 'hsl(225, 75%, 55%)', filter: 'solicitado' },
             { name: 'Em Produção', value: counts.producao, color: 'hsl(250, 70%, 60%)', filter: 'producao' },
@@ -121,6 +120,28 @@ export default function Reports() {
             { name: 'Reprovado', value: counts.cancelado, color: 'hsl(0, 70%, 55%)', filter: 'cancelado' },
             { name: 'Inauguração', value: counts.inauguracao, color: 'hsl(310, 75%, 55%)', filter: 'inauguracao' },
         ];
+    }, [filteredTasks]);
+
+    // Chart Data: Publicados por Categoria
+    const publishedData = useMemo(() => {
+        const counts = { release: 0, post: 0, video: 0, foto: 0, arte: 0, inauguracao: 0 };
+        filteredTasks.filter(t => t.status === 'publicado' || isInaugurationFinished(t)).forEach(task => {
+            if (task.type.includes('release')) counts.release++;
+            if (task.type.includes('post')) counts.post++;
+            if (task.type.includes('video')) counts.video++;
+            if (task.type.includes('foto')) counts.foto++;
+            if (task.type.includes('arte')) counts.arte++;
+            if (task.type.includes('inauguracao')) counts.inauguracao++;
+        });
+
+        return [
+            { name: 'Release', value: counts.release, color: '#0f7ddb' },
+            { name: 'Post', value: counts.post, color: '#ca8a04' },
+            { name: 'Vídeo', value: counts.video, color: '#e040a3' },
+            { name: 'Foto', value: counts.foto, color: '#157a6e' },
+            { name: 'Arte', value: counts.arte, color: '#a23eda' },
+            { name: 'Inauguração', value: counts.inauguracao, color: '#d61f43' },
+        ].filter(d => d.value > 0);
     }, [filteredTasks]);
 
     // Chart Data: Ranking de Secretarias
@@ -149,8 +170,8 @@ export default function Reports() {
         return filteredTasks.filter(t => {
             if (activeFilter.type === 'status') {
                 if (activeFilter.value === 'andamento') {
-                    return ['solicitado', 'producao', 'correcao'].includes(t.status) || 
-                           (t.status === 'inauguracao' && !isInaugurationFinished(t));
+                    return ['solicitado', 'producao', 'correcao'].includes(t.status) ||
+                        (t.status === 'inauguracao' && !isInaugurationFinished(t));
                 }
                 if (activeFilter.value === 'concluida') {
                     return t.status === 'publicado' || t.status === 'cancelado' || isInaugurationFinished(t);
@@ -324,7 +345,7 @@ export default function Reports() {
                         <h3><Users size={18} /> Ranking de Secretarias</h3>
                         <p>Secretarias que mais demandaram pautas no período</p>
                     </div>
-                    <div className="chart-body" style={{ height: 320 }}>
+                    <div className="chart-body" style={{ height: 260 }}>
                         {rankingSecretarias.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={rankingSecretarias} layout="vertical" margin={{ top: 10, right: 30, left: 10, bottom: 0 }}>
@@ -352,101 +373,130 @@ export default function Reports() {
                     </div>
                 </div>
 
-                <div className="charts-grid-secondary">
-                    {/* Tipos de Material */}
-                    <div className="chart-card glass-panel">
-                        <div className="chart-card-header">
-                            <h3><PieChartIcon size={18} /> Tipos de Material</h3>
-                            <p>Clique no gráfico para filtrar a tabela</p>
-                        </div>
-                        <div className="chart-body" style={{ height: 260 }}>
-                            {materialData.length > 0 ? (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={materialData}
-                                            innerRadius={60}
-                                            outerRadius={80}
-                                            paddingAngle={5}
-                                            dataKey="value"
-                                            onClick={(data) => setActiveFilter({ type: 'type', value: data.filter || '' })}
-                                            style={{ cursor: 'pointer' }}
-                                        >
-                                            {materialData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={entry.color} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip
-                                            contentStyle={{ backgroundColor: 'hsl(var(--color-surface))', color: 'hsl(var(--color-text))', borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                                            itemStyle={{ color: 'hsl(var(--color-text))' }}
-                                        />
-                                        <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            ) : (
-                                <div className="empty-chart">Sem dados no período</div>
-                            )}
-                        </div>
+                {/* Tipos de Material */}
+                <div className="chart-card glass-panel">
+                    <div className="chart-card-header">
+                        <h3><PieChartIcon size={18} /> Tipos de Material</h3>
+                        <p>Clique no gráfico para filtrar a tabela</p>
                     </div>
-
-                    {/* Status Geral */}
-                    <div className="chart-card glass-panel">
-                        <div className="chart-card-header">
-                            <h3><Target size={18} /> Status Geral</h3>
-                            <p>Clique no gráfico para filtrar a tabela</p>
-                        </div>
-                        <div className="chart-body" style={{ height: 260 }}>
-                            {statusData.length > 0 ? (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={statusData} margin={{ top: 20, right: 10, left: -20, bottom: 40 }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
-                                        <XAxis 
-                                            dataKey="name" 
-                                            fontSize={11} 
-                                            stroke="var(--color-text-muted)" 
-                                            interval={0}
-                                            tick={(props: any) => {
-                                                const { x, y, payload } = props;
-                                                const words = payload.value.split(' ');
-                                                return (
-                                                    <g transform={`translate(${x},${y})`}>
-                                                        <text x={0} y={0} dy={16} textAnchor="middle" fill="var(--color-text-muted)" fontSize={11}>
-                                                            {words[0]}
-                                                        </text>
-                                                        {words.length > 1 && (
-                                                            <text x={0} y={0} dy={28} textAnchor="middle" fill="var(--color-text-muted)" fontSize={11}>
-                                                                {words.slice(1).join(' ')}
-                                                            </text>
-                                                        )}
-                                                    </g>
-                                                );
-                                            }}
-                                        />
-                                        <YAxis fontSize={12} stroke="var(--color-text-muted)" allowDecimals={false} />
-                                        <Tooltip
-                                            cursor={{ fill: 'rgba(0,0,0,0.04)' }}
-                                            contentStyle={{ backgroundColor: 'hsl(var(--color-surface))', color: 'hsl(var(--color-text))', borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                                            itemStyle={{ color: 'hsl(var(--color-text))' }}
-                                        />
-                                        <Bar
-                                            dataKey="value"
-                                            radius={[4, 4, 0, 0]}
-                                            barSize={50}
-                                            onClick={(data) => setActiveFilter({ type: 'status', value: data.filter || '' })}
-                                            style={{ cursor: 'pointer' }}
-                                        >
-                                            {statusData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={entry.color} />
-                                            ))}
-                                        </Bar>
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            ) : (
-                                <div className="empty-chart">Sem dados no período</div>
-                            )}
-                        </div>
+                    <div className="chart-body" style={{ height: 260 }}>
+                        {materialData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={materialData}
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                        onClick={(data) => setActiveFilter({ type: 'type', value: data.filter || '' })}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        {materialData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: 'hsl(var(--color-surface))', color: 'hsl(var(--color-text))', borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                        itemStyle={{ color: 'hsl(var(--color-text))' }}
+                                    />
+                                    <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="empty-chart">Sem dados no período</div>
+                        )}
                     </div>
                 </div>
+
+            {/* Materiais Publicados */}
+            <div className="chart-card glass-panel">
+                <div className="chart-card-header">
+                    <h3><CheckCircle2 size={18} /> Publicações Concluídas</h3>
+                    <p>Materiais efetivamente entregues/publicados</p>
+                </div>
+                <div className="chart-body" style={{ height: 260 }}>
+                    {publishedData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={publishedData} margin={{ top: 20, right: 10, left: -20, bottom: 20 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                                <XAxis dataKey="name" fontSize={11} stroke="var(--color-text-muted)" />
+                                <YAxis fontSize={12} stroke="var(--color-text-muted)" allowDecimals={false} />
+                                <Tooltip
+                                    cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+                                    contentStyle={{ backgroundColor: 'hsl(var(--color-surface))', color: 'hsl(var(--color-text))', borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                    itemStyle={{ color: 'hsl(var(--color-text))' }}
+                                />
+                                <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={40}>
+                                    {publishedData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="empty-chart">Sem publicações concluídas no período.</div>
+                    )}
+                </div>
+            </div>
+
+            {/* Status Geral */}
+            <div className="chart-card glass-panel">
+                <div className="chart-card-header">
+                    <h3><Target size={18} /> Status Geral</h3>
+                    <p>Clique no gráfico para filtrar a tabela</p>
+                </div>
+                <div className="chart-body" style={{ height: 260 }}>
+                    {statusData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={statusData} margin={{ top: 20, right: 10, left: -20, bottom: 40 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                                <XAxis
+                                    dataKey="name"
+                                    fontSize={11}
+                                    stroke="var(--color-text-muted)"
+                                    interval={0}
+                                    tick={(props: any) => {
+                                        const { x, y, payload } = props;
+                                        const words = payload.value.split(' ');
+                                        return (
+                                            <g transform={`translate(${x},${y})`}>
+                                                <text x={0} y={0} dy={16} textAnchor="middle" fill="var(--color-text-muted)" fontSize={11}>
+                                                    {words[0]}
+                                                </text>
+                                                {words.length > 1 && (
+                                                    <text x={0} y={0} dy={28} textAnchor="middle" fill="var(--color-text-muted)" fontSize={11}>
+                                                        {words.slice(1).join(' ')}
+                                                    </text>
+                                                )}
+                                            </g>
+                                        );
+                                    }}
+                                />
+                                <YAxis fontSize={12} stroke="var(--color-text-muted)" allowDecimals={false} />
+                                <Tooltip
+                                    cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+                                    contentStyle={{ backgroundColor: 'hsl(var(--color-surface))', color: 'hsl(var(--color-text))', borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                    itemStyle={{ color: 'hsl(var(--color-text))' }}
+                                />
+                                <Bar
+                                    dataKey="value"
+                                    radius={[4, 4, 0, 0]}
+                                    barSize={50}
+                                    onClick={(data) => setActiveFilter({ type: 'status', value: data.filter || '' })}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    {statusData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="empty-chart">Sem dados no período</div>
+                    )}
+                </div>
+            </div>
             </div>
 
             {/* Filtered Tasks Table */}
