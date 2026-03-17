@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Task, Comment, TaskType } from '../types/kanban';
-import { X, Send, Paperclip, FileText, Image as ImageIcon, Video, File, Activity, Archive, MapPin, Award, Building2, CheckSquare, Calendar, RotateCcw, Trash2, Plus } from 'lucide-react';
+import { X, Send, Paperclip, FileText, Image as ImageIcon, Video, File, Activity, Archive, MapPin, Award, RotateCcw, Trash2, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '../lib/supabaseClient';
@@ -21,8 +21,8 @@ interface TaskModalProps {
 
 export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: TaskModalProps) {
     const { user } = useAuth();
-    const { archiveTask, unarchiveTask, tasks, deleteTask } = useData();
-    const uniqueAddresses = Array.from(new Set(tasks?.map((t: Task) => t.pauta_endereco).filter(Boolean)));
+    const { archiveTask, unarchiveTask, deleteTask } = useData();
+
     const [newComment, setNewComment] = useState('');
     const [viewingFile, setViewingFile] = useState<Attachment | null>(null);
     const [uploadingAttachments, setUploadingAttachments] = useState(false);
@@ -34,7 +34,14 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
     const [activeTab, setActiveTab] = useState<'geral' | 'release' | 'post' | 'video' | 'foto' | 'arte' | 'inauguracao'>('geral');
 
     useEffect(() => {
-        setEditedTask(task);
+        const start = (task.pauta_horario || '').split(' às ')[0] || '';
+        const end = (task.pauta_horario || '').split(' às ')[1] || '';
+        setEditedTask({
+            ...task,
+            pauta_horario_start: start,
+            pauta_horario_end: end,
+            secretarias: task.secretarias || task.inauguracao_secretarias || []
+        });
         setEditTitleContent(task.title);
         setEditDescContent(task.description);
         setHasUnsavedChanges(false);
@@ -47,16 +54,24 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
     const [isEditingDesc, setIsEditingDesc] = useState(false);
     const [editDescContent, setEditDescContent] = useState(task.description);
 
-    const [isEditingInaug, setIsEditingInaug] = useState(false);
+
+    const [isEditingAgendamento, setIsEditingAgendamento] = useState(false);
+    const [isEditingEquipe, setIsEditingEquipe] = useState(false);
+    const [isEditingExtras, setIsEditingExtras] = useState(false);
 
     const [activityLogs, setActivityLogs] = useState<any[]>([]);
 
-    const handleTypeToggleInModal = (typeKey: any) => {
-        const newTypes = editedTask.type.includes(typeKey)
-            ? editedTask.type.filter(t => t !== typeKey)
-            : [...editedTask.type, typeKey];
-        handleFieldChange('type', newTypes.length > 0 ? newTypes : editedTask.type);
+    const getDayOfWeek = (dateStr: string) => {
+        if (!dateStr) return '';
+        try {
+            const date = new Date(dateStr + 'T12:00:00');
+            return format(date, "EEEE", { locale: ptBR });
+        } catch (e) {
+            return '';
+        }
     };
+
+
 
     const handleFieldChange = (field: keyof Task, value: any) => {
         setEditedTask(prev => ({ ...prev, [field]: value }));
@@ -64,7 +79,19 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
     };
 
     const handleSave = async () => {
-        await onUpdateTask(editedTask);
+        // Consolidar horários de início e término para o campo pauta_horario (string única)
+        const combinedHorario = (editedTask.pauta_horario_start && editedTask.pauta_horario_end)
+            ? `${editedTask.pauta_horario_start} às ${editedTask.pauta_horario_end}`
+            : (editedTask.pauta_horario_start || editedTask.pauta_horario_end || editedTask.pauta_horario || '');
+
+        const taskToSave: Task = {
+            ...editedTask,
+            pauta_horario: combinedHorario,
+            // Sincronizar secretarias com o campo legado para compatibilidade
+            inauguracao_secretarias: editedTask.secretarias
+        };
+
+        await onUpdateTask(taskToSave);
         setHasUnsavedChanges(false);
         onClose();
     };
@@ -237,46 +264,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
         }
     };
 
-    // --- Inauguration data fallback: parse from description for old cards ---
-    const isInauguracao = task.status === 'inauguracao';
-    const parseInaugField = (field: string): string | null => {
-        if (!task.description) return null;
-        const regex = new RegExp(`\\*\\*${field}:\\*\\* (.+)`);
-        const match = task.description.match(regex);
-        return match ? match[1].trim() : null;
-    };
-    const inaugNome = editedTask.inauguracao_nome || (isInauguracao ? parseInaugField('Nome') : null);
-    const inaugEndereco = editedTask.inauguracao_endereco || (isInauguracao ? parseInaugField('Endereço') : null);
 
-    const inaugTipo = editedTask.inauguracao_tipo || (isInauguracao ? parseInaugField('Tipo') : null);
-    const inaugData = editedTask.inauguracao_data
-        ? format(editedTask.inauguracao_data, "dd/MM/yyyy", { locale: ptBR })
-        : (isInauguracao ? parseInaugField('Data') : null);
-
-    // --- Pauta data ---
-    const pautaDataStr = editedTask.pauta_data ? format(new Date(editedTask.pauta_data + 'T12:00:00'), "dd/MM/yyyy (EEEE)", { locale: ptBR }) : null;
-    const pautaHorario = editedTask.pauta_horario;
-    const pautaEndereco = editedTask.pauta_endereco;
-
-    // Fallback checklist for old cards that have tipo but no saved checklist
-    const DEFAULT_CHECKLIST_SIMPLES = [
-        { id: 'placa', label: 'Placa de inauguração', done: false },
-        { id: 'backdrop', label: 'Backdrop', done: false },
-    ];
-    const DEFAULT_CHECKLIST_MASTER = [
-        { id: 'placa', label: 'Placa de inauguração', done: false },
-        { id: 'backdrops', label: 'Backdrops / banners', done: false },
-        { id: 'telao', label: '1 Telão', done: false },
-        { id: 'video_telao', label: 'Vídeo para telão', done: false },
-    ];
-    const effectiveChecklist = task.inauguracao_checklist && task.inauguracao_checklist.length > 0
-        ? task.inauguracao_checklist
-        : isInauguracao
-            ? (inaugTipo === 'master' || inaugTipo === 'Inauguração Master' ? DEFAULT_CHECKLIST_MASTER : DEFAULT_CHECKLIST_SIMPLES)
-            : null;
-    // The creator to display in side panel
-    // Whether the description is the auto-generated inauguration markdown (hide it)
-    const isAutoInaugDesc = isInauguracao && task.description?.startsWith('**Nome:**');
 
     const renderCommentsByTab = (tabName?: string) => {
         const filteredComments = editedTask.comments.filter(c => 
@@ -440,26 +428,27 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                 {activeTab === 'geral' && (
                 <div className="modal-body">
                     <div className="modal-main-col-premium" style={{ gap: "0" }}>
+                        {/* --- Seção 01: Informações da Pauta --- */}
                         <div className="modal-section-group-premium">
-                            <div className="section-header-premium" style={{ justifyContent: 'space-between' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                    <span className="section-number-premium">01</span>
-                                    <h3>Descrição</h3>
-                                </div>
-                                {!isEditingDesc && !isAutoInaugDesc && (
+                            <div className="section-header-premium">
+                                <span className="section-number-premium">01</span>
+                                <h3>Informações da Pauta</h3>
+                                {!isEditingDesc && (
                                     <button className="btn-edit-premium" onClick={() => setIsEditingDesc(true)}>Editar</button>
                                 )}
                             </div>
-
-                            { isEditingDesc ? (
+                            
+                            {isEditingDesc ? (
                                 <div className="edit-desc-form">
                                     <textarea
                                         rows={4}
                                         value={editDescContent}
                                         onChange={e => setEditDescContent(e.target.value)}
-                                        className="edit-textarea"
+                                        className="input-premium-textarea"
+                                        placeholder="Breve resumo ou briefing..."
+                                        style={{ width: '100%', minHeight: '100px', padding: '12px', fontSize: '0.9rem' }}
                                     />
-                                    <div className="edit-actions">
+                                    <div className="edit-actions" style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                                         <button className="btn-secondary small" onClick={() => {
                                             setIsEditingDesc(false);
                                             setEditDescContent(editedTask.description);
@@ -467,255 +456,348 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                         <button className="btn-primary small" onClick={() => {
                                             handleFieldChange('description', editDescContent);
                                             setIsEditingDesc(false);
-                                        }}>Concluir Edição</button>
+                                        }}>Concluir</button>
                                     </div>
                                 </div>
                             ) : (
-                                <p className="task-description" style={{ fontSize: "0.95rem", color: "#475569" }}>{editedTask.description}</p>
+                                <p className="task-description" style={{ fontSize: "0.95rem", color: "#475569", lineHeight: '1.6', margin: 0 }}>
+                                    {editedTask.description || <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>Nenhuma descrição informada.</span>}
+                                </p>
                             )}
                         </div>
 
-                        {/* Inauguration-specific section */}
-                        {true && (
-                            <div className="modal-section-group-premium ">
-                                <div className="section-header-premium">
-                                    <span className="section-number-premium">02</span>
-                                    <h3>Dados da Cobertura</h3>
-                                    {!isEditingInaug && (
-                                        <button className="btn-edit-premium" onClick={() => setIsEditingInaug(true)}>Editar</button>
-                                    )}
-                                </div>
+                        {/* --- Seção 02: Agendamento e Local --- */}
+                        <div className="modal-section-group-premium alternate-bg-premium">
+                            <div className="section-header-premium">
+                                <span className="section-number-premium">02</span>
+                                <h3>Agendamento e Local</h3>
+                                {!isEditingAgendamento && (
+                                    <button className="btn-edit-premium" onClick={() => setIsEditingAgendamento(true)}>Editar</button>
+                                )}
+                            </div>
 
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '0' }}>
-                                    {isEditingInaug ? (
-                                        <div className="inaug-edit-grid" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                            <div className="form-group-premium">
-                                                <label><Award size={14} /> Nome da Inauguração</label>
-                                                <input
-                                                    type="text"
-                                                    className="input-premium"
-                                                    value={editedTask.inauguracao_nome || ''}
-                                                    onChange={e => handleFieldChange('inauguracao_nome', e.target.value)}
-                                                />
-                                            </div>
-                                            <div className="form-group-premium">
-                                                <label><MapPin size={14} /> Endereço</label>
-                                                <input
-                                                    type="text"
-                                                    className="input-premium"
-                                                    value={editedTask.inauguracao_endereco || ''}
-                                                    onChange={e => handleFieldChange('inauguracao_endereco', e.target.value)}
-                                                />
-                                            </div>
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                                <div className="form-group-premium">
-                                                    <label><Activity size={14} /> Tipo</label>
-                                                    <select
-                                                        className="select-premium"
-                                                        value={editedTask.inauguracao_tipo || 'simples'}
-                                                        onChange={e => handleFieldChange('inauguracao_tipo', e.target.value)}
-                                                    >
-                                                        <option value="simples">Simples</option>
-                                                        <option value="master">Master</option>
-                                                    </select>
-                                                </div>
-                                                <div className="form-group-premium">
-                                                    <label><Calendar size={14} /> Data</label>
-                                                    <input
-                                                        type="date"
-                                                        className="input-premium"
-                                                        value={editedTask.inauguracao_data ? new Date(editedTask.inauguracao_data).toISOString().split('T')[0] : ''}
-                                                        onChange={e => handleFieldChange('inauguracao_data', e.target.value ? new Date(e.target.value + 'T12:00:00') : null)}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <button 
-                                                className="btn-primary small" 
-                                                style={{ alignSelf: 'flex-end', marginTop: '0.5rem' }}
-                                                onClick={() => setIsEditingInaug(false)}
-                                            >
-                                                Confirmar Edição
-                                            </button>
+                            {isEditingAgendamento ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                                        <div className="nova-pauta-field-premium">
+                                            <label className="field-label-premium">Data</label>
+                                            <input
+                                                type="date"
+                                                className="input-premium"
+                                                value={editedTask.pauta_data || ''}
+                                                onChange={e => handleFieldChange('pauta_data', e.target.value)}
+                                            />
                                         </div>
-                                    ) : (
-                                        <>
-                                            {inaugNome && (
-                                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                                                    <Award size={15} style={{ color: 'hsl(330, 50%, 50%)', flexShrink: 0, marginTop: 2 }} />
-                                                    <div>
-                                                        <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'hsl(330, 40%, 55%)', letterSpacing: '0.05em' }}>Nome</div>
-                                                        <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{inaugNome}</div>
-                                                    </div>
+                                        <div className="nova-pauta-field-premium">
+                                            <label className="field-label-premium">Início</label>
+                                            <input
+                                                type="time"
+                                                className="input-premium"
+                                                value={editedTask.pauta_horario_start || ''}
+                                                onChange={e => handleFieldChange('pauta_horario_start', e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="nova-pauta-field-premium">
+                                            <label className="field-label-premium">Término</label>
+                                            <input
+                                                type="time"
+                                                className="input-premium"
+                                                value={editedTask.pauta_horario_end || ''}
+                                                onChange={e => handleFieldChange('pauta_horario_end', e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+                                        <div className="nova-pauta-field-premium">
+                                            <label className="field-label-premium">Endereço Completo</label>
+                                            <input
+                                                type="text"
+                                                className="input-premium"
+                                                value={editedTask.pauta_endereco || ''}
+                                                onChange={e => handleFieldChange('pauta_endereco', e.target.value)}
+                                                placeholder="Local da pauta..."
+                                            />
+                                        </div>
+                                        <div className="nova-pauta-field-premium">
+                                            <label className="field-label-premium">Saída do Paço</label>
+                                            <input
+                                                type="time"
+                                                className="input-premium"
+                                                value={editedTask.pauta_saida || ''}
+                                                onChange={e => handleFieldChange('pauta_saida', e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div 
+                                        className={`pauta-externa-toggle-card-premium ${editedTask.is_pauta_externa ? 'active' : ''}`}
+                                        onClick={() => handleFieldChange('is_pauta_externa', !editedTask.is_pauta_externa)}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        <div className="toggle-info-premium">
+                                            <span className="toggle-title-premium">Adicionar à Agenda Externa</span>
+                                        </div>
+                                        <div className={`toggle-switch-premium ${editedTask.is_pauta_externa ? 'on' : ''}`}>
+                                            <div className="toggle-knob-premium"></div>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                        <button className="btn-primary small" onClick={() => setIsEditingAgendamento(false)}>Concluir Agendamento</button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1.5rem' }}>
+                                        <div>
+                                            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>Data</div>
+                                            <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#1e293b' }}>
+                                                {editedTask.pauta_data ? format(new Date(editedTask.pauta_data + 'T12:00:00'), "dd/MM/yyyy") : '---'}
+                                                {editedTask.pauta_data && <span style={{ color: '#64748b', fontWeight: 400, marginLeft: '6px' }}>({getDayOfWeek(editedTask.pauta_data)})</span>}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>Horário</div>
+                                            <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#1e293b' }}>
+                                                {editedTask.pauta_horario_start || '--:--'} {editedTask.pauta_horario_end ? `às ${editedTask.pauta_horario_end}` : ''}
+                                            </div>
+                                        </div>
+                                        {editedTask.pauta_saida && (
+                                            <div>
+                                                <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '4px' }}>Saída do Paço</div>
+                                                <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0284c7' }}>{editedTask.pauta_saida}</div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {editedTask.pauta_endereco && (
+                                        <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
+                                            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                                                <div style={{ width: '32px', height: '32px', background: '#eff6ff', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' }}>
+                                                    <MapPin size={18} />
                                                 </div>
-                                            )}
-                                            {inaugEndereco && (
-                                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                                                    <MapPin size={15} style={{ color: 'hsl(330, 50%, 50%)', flexShrink: 0, marginTop: 2 }} />
-                                                    <div>
-                                                        <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'hsl(330, 40%, 55%)', letterSpacing: '0.05em' }}>Endereço</div>
-                                                        <div style={{ fontSize: '0.9rem' }}>{inaugEndereco}</div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                                                <Building2 size={15} style={{ color: 'hsl(330, 50%, 50%)', flexShrink: 0, marginTop: 6 }} />
-                                                <div style={{ flex: 1 }}>
-                                                    <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'hsl(330, 40%, 55%)', letterSpacing: '0.05em', marginBottom: '0.35rem' }}>Secretaria(s)</div>
-                                                    <SecretariasMultiSelect
-                                                        selected={editedTask.inauguracao_secretarias || []}
-                                                        onChange={(newSecs) => {
-                                                            handleFieldChange('inauguracao_secretarias', newSecs);
-                                                        }}
-                                                    />
+                                                <div>
+                                                    <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>LOCALIZACÃO</div>
+                                                    <div style={{ fontSize: '0.9rem', color: '#334155', fontWeight: 500 }}>{editedTask.pauta_endereco}</div>
                                                 </div>
                                             </div>
-                                            {inaugTipo && (
-                                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                                                    <Award size={15} style={{ color: 'hsl(330, 50%, 50%)', flexShrink: 0, marginTop: 2 }} />
-                                                    <div>
-                                                        <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'hsl(330, 40%, 55%)', letterSpacing: '0.05em' }}>Tipo</div>
-                                                        <div style={{ fontSize: '0.9rem' }}>{inaugTipo}</div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {inaugData && (
-                                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-                                                    <Calendar size={15} style={{ color: 'hsl(330, 50%, 50%)', flexShrink: 0, marginTop: 2 }} />
-                                                    <div>
-                                                        <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'hsl(330, 40%, 55%)', letterSpacing: '0.05em' }}>Data da Inauguração</div>
-                                                        <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'hsl(330, 55%, 40%)' }}>{inaugData}</div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </>
+                                            <a
+                                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(editedTask.pauta_endereco)}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="btn-edit-premium"
+                                                style={{ padding: '6px 12px', fontSize: '0.75rem', textDecoration: 'none', background: 'white' }}
+                                            >Ver no Mapa</a>
+                                        </div>
+                                    )}
+
+                                    {editedTask.is_pauta_externa && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#059669', fontSize: '0.75rem', fontWeight: 700, background: '#ecfdf5', padding: '6px 12px', borderRadius: '20px', alignSelf: 'flex-start' }}>
+                                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 0 2px #d1fae5' }}></div>
+                                            AGENDADA PARA EQUIPE EXTERNA
+                                        </div>
                                     )}
                                 </div>
+                            )}
+                        </div>
 
-                                {/* Checklist */}
-                                {effectiveChecklist && effectiveChecklist.length > 0 && (
+                        {/* --- Seção 03: Equipe e Responsáveis --- */}
+                        <div className="modal-section-group-premium">
+                            <div className="section-header-premium">
+                                <span className="section-number-premium">03</span>
+                                <h3>Equipe e Responsáveis</h3>
+                                {!isEditingEquipe && (
+                                    <button className="btn-edit-premium" onClick={() => setIsEditingEquipe(true)}>Editar</button>
+                                )}
+                            </div>
+
+                            {isEditingEquipe ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                                    <div className="nova-pauta-field-premium">
+                                        <label className="field-label-premium">Departamento / Secretaria Solicitante</label>
+                                        <SecretariasMultiSelect
+                                            selected={editedTask.secretarias || []}
+                                            onChange={newSecs => handleFieldChange('secretarias', newSecs)}
+                                        />
+                                    </div>
+                                    <div className="nova-pauta-field-premium">
+                                        <label className="field-label-premium">Responsáveis na SECOM</label>
+                                        <TeamMultiSelect
+                                            selected={(editedTask.creator || '').split(',').map(s => s.trim()).filter(Boolean)}
+                                            onChange={newCreators => handleFieldChange('creator', newCreators.join(', '))}
+                                        />
+                                    </div>
+                                    {editedTask.is_pauta_externa && (
+                                        <div className="nova-pauta-field-premium">
+                                            <label className="field-label-premium">Equipe de Cobertura (Externa)</label>
+                                            <TeamMultiSelect
+                                                selected={editedTask.assignees || []}
+                                                onChange={newAssignees => handleFieldChange('assignees', newAssignees)}
+                                            />
+                                        </div>
+                                    )}
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                        <button className="btn-primary small" onClick={() => setIsEditingEquipe(false)}>Concluir Equipe</button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
                                     <div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.6rem', fontSize: '0.85rem', fontWeight: 700, color: 'hsl(330, 50%, 40%)' }}>
-                                            <CheckSquare size={15} />
-                                            Checklist de Materiais
-                                            <span style={{ marginLeft: 'auto', fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--color-text-muted))' }}>
-                                                {effectiveChecklist.filter(i => i.done).length}/{effectiveChecklist.length} concluídos
-                                            </span>
+                                        <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px' }}>Secretarias</div>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                            {(editedTask.secretarias || []).length > 0 ? (
+                                                (editedTask.secretarias || []).map(s => (
+                                                    <span key={s} style={{ fontSize: '0.75rem', background: '#f1f5f9', color: '#475569', padding: '4px 10px', borderRadius: '6px', border: '1px solid #e2e8f0', fontWeight: 500 }}>{s}</span>
+                                                ))
+                                            ) : <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic' }}>Nenhuma secretaria vinculada.</span>}
                                         </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                            {effectiveChecklist.map(item => (
-                                                <label key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', padding: '4px 0' }}>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={item.done}
-                                                        style={{ accentColor: 'hsl(330, 60%, 50%)', width: 16, height: 16 }}
-                                                        onChange={() => {
-                                                            const updated = effectiveChecklist.map(i =>
-                                                                i.id === item.id ? { ...i, done: !i.done } : i
-                                                            );
-                                                            handleFieldChange('inauguracao_checklist', updated);
-                                                        }}
-                                                    />
-                                                    <span style={{ textDecoration: item.done ? 'line-through' : 'none', color: item.done ? 'hsl(var(--color-text-muted))' : 'inherit' }}>
-                                                        {item.label}
-                                                    </span>
-                                                    {item.done && <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'hsl(140, 60%, 40%)' }}>✅ Pronto</span>}
-                                                </label>
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px' }}>Responsáveis</div>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                            {editedTask.creator ? (
+                                                editedTask.creator.split(',').map(c => c.trim()).filter(Boolean).map(c => (
+                                                    <span key={c} style={{ fontSize: '0.75rem', background: '#eff6ff', color: '#1e40af', padding: '4px 10px', borderRadius: '6px', border: '1px solid #dbeafe', fontWeight: 500 }}>{c}</span>
+                                                ))
+                                            ) : <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic' }}>Nenhum responsável definido.</span>}
+                                        </div>
+                                    </div>
+                                    {editedTask.assignees && editedTask.assignees.length > 0 && (
+                                        <div style={{ gridColumn: 'span 2' }}>
+                                            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px' }}>Equipe Externa</div>
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                                {editedTask.assignees.map(a => (
+                                                    <span key={a} style={{ fontSize: '0.75rem', background: '#f5f3ff', color: '#5b21b6', padding: '4px 10px', borderRadius: '6px', border: '1px solid #ddd6fe', fontWeight: 500 }}>{a}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* --- Seção 04: Configurações e Prioridade --- */}
+                        <div className="modal-section-group-premium alternate-bg-premium">
+                            <div className="section-header-premium">
+                                <span className="section-number-premium">04</span>
+                                <h3>Configurações Extras</h3>
+                                {!isEditingExtras && (
+                                    <button className="btn-edit-premium" onClick={() => setIsEditingExtras(true)}>Editar</button>
+                                )}
+                            </div>
+
+                            {isEditingExtras ? (
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                    <div className="nova-pauta-field-premium">
+                                        <label className="field-label-premium">Nível de Prioridade</label>
+                                        <div className="prio-pills-container-premium" style={{ display: 'flex', gap: '0.5rem', marginTop: '4px' }}>
+                                            {['baixa', 'media', 'alta'].map(p => (
+                                                <button
+                                                    key={p}
+                                                    type="button"
+                                                    onClick={() => handleFieldChange('priority', p)}
+                                                    className={`prio-pill-premium ${p} ${editedTask.priority === p ? 'active' : ''}`}
+                                                    style={{ flex: 1, padding: '8px', fontSize: '0.75rem' }}
+                                                >
+                                                    {p.charAt(0).toUpperCase() + p.slice(1)}
+                                                </button>
                                             ))}
                                         </div>
                                     </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Pauta-specific section (Non-inauguration) */}
-                        {!isInauguracao && (editedTask.pauta_data || editedTask.pauta_horario || editedTask.pauta_endereco) && (
-                            <div className="modal-section-group-premium alternate-bg-premium">
-                                <div className="section-header-premium">
-                                    <span className="section-number-premium">02</span>
-                                    <h3>Dados da Cobertura</h3>
-                                </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-                                    {pautaDataStr && (
-                                        <div>
-                                            <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', letterSpacing: '0.05em' }}>Data</div>
-                                            <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{pautaDataStr}</div>
+                                    <div className="nova-pauta-field-premium">
+                                        <label className="field-label-premium">Presença do Prefeito</label>
+                                        <div 
+                                            className={`pauta-externa-toggle-card-premium ${editedTask.presenca_prefeito ? 'active' : ''}`}
+                                            onClick={() => handleFieldChange('presenca_prefeito', !editedTask.presenca_prefeito)}
+                                            style={{ margin: 0, padding: '0.75rem', cursor: 'pointer' }}
+                                        >
+                                            <div className="toggle-info-premium">
+                                                <span className="toggle-title-premium" style={{ fontSize: '0.8rem' }}>Presença Confirmada</span>
+                                            </div>
+                                            <div className={`toggle-switch-premium ${editedTask.presenca_prefeito ? 'on' : ''}`}>
+                                                <div className="toggle-knob-premium"></div>
+                                            </div>
                                         </div>
-                                    )}
-                                    {pautaHorario && (
-                                        <div>
-                                            <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', letterSpacing: '0.05em' }}>Horário</div>
-                                            <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{pautaHorario}</div>
-                                        </div>
-                                    )}
-                                </div>
-                                {pautaEndereco && (
-                                    <div style={{ marginTop: '1rem' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                                            <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', letterSpacing: '0.05em' }}>Endereço</div>
-                                            <a
-                                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pautaEndereco)}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                style={{ fontSize: '0.7rem', color: 'hsl(var(--color-primary))', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
-                                            >
-                                                <MapPin size={12} /> Ver no Google Maps
-                                            </a>
-                                        </div>
-                                        <div style={{ fontSize: '0.9rem' }}>{pautaEndereco}</div>
                                     </div>
-                                )}
-                            </div>
-                        )}
-
-                        <div className="modal-section-group-premium">
-                            <div className="section-header-premium" style={{ justifyContent: 'space-between' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                    <span className="section-number-premium">03</span>
-                                    <h3>Anexos ({task.attachments.length})</h3>
+                                    <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-end' }}>
+                                        <button className="btn-primary small" onClick={() => setIsEditingExtras(false)}>Concluir Configurações</button>
+                                    </div>
                                 </div>
-                                <input
-                                    type="file"
-                                    multiple
-                                    ref={fileInputRef}
-                                    style={{ display: 'none' }}
-                                    onChange={handleFileUpload}
-                                />
-                                <button className="btn-edit-premium" style={{ gap: '6px' }} onClick={() => fileInputRef.current?.click()} disabled={uploadingAttachments}>
-                                    {uploadingAttachments ? (
-                                        <><span style={{ display: 'inline-block', width: 12, height: 12, border: '2px solid rgba(0,0,0,0.2)', borderTopColor: 'inherit', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} /> Enviando...</>
-                                    ) : (
-                                        <><Paperclip size={14} /> Adicionar</>
-                                    )}
-                                </button>
-                            </div>
-
-                            {uploadingAttachments && (
-                                <div style={{ fontSize: '0.8rem', color: 'hsl(var(--color-primary))', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    Gravando arquivo no servidor...
+                            ) : (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '3rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Prioridade:</div>
+                                        <span className={`prio-pill-premium ${editedTask.priority}`} style={{ padding: '4px 14px', fontSize: '0.75rem', pointerEvents: 'none', opacity: 1, fontWeight: 700 }}>
+                                            {editedTask.priority.toUpperCase()}
+                                        </span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Presença do Prefeito:</div>
+                                        {editedTask.presenca_prefeito ? (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#c2410c', fontSize: '0.75rem', fontWeight: 800, background: '#fff7ed', padding: '4px 12px', borderRadius: '20px', border: '1.5px solid #fed7aa' }}>
+                                                <Award size={14} /> CONFIRMADO
+                                            </div>
+                                        ) : (
+                                            <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic', fontWeight: 500 }}>Não prevista</span>
+                                        )}
+                                    </div>
                                 </div>
                             )}
+                        </div>
 
+                        {/* --- Seção de Anexos --- */}
+                        <div className="modal-section-group-premium">
+                            <div className="section-header-premium">
+                                <span className="section-number-premium">05</span>
+                                <h3>Anexos ({(editedTask.attachments || []).length})</h3>
+                                <button className="btn-edit-premium" style={{ gap: '6px' }} onClick={() => fileInputRef.current?.click()} disabled={uploadingAttachments}>
+                                    {uploadingAttachments ? 'Enviando...' : <><Plus size={14} /> Adicionar</>}
+                                </button>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    style={{ display: 'none' }}
+                                    multiple
+                                    onChange={handleFileUpload}
+                                />
+                            </div>
+                            
                             {(editedTask.attachments || []).length > 0 ? (
-                                <div className="attachments-list">
-                                    {editedTask.attachments.map(att => (
-                                        <div
-                                            key={att.id}
-                                            className="attachment-item clickable"
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+                                    {editedTask.attachments?.map(att => (
+                                        <div 
+                                            key={att.id} 
+                                            className="attachment-card-premium" 
                                             onClick={() => setViewingFile(att)}
-                                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                                            style={{ 
+                                                background: 'white', 
+                                                border: '1.5px solid #e2e8f0', 
+                                                borderRadius: '14px', 
+                                                padding: '0.85rem', 
+                                                cursor: 'pointer', 
+                                                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)', 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                gap: '0.85rem',
+                                                boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+                                            }}
+                                            onMouseOver={e => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'; }}
+                                            onMouseOut={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.03)'; }}
                                         >
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                            <div style={{ width: '42px', height: '42px', background: '#f8fafc', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
                                                 {getFileIcon(att.type)}
-                                                <div className="att-info">
-                                                    <span className="att-name">{att.name}</span>
-                                                    <span className="att-size">{att.size}</span>
-                                                </div>
+                                            </div>
+                                            <div style={{ flex: 1, overflow: 'hidden' }}>
+                                                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{att.name}</div>
+                                                <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 600 }}>{att.size}</div>
                                             </div>
                                             <button 
-                                                className="icon-btn-small" 
+                                                className="att-delete-btn-premium"
                                                 onClick={(e) => handleRemoveAttachment(e, att)}
-                                                style={{ color: 'var(--color-danger)', opacity: 0.7 }}
-                                                title="Excluir Anexo"
+                                                style={{ background: 'none', border: 'none', color: '#cbd5e1', padding: '6px', cursor: 'pointer', transition: 'all 0.2s', borderRadius: '6px' }}
+                                                onMouseOver={e => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = '#fef2f2'; }}
+                                                onMouseOut={e => { e.currentTarget.style.color = '#cbd5e1'; e.currentTarget.style.background = 'none'; }}
                                             >
                                                 <Trash2 size={16} />
                                             </button>
@@ -723,271 +805,115 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                     ))}
                                 </div>
                             ) : (
-                                <p className="empty-state">Nenhum anexo adicionado.</p>
+                                <div style={{ textAlign: 'center', padding: '2rem', background: '#f8fafc', borderRadius: '16px', border: '2px dashed #e2e8f0', marginTop: '1rem' }}>
+                                    <Paperclip size={24} style={{ color: '#cbd5e1', marginBottom: '8px' }} />
+                                    <div style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 500 }}>Nenhum anexo adicionado nesta pauta ainda.</div>
+                                </div>
                             )}
                         </div>
 
-                        <div className="modal-section-group-premium alternate-bg-premium">
-                            <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1e293b' }}>Discussão Geral</h3>
-                            {renderCommentsByTab('geral')}
+                        {/* --- Seção: Discussão Geral --- */}
+                        <div className="modal-section-group-premium" style={{ borderBottom: 'none' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                                <div style={{ width: '6px', height: '24px', background: 'linear-gradient(to bottom, #3b82f6, #60a5fa)', borderRadius: '4px' }}></div>
+                                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1e293b', margin: 0 }}>Discussão Geral</h3>
+                            </div>
+                            <div style={{ paddingLeft: '1.25rem' }}>
+                                {renderCommentsByTab('geral')}
+                            </div>
                         </div>
-
                     </div>
 
-                    <div className="modal-side-col-premium" style={{ borderLeft: "1px solid #e2e8f0", padding: "2rem 1.5rem" }}>
+                    {/* --- Barra Lateral Premium (Simplificada) --- */}
+                    <div className="modal-side-col-premium" style={{ width: '320px', padding: '0 0 2rem 2rem', borderLeft: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                        
+                        {/* Status e Fluxo */}
                         <div className="side-section-premium">
-                            <h3 className="side-title-premium">Detalhes da Cobertura</h3>
-
-                            {/* Secretaria */}
-                            <div className="detail-item-premium">
-                                <label className="detail-label-premium">DEPARTAMENTOS / SECRETARIAS</label>
-                                <SecretariasMultiSelect
-                                    selected={editedTask.inauguracao_secretarias || []}
-                                    onChange={(newSecs) => handleFieldChange('inauguracao_secretarias', newSecs)}
-                                />
-                            </div>
-
-                            {/* Responsável pela Pauta */}
-                            <div className="detail-item-premium">
-                                <label className="detail-label-premium">Responsável pela Pauta</label>
-                                <TeamMultiSelect
-                                    selected={(editedTask.creator || '').split(',').map(s => s.trim()).filter(Boolean)}
-                                    onChange={(newCreators) => handleFieldChange('creator', newCreators.join(', '))}
-                                    placeholder="Selecione..."
-                                />
-                            </div>
-
-                            {/* Pauta Externa Toggle */}
-                            <div
-                                className={`pauta-externa-side-toggle-premium ${editedTask.is_pauta_externa ? 'active' : ''}`}
-                                onClick={() => handleFieldChange('is_pauta_externa', !editedTask.is_pauta_externa)}
-                            >
-                                <div className="toggle-info-premium">
-                                    <span style={{ fontSize: '0.8rem', fontWeight: 800 }}>Agenda Externa</span>
-                                    <span style={{ fontSize: '0.65rem', opacity: 0.8 }}>Visível na agenda geral</span>
+                            <div className="side-title-premium" style={{ color: '#64748b' }}>STATUS DA PAUTA</div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                <div className={`status-badge-premium ${editedTask.status}`} style={{ width: '100%', padding: '10px', fontSize: '0.8rem', fontWeight: 800, textAlign: 'center', borderRadius: '12px' }}>
+                                    {editedTask.status.toUpperCase()}
                                 </div>
-                                <div className={`toggle-switch-premium mini ${editedTask.is_pauta_externa ? 'on' : ''}`}>
-                                    <div className="toggle-knob-premium" />
-                                </div>
-                            </div>
-
-                            {/* Equipe Externa */}
-                            {editedTask.is_pauta_externa && (
-                                <div className="detail-item-premium">
-                                    <label className="detail-label-premium">Equipe Externa (Agenda)</label>
-                                    <TeamMultiSelect
-                                        selected={editedTask.assignees || []}
-                                        onChange={(newAssignees) => handleFieldChange('assignees', newAssignees)}
-                                    />
-                                </div>
-                            )}
-
-                            {/* Data da Pauta */}
-                            <div className="detail-item-premium">
-                                <div className="label-with-hint-premium">
-                                    <label className="detail-label-premium">DATA DA PAUTA</label>
-                                    {editedTask.pauta_data && (
-                                        <span className="side-day-hint-premium">
-                                            {format(new Date(editedTask.pauta_data + 'T12:00:00'), "EEEE", { locale: ptBR })}
-                                        </span>
-                                    )}
-                                </div>
-                                <input
-                                    type="date"
-                                    className="input-premium"
-                                    value={editedTask.pauta_data || ''}
-                                    onChange={e => handleFieldChange('pauta_data', e.target.value)}
-                                />
-                            </div>
-
-                            {/* Horários */}
-                            <div className="detail-item-premium">
-                                <label className="detail-label-premium">HORÁRIO DA COBERTURA</label>
-                                <div className="time-range-group-premium">
-                                    <input
-                                        type="time"
-                                        className="time-input-premium"
-                                        value={(editedTask.pauta_horario || '').split(' às ')[0] || ''}
-                                        onChange={e => {
-                                            const end = (editedTask.pauta_horario || '').split(' às ')[1] || '';
-                                            handleFieldChange('pauta_horario', end ? `${e.target.value} às ${end}` : e.target.value);
-                                        }}
-                                    />
-                                    <span className="time-separator-premium">às</span>
-                                    <input
-                                        type="time"
-                                        className="time-input-premium"
-                                        value={(editedTask.pauta_horario || '').split(' às ')[1] || ''}
-                                        onChange={e => {
-                                            const start = (editedTask.pauta_horario || '').split(' às ')[0] || '';
-                                            handleFieldChange('pauta_horario', start ? `${start} às ${e.target.value}` : e.target.value);
-                                        }}
-                                    />
-                                </div>
-                            </div>
-
-                            {editedTask.is_pauta_externa && (
-                                <div className="detail-item-premium">
-                                    <label className="detail-label-premium">Saída do Paço</label>
-                                    <input
-                                        type="time"
-                                        className="input-premium"
-                                        value={editedTask.pauta_saida || ''}
-                                        onChange={e => handleFieldChange('pauta_saida', e.target.value)}
-                                    />
-                                </div>
-                            )}
-
-                            {/* Endereço */}
-                            <div className="detail-item-premium">
-                                <label className="detail-label-premium">ENDEREÇO</label>
-                                <div className="address-input-wrapper-premium">
-                                    <input
-                                        type="text"
-                                        className="input-premium address-input-premium"
-                                        placeholder="Endereço da pauta..."
-                                        value={editedTask.pauta_endereco || ''}
-                                        onChange={e => handleFieldChange('pauta_endereco', e.target.value)}
-                                        list="enderecos-salvos-edit"
-                                    />
-                                    <a
-                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(editedTask.pauta_endereco || '')}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="maps-button-premium"
-                                        title="Ver no Google Maps"
-                                    >
-                                        <MapPin size={16} />
-                                    </a>
-                                </div>
-                                <datalist id="enderecos-salvos-edit">
-                                    {(uniqueAddresses || []).map((addr, idx) => (
-                                        <option key={idx} value={addr as string} />
-                                    ))}
-                                </datalist>
-                            </div>
-
-                            {/* Material */}
-                            <div className="detail-item-premium">
-                                <label className="detail-label-premium">TIPOS DE MATERIAL</label>
-                                <div className="material-pills-premium side" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                                    {[
-                                        { id: 'release', label: 'Release' },
-                                        { id: 'post', label: 'Post' },
-                                        { id: 'video', label: 'Vídeo' },
-                                        { id: 'foto', label: 'Foto' },
-                                        { id: 'arte', label: 'Arte' },
-                                        { id: 'inauguracao', label: 'Inauguração' }
-                                    ].map(m => (
-                                        <button
-                                            key={m.id}
-                                            type="button"
-                                            className={`material-pill-premium ${editedTask.type.includes(m.id as any) ? 'active' : ''}`}
-                                            onClick={() => handleTypeToggleInModal(m.id)}
-                                        >
-                                            {m.label}
-                                        </button>
-                                    ))}
-                                </div>
+                                
+                                <select
+                                    className="select-premium"
+                                    style={{ width: '100%', padding: '10px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 600 }}
+                                    value={editedTask.status}
+                                    onChange={(e) => handleFieldChange('status', e.target.value)}
+                                >
+                                    <option value="solicitado">Mudar para: Solicitado</option>
+                                    <option value="producao">Mudar para: Em Produção</option>
+                                    <option value="correcao">Mudar para: Correção</option>
+                                    <option value="aprovado">Mudar para: Aprovado</option>
+                                    <option value="publicado">Mudar para: Publicado</option>
+                                    <option value="cancelado">Mudar para: Cancelado</option>
+                                </select>
                             </div>
                         </div>
 
-                        <div className="side-section-premium alternate">
-                            <h3 className="side-title-premium" style={{ marginTop: "1rem" }}>AÇÕES</h3>
-                            <div className="side-footer-actions-premium">
-                                <button className="btn-side-action-premium" onClick={() => {
-                                    const newStatus = prompt('Digite o novo status (solicitado, producao, correcao, aprovado, publicado, cancelado):');
-                                    if (newStatus && ['solicitado', 'producao', 'correcao', 'aprovado', 'publicado', 'cancelado'].includes(newStatus.toLowerCase())) {
-                                        handleFieldChange('status', newStatus.toLowerCase());
-                                    }
-                                }}>Mover Cartão</button>
-
+                        {/* Ações de Gestão */}
+                        <div className="side-section-premium">
+                            <div className="side-title-premium" style={{ color: '#64748b' }}>GESTÃO</div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                 {editedTask.archived ? (
-                                    <button
-                                        className="btn-side-action-premium"
-                                        style={{ background: 'hsl(140, 50%, 95%)', color: 'hsl(140, 50%, 25%)', borderColor: 'hsl(140, 50%, 80%)' }}
-                                        onClick={async () => {
-                                            await unarchiveTask(task.id);
-                                            onClose();
-                                        }}
-                                    >
-                                        <RotateCcw size={16} /> Desarquivar Pauta
+                                    <button className="btn-side-action-premium" style={{ background: '#ecfdf5', color: '#065f46', borderColor: '#a7f3d0' }} onClick={async () => { await unarchiveTask(task.id); onClose(); }}>
+                                        <RotateCcw size={16} /> Reativar Pauta
                                     </button>
                                 ) : (
-                                    <button
-                                        className="btn-side-action-premium"
-                                        onClick={async () => {
-                                            if (confirm('Deseja arquivar esta pauta?')) {
-                                                await archiveTask(task.id);
-                                                onClose();
-                                            }
-                                        }}
-                                    >
+                                    <button className="btn-side-action-premium" onClick={async () => { if (confirm('Deseja mover esta pauta para o arquivo histórico?')) { await archiveTask(task.id); if (onArchive) onArchive(); onClose(); } }}>
                                         <Archive size={16} /> Arquivar Pauta
                                     </button>
                                 )}
 
                                 {(user?.role === 'admin' || user?.role === 'desenvolvedor') && (
-                                    <>
-                                        <button
-                                            className="btn-side-action-premium danger"
-                                            onClick={async () => {
-                                                if (confirm('EXCLUSÃO DEFINITIVA: Tem certeza absoluta? Essa ação NÃO pode ser desfeita.')) {
-                                                    await deleteTask(task.id);
-                                                    onClose();
-                                                }
-                                            }}
-                                        >Excluir Definitivamente</button>
-                                    </>
+                                    <button className="btn-side-action-premium danger" style={{ marginTop: '0.5rem' }} onClick={async () => { if (confirm('⚠️ ATENCÃO: EXCLUIR DEFINITIVAMENTE?\nEsta ação apagará todos os dados, anexos e comentários de forma irreversível.')) { await deleteTask(task.id); onClose(); } }}>
+                                        <Trash2 size={16} /> Excluir Pauta
+                                    </button>
                                 )}
                             </div>
                         </div>
 
-                        {/* Histórico de Atividades - Global na Lateral */}
-                        <div className="side-section-premium" style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem', marginTop: 'auto' }}>
+                        {/* Histórico Consolidado */}
+                        <div className="side-section-premium" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                             <div className="side-title-premium" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748b' }}>
-                                <Activity size={14} /> HISTÓRICO
+                                <Activity size={14} /> HISTÓRICO DE ATIVIDADES
                             </div>
-                            <div className="activity-list" style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '10px',
-                                maxHeight: '250px',
-                                overflowY: 'auto',
-                                paddingRight: '5px'
-                            }}>
+                            <div className="activity-list" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '420px', overflowY: 'auto', paddingRight: '8px', marginTop: '4px' }}>
                                 {activityLogs.length > 0 ? (
-                                    activityLogs.map(log => (
-                                        <div key={log.id} style={{ fontSize: '0.75rem', borderLeft: '2px solid #e2e8f0', paddingLeft: '10px', paddingBottom: '2px' }}>
-                                            <div style={{ fontWeight: 700, color: '#475569' }}>{log.user_name}</div>
-                                            <div style={{ color: '#64748b', margin: '2px 0' }}>{log.details}</div>
-                                            <div style={{ color: '#94a3b8', fontSize: '0.65rem' }}>
-                                                {format(new Date(log.created_at), "d/MM HH:mm", { locale: ptBR })}
-                                            </div>
+                                    activityLogs.map((log, idx) => (
+                                        <div key={log.id} style={{ fontSize: '0.75rem', borderLeft: '2px solid #f1f5f9', paddingLeft: '14px', position: 'relative' }}>
+                                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: idx === 0 ? '#3b82f6' : '#e2e8f0', position: 'absolute', left: '-5px', top: '4px', boxShadow: idx === 0 ? '0 0 0 3px rgba(59, 130, 246, 0.15)' : 'none' }}></div>
+                                            <div style={{ fontWeight: 700, color: '#334155' }}>{log.user_name}</div>
+                                            <div style={{ color: '#64748b', margin: '3px 0', lineHeight: '1.4' }}>{log.details}</div>
+                                            <div style={{ color: '#cbd5e1', fontSize: '0.65rem', fontWeight: 600 }}>{format(new Date(log.created_at), "dd MMM, HH:mm", { locale: ptBR })}</div>
                                         </div>
                                     ))
                                 ) : (
-                                    <p style={{ fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic' }}>Nenhum registro.</p>
+                                    <div style={{ textAlign: 'center', padding: '2rem 0', color: '#cbd5e1' }}>
+                                        <Activity size={20} style={{ opacity: 0.3, marginBottom: '8px' }} />
+                                        <p style={{ fontSize: '0.7rem', fontStyle: 'italic', margin: 0 }}>Nenhuma atividade registrada.</p>
+                                    </div>
                                 )}
                             </div>
                         </div>
 
-                        {/* Save Actions Banner */}
+                        {/* Banner de Salvamento Flutuante (dentro da sidebar pra manter o padrão de visualização) */}
                         {hasUnsavedChanges && (
-                            <div className="save-banner-premium">
-                                <span className="save-banner-text-premium">Alterações pendentes</span>
-                                <div className="save-banner-buttons-premium">
-                                    <button
-                                        className="btn-save-banner-cancel-premium"
-                                        onClick={() => {
-                                            setEditedTask(task);
-                                            setHasUnsavedChanges(false);
-                                        }}
-                                    >Descartar</button>
-                                    <button
-                                        className="btn-save-banner-confirm-premium"
-                                        onClick={handleSave}
-                                    >Salvar tudo</button>
+                            <div className="save-banner-premium" style={{ 
+                                marginTop: 'auto', 
+                                padding: '1.25rem', 
+                                background: '#1e293b', 
+                                borderRadius: '16px', 
+                                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)',
+                                animation: 'slideUp 0.3s ease-out'
+                            }}>
+                                <div style={{ color: 'white', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.85rem', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                                    <div style={{ width: '6px', height: '6px', background: '#f59e0b', borderRadius: '50%' }}></div>
+                                    Alterações não salvas
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <button className="btn-save-banner-cancel-premium" style={{ flex: 1, padding: '8px', fontSize: '0.75rem' }} onClick={() => { setEditedTask(task); setHasUnsavedChanges(false); }}>Descartar</button>
+                                    <button className="btn-save-banner-confirm-premium" style={{ flex: 1, padding: '8px', fontSize: '0.75rem' }} onClick={handleSave}>Salvar Tudo</button>
                                 </div>
                             </div>
                         )}

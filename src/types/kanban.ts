@@ -52,9 +52,13 @@ export interface Task {
     // General Pauta fields
     pauta_data?: string;
     pauta_horario?: string;
+    pauta_horario_start?: string; // New: for easier editing
+    pauta_horario_end?: string;   // New: for easier editing
     pauta_endereco?: string;
     pauta_saida?: string;
     is_pauta_externa?: boolean;
+    secretarias?: string[]; // New: unified secretarias field
+    presenca_prefeito?: boolean; // New: priority indicator
     // Video-specific fields
     video_captacao_equipe?: string[];
     video_captacao_data?: Date | null;
