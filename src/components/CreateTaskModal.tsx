@@ -20,7 +20,7 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
     const uniqueAddresses = Array.from(new Set(tasks.map((t: Task) => t.pauta_endereco).filter(Boolean)));
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [types, setTypes] = useState<TaskType[]>(['release']);
+    const [types] = useState<TaskType[]>(['release']);
     const [priority, setPriority] = useState<TaskPriority>('media');
     const [assignees, setAssignees] = useState<string[]>([]);
     const [secretarias, setSecretarias] = useState<string[]>([]);

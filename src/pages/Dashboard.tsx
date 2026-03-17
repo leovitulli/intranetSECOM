@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Plus, MoreHorizontal, MessageSquare, Paperclip, Clock, Archive, RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useAuth } from '../contexts/AuthContext';
 import type { Task, TaskStatus, TaskType } from '../types/kanban';
 import { useData } from '../contexts/DataContext';
 import TaskModal from '../components/TaskModal';
