@@ -825,19 +825,19 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                     </div>
 
                     {/* --- Barra Lateral Premium (Simplificada) --- */}
-                    <div className="modal-side-col-premium" style={{ width: '320px', padding: '0 0 2rem 2rem', borderLeft: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                    <div className="modal-side-col-premium">
                         
                         {/* Status e Fluxo */}
                         <div className="side-section-premium">
                             <div className="side-title-premium" style={{ color: '#64748b' }}>STATUS DA PAUTA</div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                <div className={`status-badge-premium ${editedTask.status}`} style={{ width: '100%', padding: '10px', fontSize: '0.8rem', fontWeight: 800, textAlign: 'center', borderRadius: '12px' }}>
+                                <div className={`status-badge-premium ${editedTask.status}`} style={{ width: '100%', padding: '8px', fontSize: '0.8rem', fontWeight: 800, textAlign: 'center', borderRadius: '10px' }}>
                                     {editedTask.status.toUpperCase()}
                                 </div>
                                 
                                 <select
                                     className="select-premium"
-                                    style={{ width: '100%', padding: '10px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 600 }}
+                                    style={{ width: '100%', padding: '8px', borderRadius: '10px', fontSize: '0.85rem', fontWeight: 600 }}
                                     value={editedTask.status}
                                     onChange={(e) => handleFieldChange('status', e.target.value)}
                                 >
