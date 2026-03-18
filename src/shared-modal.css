@@ -529,3 +529,101 @@
     .prio-pills-container-premium,
     .material-pills-premium { flex-wrap: wrap; }
 }
+
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   CLASSES GLOBAIS DE PÁGINA
+   Adicione estas ao shared-modal.css e REMOVA as definições duplicadas de:
+   - Dashboard.css (.btn-primary, .page-header)
+   - ProfileTeamTab.css (.btn-primary, .icon-btn-small)
+   - Reports.css (.status-badge e variantes)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Page header canônico ─────────────────────────────────────────────────── */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.page-header h1 {
+    font-size: 1.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.page-header .subtitle {
+    color: hsl(var(--color-text-muted));
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* ── Icon button small canônico ───────────────────────────────────────────── */
+.icon-btn-small {
+    background: transparent;
+    border: 1px solid hsl(var(--color-border));
+    color: hsl(var(--color-text-muted));
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm, 6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+    padding: 0;
+}
+
+.icon-btn-small:hover {
+    background-color: hsl(var(--color-primary) / 0.08);
+    color: hsl(var(--color-primary));
+    border-color: hsl(var(--color-primary) / 0.3);
+}
+
+.icon-btn-small.danger:hover {
+    background-color: hsl(0 84% 60% / 0.1);
+    color: hsl(0 84% 60%);
+    border-color: hsl(0 84% 60% / 0.3);
+}
+
+.icon-btn-small:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* ── Status badges unificados (substitui duplicações em Reports.css e TaskModal.css) ── */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    border-radius: 99px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+}
+
+.status-badge.solicitado,  .stat-solicitado  { background: hsl(40  90% 50% / 0.1); color: hsl(40  90% 38%); border-color: hsl(40  90% 50% / 0.2); }
+.status-badge.producao,    .stat-producao    { background: hsl(210 90% 55% / 0.1); color: hsl(210 90% 45%); border-color: hsl(210 90% 55% / 0.2); }
+.status-badge.correcao,    .stat-correcao    { background: hsl(270 80% 60% / 0.1); color: hsl(270 80% 50%); border-color: hsl(270 80% 60% / 0.2); }
+.status-badge.aprovado,    .stat-aprovado    { background: hsl(280 80% 60% / 0.1); color: hsl(280 80% 50%); border-color: hsl(280 80% 60% / 0.2); }
+.status-badge.publicado,   .stat-publicado   { background: hsl(160 80% 40% / 0.1); color: hsl(160 80% 32%); border-color: hsl(160 80% 40% / 0.2); }
+.status-badge.cancelado,   .stat-cancelado   { background: hsl(0   80% 55% / 0.1); color: hsl(0   80% 45%); border-color: hsl(0   80% 55% / 0.2); }
+.status-badge.inauguracao, .stat-inauguracao { background: hsl(350 80% 50% / 0.1); color: hsl(350 80% 40%); border-color: hsl(350 80% 50% / 0.2); }
+
+/* ── Error message global ─────────────────────────────────────────────────── */
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #dc2626;
+    font-size: 0.85rem;
+    font-weight: 500;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 0.6rem 0.875rem;
+}
