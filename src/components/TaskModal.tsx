@@ -259,9 +259,10 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                         {/* ════════════════════════════════════════
                             ABA: GERAL
                         ════════════════════════════════════════ */}
-                        {activeTab === 'geral' && (
-                            <div className="modal-body">
-                                <div className="modal-main-col-premium" style={{ gap: 0 }}>
+                        <div className="modal-body">
+                            <div className="modal-main-col-premium" style={{ gap: 0 }}>
+                                {activeTab === 'geral' && (
+                                    <>
 
                                     {/* 01 – Informações */}
                                     <div className="modal-section-group-premium">
@@ -604,17 +605,424 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                         )}
                                     </div>
 
-                                    {/* Discussão Geral */}
-                                    <div className="modal-section-group-premium" style={{ borderBottom: 'none' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                                            <div style={{ width: 6, height: 24, background: 'linear-gradient(to bottom, #3b82f6, #60a5fa)', borderRadius: 4 }}></div>
-                                            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1e293b', margin: 0 }}>Discussão Geral</h3>
-                                        </div>
-                                        <div style={{ paddingLeft: '1.25rem' }}>{renderCommentsByTab('geral')}</div>
+                                    </>
+                                )}
+
+                        {activeTab === 'release' && (
+                            <>
+                                <div className="modal-section-group-premium">
+                                    <div className="section-header-premium">
+                                        <span className="section-number-premium">📝</span>
+                                        <h3>Produção de Release</h3>
+                                    </div>
+                                    <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Os campos dedicados para produção de Release serão construídos aqui em breve.</p>
+                                </div>
+                                <section className="modal-section-group-premium">
+                                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1e293b', marginBottom: '1.5rem' }}>Discussão do Release</h3>
+                                    {renderCommentsByTab('release')}
+                                </section>
+                            </>
+                        )}
+
+                        {activeTab === 'post' && (
+                            <>
+                                <div className="modal-section-group-premium">
+                                    <div className="section-header-premium">
+                                        <span className="section-number-premium">📱</span>
+                                        <h3>Estratégia de Social Media</h3>
+                                    </div>
+
+                                    <div className="nova-pauta-field-premium" style={{ marginBottom: '1.5rem' }}>
+                                        <label className="field-label-premium">CRIAÇÃO DO TEXTO (DESCRIÇÃO)</label>
+                                        <textarea
+                                            className="input-premium-textarea"
+                                            rows={6}
+                                            placeholder="Escreva a legenda sugerida para o post..."
+                                            value={editedTask.post_criacao_texto || ''}
+                                            onChange={e => handleFieldChange('post_criacao_texto', e.target.value)}
+                                        />
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginTop: '0.75rem' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!editedTask.post_criacao_corrigido}
+                                                onChange={e => handleFieldChange('post_criacao_corrigido', e.target.checked)}
+                                                style={{ width: 18, height: 18, accentColor: '#3b82f6' }}
+                                            />
+                                            Texto de Criação Corrigido
+                                        </label>
                                     </div>
                                 </div>
 
-                                {/* ── Sidebar ─────────────────────────────────── */}
+                                <div className="modal-section-group-premium alternate-bg-premium" style={{ margin: '0 -2rem', padding: '1.5rem 2rem' }}>
+                                    <div className="section-header-premium">
+                                        <span className="section-number-premium" style={{ background: '#f0f9ff', color: '#0ea5e9' }}>✓</span>
+                                        <h3>Controle de Aprovação</h3>
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+                                        <div
+                                            className={`pauta-externa-toggle-card-premium ${editedTask.post_aprovado ? 'active' : ''}`}
+                                            onClick={() => { handleFieldChange('post_aprovado', !editedTask.post_aprovado); if (!editedTask.post_aprovado) handleFieldChange('post_reprovado', false); }}
+                                        >
+                                            <div className="toggle-info-premium">
+                                                <span className="toggle-title-premium">Post Aprovado</span>
+                                                <span className="toggle-description-premium">Pronto para publicação</span>
+                                            </div>
+                                            <div className={`toggle-switch-premium ${editedTask.post_aprovado ? 'on' : ''}`}>
+                                                <div className="toggle-knob-premium"></div>
+                                            </div>
+                                        </div>
+
+                                        <div style={{ background: 'white', padding: '1.25rem', borderRadius: 12, border: '1.5px solid #e2e8f0' }}>
+                                            <div className="nova-pauta-field-premium">
+                                                <label className="field-label-premium">FOI ALTERADO / CORRIGIDO?</label>
+                                                <textarea
+                                                    className="input-premium-textarea"
+                                                    rows={2}
+                                                    placeholder="Descreva o que foi alterado ou o que precisa ser corrigido..."
+                                                    value={editedTask.post_alterado_texto || ''}
+                                                    onChange={e => handleFieldChange('post_alterado_texto', e.target.value)}
+                                                    style={{ fontSize: '0.85rem' }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div style={{ background: editedTask.post_reprovado ? '#fff1f2' : 'white', padding: '1.25rem', borderRadius: 12, border: editedTask.post_reprovado ? '1.5px solid #fda4af' : '1.5px solid #e2e8f0', transition: 'all 0.2s' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: editedTask.post_reprovado ? '1rem' : 0 }}>
+                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                    <span style={{ fontSize: '0.9rem', fontWeight: 700, color: editedTask.post_reprovado ? '#be123c' : '#1e293b' }}>Post Reprovado / Cancelado</span>
+                                                    <span style={{ fontSize: '0.75rem', color: editedTask.post_reprovado ? '#e11d48' : '#64748b' }}>Marcar se o material foi descartado</span>
+                                                </div>
+                                                <div
+                                                    className={`toggle-switch-premium ${editedTask.post_reprovado ? 'on' : ''}`}
+                                                    onClick={() => { const v = !editedTask.post_reprovado; handleFieldChange('post_reprovado', v); if (v) handleFieldChange('post_aprovado', false); }}
+                                                    style={{ background: editedTask.post_reprovado ? '#e11d48' : undefined }}
+                                                >
+                                                    <div className="toggle-knob-premium"></div>
+                                                </div>
+                                            </div>
+                                            {editedTask.post_reprovado && (
+                                                <div className="nova-pauta-field-premium">
+                                                    <label className="field-label-premium" style={{ color: '#be123c' }}>MOTIVO DO CANCELAMENTO</label>
+                                                    <textarea
+                                                        className="input-premium-textarea"
+                                                        rows={2}
+                                                        placeholder="Por que este post foi reprovado ou cancelado?"
+                                                        value={editedTask.post_reprovado_comentario || ''}
+                                                        onChange={e => handleFieldChange('post_reprovado_comentario', e.target.value)}
+                                                        style={{ fontSize: '0.85rem', borderColor: '#fda4af' }}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="modal-section-group-premium" style={{ marginTop: '1.5rem' }}>
+                                    <div className="section-header-premium">
+                                        <span className="section-number-premium">📦</span>
+                                        <h3>Material Solicitado</h3>
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+                                        {([
+                                            { id: 'release', label: 'Release' },
+                                            { id: 'post', label: 'Post' },
+                                            { id: 'video', label: 'Vídeo' },
+                                            { id: 'foto', label: 'Foto' },
+                                            { id: 'arte', label: 'Arte' },
+                                            { id: 'inauguracao', label: 'Inauguração' },
+                                        ] as { id: TaskType; label: string }[]).map(mat => {
+                                            const isActive = editedTask.type.includes(mat.id);
+                                            return (
+                                                <button
+                                                    key={mat.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const newTypes = isActive
+                                                            ? editedTask.type.filter(t => t !== mat.id)
+                                                            : [...editedTask.type, mat.id];
+                                                        const finalTypes = newTypes.length > 0 ? newTypes : ['release' as TaskType];
+                                                        handleFieldChange('type', finalTypes);
+                                                        handleFieldChange('post_material_solicitado', finalTypes.map(t => {
+                                                            if (t === 'video') return 'Vídeo';
+                                                            if (t === 'foto') return 'Foto';
+                                                            return t.charAt(0).toUpperCase() + t.slice(1);
+                                                        }));
+                                                    }}
+                                                    className={`prio-pill-premium ${isActive ? 'active' : ''}`}
+                                                    style={{ padding: '1rem', fontSize: '1rem', fontWeight: 700, display: 'flex', justifyContent: 'center', alignItems: 'center', background: isActive ? '#1e293b' : 'white', color: isActive ? 'white' : '#475569', border: '1.5px solid', borderColor: isActive ? '#1e293b' : '#e2e8f0', boxShadow: isActive ? '0 4px 6px -1px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s cubic-bezier(0.4,0,0.2,1)', cursor: 'pointer' }}
+                                                >
+                                                    {mat.label}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.75rem', fontStyle: 'italic' }}>
+                                        💡 Selecione os formatos previstos para esta estratégia de post.
+                                    </p>
+                                </div>
+
+                                <section className="modal-section-group-premium">
+                                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1e293b', marginBottom: '1.5rem' }}>Discussão do Post</h3>
+                                    {renderCommentsByTab('post')}
+                                </section>
+                            </>
+                        )}
+
+                        {activeTab === 'video' && (
+                            <>
+                                <div className="modal-section-group-premium">
+                                    <div className="section-header-premium">
+                                        <span className="section-number-premium">🎬</span>
+                                        <h3>Planejamento de Vídeo</h3>
+                                    </div>
+                                    <div className="nova-pauta-field-premium">
+                                        <label className="field-label-premium">Resumo da Pauta / Briefing de Vídeo</label>
+                                        <textarea className="input-premium-textarea" rows={6} placeholder="Objetivo do vídeo, roteiro básico..." value={editedTask.video_briefing || ''} onChange={e => handleFieldChange('video_briefing', e.target.value)} />
+                                    </div>
+                                </div>
+
+                                <div className="modal-section-group-premium alternate-bg-premium">
+                                    <div className="section-header-premium">
+                                        <span className="section-number-premium">02</span>
+                                        <h3>Equipe e Prazos (Vídeo)</h3>
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                                        <div className="detail-item-premium">
+                                            <label className="detail-label-premium">Captação (Imagens)</label>
+                                            <TeamMultiSelect selected={editedTask.video_captacao_equipe || []} onChange={v => handleFieldChange('video_captacao_equipe', v)} />
+                                        </div>
+                                        <div className="detail-item-premium">
+                                            <label className="detail-label-premium">Data Captação</label>
+                                            <input type="date" className="input-premium" value={editedTask.video_captacao_data ? new Date(editedTask.video_captacao_data).toISOString().split('T')[0] : ''} onChange={e => handleFieldChange('video_captacao_data', e.target.value ? new Date(e.target.value + 'T12:00:00') : null)} />
+                                        </div>
+                                        <div className="detail-item-premium">
+                                            <label className="detail-label-premium">Edição / Finalização</label>
+                                            <TeamMultiSelect selected={editedTask.video_edicao_equipe || []} onChange={v => handleFieldChange('video_edicao_equipe', v)} />
+                                        </div>
+                                        <div className="detail-item-premium">
+                                            <label className="detail-label-premium">Previsão de Edição</label>
+                                            <input type="date" className="input-premium" value={editedTask.video_edicao_data ? new Date(editedTask.video_edicao_data).toISOString().split('T')[0] : ''} onChange={e => handleFieldChange('video_edicao_data', e.target.value ? new Date(e.target.value + 'T12:00:00') : null)} />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="modal-section-group-premium">
+                                    <div className="section-header-premium">
+                                        <span className="section-number-premium">03</span>
+                                        <h3>O que precisa ser feito?</h3>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', background: 'white', padding: '1rem', borderRadius: 12, border: '1.5px solid #e2e8f0' }}>
+                                        {[
+                                            { id: 'cobertura', label: 'Cobertura (Imagens)' },
+                                            { id: 'depoimentos', label: 'Depoimentos' },
+                                            { id: 'drone', label: 'Imagens Aéreas (Drone)' },
+                                        ].map(item => (
+                                            <label key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, color: '#475569' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={(editedTask.video_necessidades || []).includes(item.id)}
+                                                    onChange={e => {
+                                                        const cur = editedTask.video_necessidades || [];
+                                                        handleFieldChange('video_necessidades', e.target.checked ? [...cur, item.id] : cur.filter(x => x !== item.id));
+                                                    }}
+                                                    style={{ width: 18, height: 18, accentColor: '#3b82f6' }}
+                                                />
+                                                {item.label}
+                                            </label>
+                                        ))}
+                                    </div>
+                                    {(editedTask.video_necessidades || []).includes('depoimentos') && (
+                                        <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: 6, color: '#dc2626', fontSize: '0.75rem', fontWeight: 700 }}>
+                                            <span style={{ background: '#fee2e2', padding: '2px 6px', borderRadius: 4 }}>💡 AVISO:</span> Não esqueça de levar o microfone!
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="modal-section-group-premium alternate-bg-premium">
+                                    <div className="section-header-premium">
+                                        <span className="section-number-premium">🎬</span>
+                                        <h3>Controle de Entrega</h3>
+                                    </div>
+                                    <div style={{ maxWidth: 300 }}>
+                                        <div className="detail-item-premium">
+                                            <label className="detail-label-premium">Prazo Máximo de Entrega</label>
+                                            <input type="date" className="input-premium" value={editedTask.video_entrega_data ? new Date(editedTask.video_entrega_data).toISOString().split('T')[0] : ''} onChange={e => handleFieldChange('video_entrega_data', e.target.value ? new Date(e.target.value + 'T12:00:00') : null)} />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <section className="modal-section-group-premium">
+                                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1e293b', marginBottom: '1.5rem' }}>Discussão da Produção (Vídeo)</h3>
+                                    {renderCommentsByTab('video')}
+                                </section>
+                            </>
+                        )}
+
+                        {/* ════════════════════════════════════════
+                            ABA: FOTO
+                        ════════════════════════════════════════ */}
+                        {activeTab === 'foto' && (
+                            <>
+                                <div className="modal-section-group-premium">
+                                    <div className="section-header-premium">
+                                        <span className="section-number-premium">📸</span>
+                                        <h3>Produção de Fotografia</h3>
+                                    </div>
+                                    <div className="nova-pauta-field-premium">
+                                        <label className="field-label-premium">Briefing de Fotografia</label>
+                                        <textarea className="input-premium-textarea" rows={4} placeholder="O que deve ser fotografado, estilo das fotos..." value={editedTask.foto_briefing || ''} onChange={e => handleFieldChange('foto_briefing', e.target.value)} />
+                                    </div>
+                                </div>
+                                <section className="modal-section-group-premium">
+                                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1e293b', marginBottom: '1.5rem' }}>Discussão da Produção (Foto)</h3>
+                                    {renderCommentsByTab('foto')}
+                                </section>
+                            </>
+                        )}
+
+                        {/* ════════════════════════════════════════
+                            ABA: ARTE
+                        ════════════════════════════════════════ */}
+                        {activeTab === 'arte' && (
+                            <>
+                                <div className="modal-section-group-premium">
+                                    <div className="section-header-premium">
+                                        <span className="section-number-premium">🎨</span>
+                                        <h3>Solicitação de Peças Gráficas</h3>
+                                    </div>
+                                    <div className="nova-pauta-field-premium">
+                                        <label className="field-label-premium">Quais peças são necessárias?</label>
+                                        <textarea className="input-premium-textarea" rows={4} placeholder="Ex: Card para Instagram, Banner para site, Cartaz A3..." value={editedTask.arte_pecas || ''} onChange={e => handleFieldChange('arte_pecas', e.target.value)} />
+                                    </div>
+                                </div>
+
+                                <div className="modal-section-group-premium alternate-bg-premium">
+                                    <div className="section-header-premium">
+                                        <span className="section-number-premium">📏</span>
+                                        <h3>Formatos e Especificações</h3>
+                                    </div>
+                                    <div className="nova-pauta-field-premium">
+                                        <label className="field-label-premium">Informações Relevantes / Texto da Arte</label>
+                                        <textarea className="input-premium-textarea" rows={4} placeholder="Conteúdo textual que deve constar na arte..." value={editedTask.arte_informacoes || ''} onChange={e => handleFieldChange('arte_informacoes', e.target.value)} />
+                                    </div>
+                                </div>
+
+                                <section className="modal-section-group-premium">
+                                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1e293b', marginBottom: '1.5rem' }}>Discussão da Produção (Arte)</h3>
+                                    {renderCommentsByTab('arte')}
+                                </section>
+                            </>
+                        )}
+
+                        {/* ════════════════════════════════════════
+                            ABA: INAUGURAÇÃO
+                        ════════════════════════════════════════ */}
+                        {activeTab === 'inauguracao' && (
+                            <>
+                                <div className="modal-section-group-premium">
+                                    <div className="section-header-premium">
+                                        <span className="section-number-premium">🏛️</span>
+                                        <h3>Gestão de Inauguração</h3>
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                                        <div
+                                            className={`pauta-externa-toggle-card-premium ${editedTask.inauguracao_tipo === 'simples' ? 'active' : ''}`}
+                                            onClick={() => {
+                                                handleFieldChange('inauguracao_tipo', 'simples');
+                                                handleFieldChange('inauguracao_checklist', [
+                                                    { id: 'placa', label: 'Placa de inauguração', done: false },
+                                                    { id: 'backdrop', label: 'Backdrop', done: false },
+                                                ]);
+                                                if (!editedTask.type.includes('inauguracao')) {
+                                                    handleFieldChange('type', [...editedTask.type, 'inauguracao']);
+                                                }
+                                            }}
+                                            style={{ padding: '1.25rem', border: '1.5px solid #e2e8f0', cursor: 'pointer' }}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="inauguracao_tipo"
+                                                checked={editedTask.inauguracao_tipo === 'simples'}
+                                                readOnly
+                                                style={{ accentColor: '#e11d48', width: 20, height: 20 }}
+                                            />
+                                            <div className="toggle-info-premium" style={{ marginLeft: '1rem' }}>
+                                                <span className="toggle-title-premium">Inauguração Simples</span>
+                                                <span className="toggle-description-premium">Placa + Backdrop</span>
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            className={`pauta-externa-toggle-card-premium ${editedTask.inauguracao_tipo === 'master' ? 'active' : ''}`}
+                                            onClick={() => {
+                                                handleFieldChange('inauguracao_tipo', 'master');
+                                                handleFieldChange('inauguracao_checklist', [
+                                                    { id: 'placa', label: 'Placa de inauguração', done: false },
+                                                    { id: 'backdrops', label: 'Backdrops / banners', done: false },
+                                                    { id: 'telao', label: '1 Telão', done: false },
+                                                    { id: 'video_telao', label: 'Vídeo para telão', done: false },
+                                                ]);
+                                                if (!editedTask.type.includes('inauguracao')) {
+                                                    handleFieldChange('type', [...editedTask.type, 'inauguracao']);
+                                                }
+                                            }}
+                                            style={{ padding: '1.25rem', border: '1.5px solid #e2e8f0', cursor: 'pointer' }}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="inauguracao_tipo"
+                                                checked={editedTask.inauguracao_tipo === 'master'}
+                                                readOnly
+                                                style={{ accentColor: '#e11d48', width: 20, height: 20 }}
+                                            />
+                                            <div className="toggle-info-premium" style={{ marginLeft: '1rem' }}>
+                                                <span className="toggle-title-premium">Evento Master</span>
+                                                <span className="toggle-description-premium">Estrutura completa</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {editedTask.inauguracao_tipo && (
+                                        <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: 16, border: '1.5px solid #e2e8f0' }}>
+                                            <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1e293b', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                <span style={{ background: '#e11d48', color: 'white', width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem' }}>✓</span>
+                                                CHECKLIST DE PRODUÇÃO
+                                            </div>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                                {(editedTask.inauguracao_checklist || []).map(item => (
+                                                    <label key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '0.75rem', background: 'white', borderRadius: 10, border: '1px solid #f1f5f9' }}>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={item.done}
+                                                            onChange={e => {
+                                                                const newList = (editedTask.inauguracao_checklist || []).map(i =>
+                                                                    i.id === item.id ? { ...i, done: e.target.checked } : i
+                                                                );
+                                                                handleFieldChange('inauguracao_checklist', newList);
+                                                            }}
+                                                            style={{ width: 18, height: 18, accentColor: '#e11d48' }}
+                                                        />
+                                                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: item.done ? '#94a3b8' : '#334155', textDecoration: item.done ? 'line-through' : 'none' }}>
+                                                            {item.label}
+                                                        </span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <section className="modal-section-group-premium">
+                                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1e293b', marginBottom: '1.5rem' }}>Discussão da Inauguração</h3>
+                                    {renderCommentsByTab('inauguracao')}
+                                </section>
+                            </>
+                        )}
+
+                                </div> {/* Fim modal-main-col-premium */}
+
+                                {/* ── Sidebar Global ─────────────────────────────────── */}
                                 <div className="modal-side-col-premium">
                                     <div className="side-section-premium">
                                         <div className="side-title-premium" style={{ color: '#64748b' }}>STATUS DA PAUTA</div>
@@ -678,527 +1086,35 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                             )}
                                         </div>
                                     </div>
+                                </div> {/* Fim modal-side-col-premium */}
+                            </div> {/* Fim modal-body */}
+                        </div>{/* fim nova-pauta-body-premium */}
 
-                                    {/* Banner de alterações não salvas */}
-                                    {hasUnsavedChanges && (
-                                        <div className="save-banner-premium" style={{ marginTop: 'auto', padding: '1.25rem', background: '#1e293b', borderRadius: 16, boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)', animation: 'slideUp 0.3s ease-out' }}>
-                                            <div style={{ color: 'white', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.85rem', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                                                <div style={{ width: 6, height: 6, background: '#f59e0b', borderRadius: '50%' }}></div>
-                                                Alterações não salvas
-                                            </div>
-                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                <button className="btn-save-banner-cancel-premium" style={{ flex: 1, padding: 8, fontSize: '0.75rem' }} onClick={handleDiscard}>Descartar</button>
-                                                <button className="btn-save-banner-confirm-premium" style={{ flex: 1, padding: 8, fontSize: '0.75rem' }} onClick={() => handleSave(false)}>Salvar Tudo</button>
-                                            </div>
-                                        </div>
-                                    )}
+                        {hasUnsavedChanges && (
+                            <div className="save-banner-premium" style={{ 
+                                position: 'absolute', 
+                                bottom: '2rem', 
+                                right: '2.5rem', 
+                                width: '320px', 
+                                padding: '1.25rem', 
+                                background: '#1e293b', 
+                                borderRadius: 16, 
+                                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)', 
+                                zIndex: 1100,
+                                animation: 'slideUp 0.3s ease-out' 
+                            }}>
+                                <div style={{ color: 'white', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.85rem', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                                    <div style={{ width: 6, height: 6, background: '#f59e0b', borderRadius: '50%' }}></div>
+                                    Alterações não salvas
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <button className="btn-save-banner-cancel-premium" style={{ flex: 1, padding: 8, fontSize: '0.75rem' }} onClick={handleDiscard}>Descartar</button>
+                                    <button className="btn-save-banner-confirm-premium" style={{ flex: 1, padding: 8, fontSize: '0.75rem' }} onClick={() => handleSave(false)}>Salvar Tudo</button>
                                 </div>
                             </div>
                         )}
-
-                        {/* ════════════════════════════════════════
-                            ABA: RELEASE
-                        ════════════════════════════════════════ */}
-                        {activeTab === 'release' && (
-                            <div className="modal-body">
-                                <div className="modal-main-col-premium" style={{ gap: 0 }}>
-                                    <div className="modal-section-group-premium">
-                                        <div className="section-header-premium">
-                                            <span className="section-number-premium">📝</span>
-                                            <h3>Produção de Release</h3>
-                                        </div>
-                                        <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Os campos dedicados para produção de Release serão construídos aqui em breve.</p>
-                                    </div>
-                                    <section className="modal-section-group-premium">
-                                        <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1e293b', marginBottom: '1.5rem' }}>Discussão do Release</h3>
-                                        {renderCommentsByTab('release')}
-                                    </section>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* ════════════════════════════════════════
-                            ABA: POST
-                        ════════════════════════════════════════ */}
-                        {activeTab === 'post' && (
-                            <div className="modal-body">
-                                <div className="modal-main-col-premium" style={{ gap: 0 }}>
-                                    <div className="modal-section-group-premium">
-                                        <div className="section-header-premium">
-                                            <span className="section-number-premium">📱</span>
-                                            <h3>Estratégia de Social Media</h3>
-                                        </div>
-
-                                        <div className="nova-pauta-field-premium" style={{ marginBottom: '1.5rem' }}>
-                                            <label className="field-label-premium">CRIAÇÃO DO TEXTO (DESCRIÇÃO)</label>
-                                            <textarea
-                                                className="input-premium-textarea"
-                                                rows={6}
-                                                placeholder="Escreva a legenda sugerida para o post..."
-                                                value={editedTask.post_criacao_texto || ''}
-                                                onChange={e => handleFieldChange('post_criacao_texto', e.target.value)}
-                                            />
-                                            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: '#475569', marginTop: '0.75rem' }}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={!!editedTask.post_criacao_corrigido}
-                                                    onChange={e => handleFieldChange('post_criacao_corrigido', e.target.checked)}
-                                                    style={{ width: 18, height: 18, accentColor: '#3b82f6' }}
-                                                />
-                                                Texto de Criação Corrigido
-                                            </label>
-                                        </div>
-
-                                        <div className="modal-section-group-premium alternate-bg-premium" style={{ margin: '0 -2rem', padding: '1.5rem 2rem' }}>
-                                            <div className="section-header-premium">
-                                                <span className="section-number-premium" style={{ background: '#f0f9ff', color: '#0ea5e9' }}>✓</span>
-                                                <h3>Controle de Aprovação</h3>
-                                            </div>
-
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
-                                                <div
-                                                    className={`pauta-externa-toggle-card-premium ${editedTask.post_aprovado ? 'active' : ''}`}
-                                                    onClick={() => { handleFieldChange('post_aprovado', !editedTask.post_aprovado); if (!editedTask.post_aprovado) handleFieldChange('post_reprovado', false); }}
-                                                >
-                                                    <div className="toggle-info-premium">
-                                                        <span className="toggle-title-premium">Post Aprovado</span>
-                                                        <span className="toggle-description-premium">Pronto para publicação</span>
-                                                    </div>
-                                                    <div className={`toggle-switch-premium ${editedTask.post_aprovado ? 'on' : ''}`}>
-                                                        <div className="toggle-knob-premium"></div>
-                                                    </div>
-                                                </div>
-
-                                                <div style={{ background: 'white', padding: '1.25rem', borderRadius: 12, border: '1.5px solid #e2e8f0' }}>
-                                                    <div className="nova-pauta-field-premium">
-                                                        <label className="field-label-premium">FOI ALTERADO / CORRIGIDO?</label>
-                                                        <textarea
-                                                            className="input-premium-textarea"
-                                                            rows={2}
-                                                            placeholder="Descreva o que foi alterado ou o que precisa ser corrigido..."
-                                                            value={editedTask.post_alterado_texto || ''}
-                                                            onChange={e => handleFieldChange('post_alterado_texto', e.target.value)}
-                                                            style={{ fontSize: '0.85rem' }}
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                <div style={{ background: editedTask.post_reprovado ? '#fff1f2' : 'white', padding: '1.25rem', borderRadius: 12, border: editedTask.post_reprovado ? '1.5px solid #fda4af' : '1.5px solid #e2e8f0', transition: 'all 0.2s' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: editedTask.post_reprovado ? '1rem' : 0 }}>
-                                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                            <span style={{ fontSize: '0.9rem', fontWeight: 700, color: editedTask.post_reprovado ? '#be123c' : '#1e293b' }}>Post Reprovado / Cancelado</span>
-                                                            <span style={{ fontSize: '0.75rem', color: editedTask.post_reprovado ? '#e11d48' : '#64748b' }}>Marcar se o material foi descartado</span>
-                                                        </div>
-                                                        <div
-                                                            className={`toggle-switch-premium ${editedTask.post_reprovado ? 'on' : ''}`}
-                                                            onClick={() => { const v = !editedTask.post_reprovado; handleFieldChange('post_reprovado', v); if (v) handleFieldChange('post_aprovado', false); }}
-                                                            style={{ background: editedTask.post_reprovado ? '#e11d48' : undefined }}
-                                                        >
-                                                            <div className="toggle-knob-premium"></div>
-                                                        </div>
-                                                    </div>
-                                                    {editedTask.post_reprovado && (
-                                                        <div className="nova-pauta-field-premium">
-                                                            <label className="field-label-premium" style={{ color: '#be123c' }}>MOTIVO DO CANCELAMENTO</label>
-                                                            <textarea
-                                                                className="input-premium-textarea"
-                                                                rows={2}
-                                                                placeholder="Por que este post foi reprovado ou cancelado?"
-                                                                value={editedTask.post_reprovado_comentario || ''}
-                                                                onChange={e => handleFieldChange('post_reprovado_comentario', e.target.value)}
-                                                                style={{ fontSize: '0.85rem', borderColor: '#fda4af' }}
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="modal-section-group-premium" style={{ marginTop: '1.5rem' }}>
-                                            <div className="section-header-premium">
-                                                <span className="section-number-premium">📦</span>
-                                                <h3>Material Solicitado</h3>
-                                            </div>
-                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
-                                                {([
-                                                    { id: 'release', label: 'Release' },
-                                                    { id: 'post', label: 'Post' },
-                                                    { id: 'video', label: 'Vídeo' },
-                                                    { id: 'foto', label: 'Foto' },
-                                                    { id: 'arte', label: 'Arte' },
-                                                    { id: 'inauguracao', label: 'Inauguração' },
-                                                ] as { id: TaskType; label: string }[]).map(mat => {
-                                                    const isActive = editedTask.type.includes(mat.id);
-                                                    return (
-                                                        <button
-                                                            key={mat.id}
-                                                            type="button"
-                                                            onClick={() => {
-                                                                const newTypes = isActive
-                                                                    ? editedTask.type.filter(t => t !== mat.id)
-                                                                    : [...editedTask.type, mat.id];
-                                                                const finalTypes = newTypes.length > 0 ? newTypes : ['release' as TaskType];
-                                                                handleFieldChange('type', finalTypes);
-                                                                handleFieldChange('post_material_solicitado', finalTypes.map(t => {
-                                                                    if (t === 'video') return 'Vídeo';
-                                                                    if (t === 'foto') return 'Foto';
-                                                                    return t.charAt(0).toUpperCase() + t.slice(1);
-                                                                }));
-                                                            }}
-                                                            className={`prio-pill-premium ${isActive ? 'active' : ''}`}
-                                                            style={{ padding: '1rem', fontSize: '1rem', fontWeight: 700, display: 'flex', justifyContent: 'center', alignItems: 'center', background: isActive ? '#1e293b' : 'white', color: isActive ? 'white' : '#475569', border: '1.5px solid', borderColor: isActive ? '#1e293b' : '#e2e8f0', boxShadow: isActive ? '0 4px 6px -1px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.2s cubic-bezier(0.4,0,0.2,1)', cursor: 'pointer' }}
-                                                        >
-                                                            {mat.label}
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                            <p style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.75rem', fontStyle: 'italic' }}>
-                                                💡 Selecione os formatos previstos para esta estratégia de post.
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <section className="modal-section-group-premium">
-                                        <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1e293b', marginBottom: '1.5rem' }}>Discussão do Post</h3>
-                                        {renderCommentsByTab('post')}
-                                    </section>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* ════════════════════════════════════════
-                            ABA: VÍDEO
-                        ════════════════════════════════════════ */}
-                        {activeTab === 'video' && (
-                            <div className="modal-body">
-                                <div className="modal-main-col-premium" style={{ gap: 0 }}>
-                                    <div className="modal-section-group-premium">
-                                        <div className="section-header-premium">
-                                            <span className="section-number-premium">🎬</span>
-                                            <h3>Planejamento de Vídeo</h3>
-                                        </div>
-                                        <div className="nova-pauta-field-premium">
-                                            <label className="field-label-premium">Resumo da Pauta / Briefing de Vídeo</label>
-                                            <textarea className="input-premium-textarea" rows={6} placeholder="Objetivo do vídeo, roteiro básico..." value={editedTask.video_briefing || ''} onChange={e => handleFieldChange('video_briefing', e.target.value)} />
-                                        </div>
-                                    </div>
-
-                                    <div className="modal-section-group-premium alternate-bg-premium">
-                                        <div className="section-header-premium">
-                                            <span className="section-number-premium">02</span>
-                                            <h3>Equipe e Prazos (Vídeo)</h3>
-                                        </div>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-                                            <div className="detail-item-premium">
-                                                <label className="detail-label-premium">Captação (Imagens)</label>
-                                                <TeamMultiSelect selected={editedTask.video_captacao_equipe || []} onChange={v => handleFieldChange('video_captacao_equipe', v)} />
-                                            </div>
-                                            <div className="detail-item-premium">
-                                                <label className="detail-label-premium">Data Captação</label>
-                                                <input type="date" className="input-premium" value={editedTask.video_captacao_data ? new Date(editedTask.video_captacao_data).toISOString().split('T')[0] : ''} onChange={e => handleFieldChange('video_captacao_data', e.target.value ? new Date(e.target.value + 'T12:00:00') : null)} />
-                                            </div>
-                                            <div className="detail-item-premium">
-                                                <label className="detail-label-premium">Edição / Finalização</label>
-                                                <TeamMultiSelect selected={editedTask.video_edicao_equipe || []} onChange={v => handleFieldChange('video_edicao_equipe', v)} />
-                                            </div>
-                                            <div className="detail-item-premium">
-                                                <label className="detail-label-premium">Previsão de Edição</label>
-                                                <input type="date" className="input-premium" value={editedTask.video_edicao_data ? new Date(editedTask.video_edicao_data).toISOString().split('T')[0] : ''} onChange={e => handleFieldChange('video_edicao_data', e.target.value ? new Date(e.target.value + 'T12:00:00') : null)} />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="modal-section-group-premium">
-                                        <div className="section-header-premium">
-                                            <span className="section-number-premium">03</span>
-                                            <h3>O que precisa ser feito?</h3>
-                                        </div>
-                                        <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', background: 'white', padding: '1rem', borderRadius: 12, border: '1.5px solid #e2e8f0' }}>
-                                            {[
-                                                { id: 'cobertura', label: 'Cobertura (Imagens)' },
-                                                { id: 'depoimentos', label: 'Depoimentos' },
-                                                { id: 'drone', label: 'Imagens Aéreas (Drone)' },
-                                            ].map(item => (
-                                                <label key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600, color: '#475569' }}>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={(editedTask.video_necessidades || []).includes(item.id)}
-                                                        onChange={e => {
-                                                            const cur = editedTask.video_necessidades || [];
-                                                            handleFieldChange('video_necessidades', e.target.checked ? [...cur, item.id] : cur.filter(x => x !== item.id));
-                                                        }}
-                                                        style={{ width: 18, height: 18, accentColor: '#3b82f6' }}
-                                                    />
-                                                    {item.label}
-                                                </label>
-                                            ))}
-                                        </div>
-                                        {(editedTask.video_necessidades || []).includes('depoimentos') && (
-                                            <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: 6, color: '#dc2626', fontSize: '0.75rem', fontWeight: 700 }}>
-                                                <span style={{ background: '#fee2e2', padding: '2px 6px', borderRadius: 4 }}>💡 AVISO:</span> Não esqueça de levar o microfone!
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="modal-section-group-premium alternate-bg-premium">
-                                        <div className="section-header-premium">
-                                            <span className="section-number-premium">🎬</span>
-                                            <h3>Controle de Entrega</h3>
-                                        </div>
-                                        <div style={{ maxWidth: 300 }}>
-                                            <div className="detail-item-premium">
-                                                <label className="detail-label-premium">Prazo Máximo de Entrega</label>
-                                                <input type="date" className="input-premium" value={editedTask.video_entrega_data ? new Date(editedTask.video_entrega_data).toISOString().split('T')[0] : ''} onChange={e => handleFieldChange('video_entrega_data', e.target.value ? new Date(e.target.value + 'T12:00:00') : null)} />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <section className="modal-section-group-premium">
-                                        <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1e293b', marginBottom: '1.5rem' }}>Discussão da Produção (Vídeo)</h3>
-                                        {renderCommentsByTab('video')}
-                                    </section>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* ════════════════════════════════════════
-                            ABA: FOTO
-                        ════════════════════════════════════════ */}
-                        {activeTab === 'foto' && (
-                            <div className="modal-body">
-                                <div className="modal-main-col-premium" style={{ gap: 0 }}>
-                                    <div className="modal-section-group-premium">
-                                        <div className="section-header-premium">
-                                            <span className="section-number-premium">📸</span>
-                                            <h3>Produção de Fotografia</h3>
-                                        </div>
-                                        <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Os campos dedicados para produção de Fotos serão construídos aqui em breve.</p>
-                                    </div>
-                                    <section className="modal-section-group-premium">
-                                        <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1e293b', marginBottom: '1.5rem' }}>Discussão da Fotografia</h3>
-                                        {renderCommentsByTab('foto')}
-                                    </section>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* ════════════════════════════════════════
-                            ABA: ARTE
-                        ════════════════════════════════════════ */}
-                        {activeTab === 'arte' && (
-                            <div className="modal-body">
-                                <div className="modal-main-col-premium" style={{ gap: 0 }}>
-                                    <div className="modal-section-group-premium">
-                                        <div className="section-header-premium">
-                                            <span className="section-number-premium">🎨</span>
-                                            <h3>Pedido de Arte</h3>
-                                        </div>
-                                        <div className="nova-pauta-field-premium" style={{ marginBottom: '1.5rem' }}>
-                                            <label className="field-label-premium">TIPO DE PEÇAS</label>
-                                            <textarea className="input-premium-textarea" rows={4} placeholder="Descreva as peças necessárias..." value={editedTask.arte_tipo_pecas || ''} onChange={e => handleFieldChange('arte_tipo_pecas', e.target.value)} />
-                                        </div>
-                                        <div className="fields-grid-2-premium">
-                                            <div className="nova-pauta-field-premium">
-                                                <label className="field-label-premium">PRAZO DE ENTREGA</label>
-                                                <input type="date" className="input-premium" value={editedTask.arte_entrega_data ? new Date(editedTask.arte_entrega_data).toISOString().split('T')[0] : ''} onChange={e => handleFieldChange('arte_entrega_data', e.target.value ? new Date(e.target.value + 'T12:00:00') : null)} />
-                                            </div>
-                                            <div className="nova-pauta-field-premium">
-                                                <label className="field-label-premium">ANEXOS / REFERÊNCIAS</label>
-                                                <div style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: 12, border: '1.5px dashed #e2e8f0', textAlign: 'center' }}>
-                                                    <p style={{ fontSize: '0.8rem', color: '#64748b' }}>Utilize a seção de anexos da aba Geral.</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <section className="modal-section-group-premium">
-                                        <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1e293b', marginBottom: '1.5rem' }}>Discussão da Arte</h3>
-                                        {renderCommentsByTab('arte')}
-                                    </section>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* ════════════════════════════════════════
-                            ABA: INAUGURAÇÃO
-                        ════════════════════════════════════════ */}
-                        {activeTab === 'inauguracao' && (
-                            <div className="modal-body">
-                                <div className="modal-main-col-premium" style={{ gap: 0 }}>
-
-                                    {/* Tipo de Inauguração */}
-                                    <div className="modal-section-group-premium">
-                                        <div className="section-header-premium">
-                                            <span className="section-number-premium">🏛️</span>
-                                            <h3>Tipo de Inauguração</h3>
-                                        </div>
-
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                            {/* Simples */}
-                                            <label
-                                                style={{
-                                                    display: 'flex', alignItems: 'center', gap: '1rem',
-                                                    padding: '1.25rem', borderRadius: 16, cursor: 'pointer',
-                                                    border: `2.5px solid ${editedTask.inauguracao_tipo === 'simples' ? '#e11d48' : '#f1f5f9'}`,
-                                                    background: editedTask.inauguracao_tipo === 'simples' ? '#fff1f2' : '#ffffff',
-                                                    boxShadow: editedTask.inauguracao_tipo === 'simples' ? '0 4px 12px rgba(225,29,72,0.1)' : 'none',
-                                                    transition: 'all 0.2s',
-                                                }}
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    name="inauguracao_tipo"
-                                                    value="simples"
-                                                    checked={editedTask.inauguracao_tipo === 'simples'}
-                                                    onChange={() => {
-                                                        handleFieldChange('inauguracao_tipo', 'simples');
-                                                        // Resetar checklist para o tipo simples
-                                                        handleFieldChange('inauguracao_checklist', [
-                                                            { id: 'placa', label: 'Placa de inauguração', done: false },
-                                                            { id: 'backdrop', label: 'Backdrop', done: false },
-                                                        ]);
-                                                    }}
-                                                    style={{ accentColor: '#e11d48', width: 20, height: 20 }}
-                                                />
-                                                <div>
-                                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#1e293b' }}>Inauguração Simples</div>
-                                                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: 2 }}>Placa + Backdrop</div>
-                                                </div>
-                                            </label>
-
-                                            {/* Master */}
-                                            <label
-                                                style={{
-                                                    display: 'flex', alignItems: 'center', gap: '1rem',
-                                                    padding: '1.25rem', borderRadius: 16, cursor: 'pointer',
-                                                    border: `2.5px solid ${editedTask.inauguracao_tipo === 'master' ? '#e11d48' : '#f1f5f9'}`,
-                                                    background: editedTask.inauguracao_tipo === 'master' ? '#fff1f2' : '#ffffff',
-                                                    boxShadow: editedTask.inauguracao_tipo === 'master' ? '0 4px 12px rgba(225,29,72,0.1)' : 'none',
-                                                    transition: 'all 0.2s',
-                                                }}
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    name="inauguracao_tipo"
-                                                    value="master"
-                                                    checked={editedTask.inauguracao_tipo === 'master'}
-                                                    onChange={() => {
-                                                        handleFieldChange('inauguracao_tipo', 'master');
-                                                        // Resetar checklist para o tipo master
-                                                        handleFieldChange('inauguracao_checklist', [
-                                                            { id: 'placa', label: 'Placa de inauguração', done: false },
-                                                            { id: 'backdrops', label: 'Backdrops / banners', done: false },
-                                                            { id: 'telao', label: '1 Telão', done: false },
-                                                            { id: 'video_telao', label: 'Vídeo para telão', done: false },
-                                                        ]);
-                                                    }}
-                                                    style={{ accentColor: '#e11d48', width: 20, height: 20 }}
-                                                />
-                                                <div>
-                                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#1e293b' }}>Inauguração Master</div>
-                                                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: 2 }}>Placa + Backdrops + Telão + Vídeo</div>
-                                                </div>
-                                            </label>
-                                        </div>
-                                    </div>
-
-                                    {/* Checklist de Materiais */}
-                                    {editedTask.inauguracao_tipo && (
-                                        <div className="modal-section-group-premium alternate-bg-premium">
-                                            <div className="section-header-premium">
-                                                <span className="section-number-premium">02</span>
-                                                <h3>
-                                                    Checklist de Materiais
-                                                    {/* Badge "tudo pronto" */}
-                                                    {(editedTask.inauguracao_checklist || []).length > 0 &&
-                                                     (editedTask.inauguracao_checklist || []).every(i => i.done) && (
-                                                        <span style={{
-                                                            marginLeft: 8, fontSize: '0.7rem', fontWeight: 700,
-                                                            color: '#059669', background: '#ecfdf5',
-                                                            padding: '2px 8px', borderRadius: 6,
-                                                        }}>
-                                                            ✅ Tudo pronto!
-                                                        </span>
-                                                    )}
-                                                </h3>
-                                            </div>
-
-                                            <div style={{ background: 'white', padding: '1.25rem', borderRadius: 16, border: '1.5px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                                {(editedTask.inauguracao_checklist || []).map(item => (
-                                                    <label
-                                                        key={item.id}
-                                                        style={{
-                                                            display: 'flex', alignItems: 'center', gap: '0.75rem',
-                                                            fontSize: '0.9rem', fontWeight: 500,
-                                                            color: item.done ? '#94a3b8' : '#334155',
-                                                            cursor: 'pointer', transition: 'all 0.2s',
-                                                            textDecoration: item.done ? 'line-through' : 'none',
-                                                        }}
-                                                    >
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={item.done}
-                                                            onChange={() => {
-                                                                const updated = (editedTask.inauguracao_checklist || []).map(i =>
-                                                                    i.id === item.id ? { ...i, done: !i.done } : i
-                                                                );
-                                                                handleFieldChange('inauguracao_checklist', updated);
-                                                            }}
-                                                            style={{ accentColor: '#e11d48', width: 18, height: 18 }}
-                                                        />
-                                                        {item.label}
-                                                    </label>
-                                                ))}
-                                            </div>
-
-                                            {/* Barra de progresso */}
-                                            {(editedTask.inauguracao_checklist || []).length > 0 && (() => {
-                                                const total = (editedTask.inauguracao_checklist || []).length;
-                                                const done = (editedTask.inauguracao_checklist || []).filter(i => i.done).length;
-                                                const pct = Math.round((done / total) * 100);
-                                                return (
-                                                    <div style={{ marginTop: '0.75rem' }}>
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#64748b', fontWeight: 600, marginBottom: 4 }}>
-                                                            <span>{done} de {total} concluídos</span>
-                                                            <span>{pct}%</span>
-                                                        </div>
-                                                        <div style={{ height: 6, borderRadius: 99, background: '#f1f5f9', overflow: 'hidden' }}>
-                                                            <div style={{
-                                                                height: '100%', width: `${pct}%`,
-                                                                background: done === total ? '#10b981' : '#e11d48',
-                                                                borderRadius: 99, transition: 'width 0.3s',
-                                                            }} />
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })()}
-                                        </div>
-                                    )}
-
-                                    {/* Placeholder quando tipo não foi escolhido */}
-                                    {!editedTask.inauguracao_tipo && (
-                                        <div className="modal-section-group-premium" style={{ borderBottom: 'none' }}>
-                                            <div style={{ textAlign: 'center', padding: '2rem', background: '#f8fafc', borderRadius: 16, border: '2px dashed #e2e8f0' }}>
-                                                <div style={{ fontSize: '2rem', marginBottom: 8 }}>🏛️</div>
-                                                <div style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 500 }}>
-                                                    Selecione o tipo de inauguração acima para ver o checklist de materiais.
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Discussão */}
-                                    <section className="modal-section-group-premium" style={{ borderBottom: 'none' }}>
-                                        <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1e293b', marginBottom: '1.5rem' }}>Discussão da Inauguração</h3>
-                                        {renderCommentsByTab('inauguracao')}
-                                    </section>
-                                </div>
-                            </div>
-                        )}
-
-                    </div>{/* fim nova-pauta-body-premium */}
-                </div>
-            </div>
+                    </div> {/* fim modal-content */}
+                </div> {/* fim modal-overlay */}
 
             {viewingFile && (
                 <FileViewer attachment={viewingFile} onClose={() => setViewingFile(null)} />

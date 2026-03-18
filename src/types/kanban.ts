@@ -69,6 +69,9 @@ export interface Task {
     video_entrega_data?: Date | null;
     arte_tipo_pecas?: string;
     arte_entrega_data?: Date | null;
+    arte_pecas?: string;
+    arte_informacoes?: string;
+    foto_briefing?: string;
     // Post-specific fields
     post_criacao_texto?: string;
     post_criacao_corrigido?: boolean;

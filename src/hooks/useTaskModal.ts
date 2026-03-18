@@ -266,11 +266,14 @@ export function useTaskModal(task: Task, onUpdateTask: (t: Task) => void, onClos
 
     /** Excluir pauta com confirmação */
     const handleDelete = () => {
+        console.log('🚀 Tentando excluir pauta:', task.id);
         openConfirm(
             '⚠️ Excluir Definitivamente',
             'Esta ação apagará todos os dados, anexos e comentários de forma irreversível.',
             async () => {
+                console.log('🛠️ Confirmação recebida, chamando deleteTask...');
                 await deleteTask(task.id);
+                console.log('✅ deleteTask finalizado, fechando modal.');
                 onClose();
             }
         );

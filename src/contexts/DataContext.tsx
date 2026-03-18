@@ -542,26 +542,40 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
     const deleteTask = async (taskId: string) => {
         try {
-            // Manual cascade deletion for related tables
+            console.log('🗑️ Iniciando processo de exclusão para task:', taskId);
+            
+            // Busca o título da pauta para deletar notificações relacionadas (pode estar na lista ativa ou arquivada)
+            const targetTask = tasks.find(t => t.id === taskId) || archivedTasks.find(t => t.id === taskId);
+            
+            // 1. Limpeza manual de tabelas relacionadas (Cascata Manual)
+            // task_assignees e task_logs usam cascade no banco idealmente, mas reforçamos aqui
             await supabase.from('task_assignees').delete().eq('task_id', taskId);
             await supabase.from('task_logs').delete().eq('task_id', taskId);
-            await supabase.from('notifications').delete().eq('message', `Escalado(a) na pauta: "${tasks.find(t => t.id === taskId)?.title}"`);
+            
+            if (targetTask?.title) {
+                await supabase.from('notifications')
+                    .delete()
+                    .eq('message', `Escalado(a) na pauta: "${targetTask.title}"`);
+            }
 
+            // 2. Exclusão da pauta principal
             const { error } = await supabase
                 .from('tasks')
                 .delete()
                 .eq('id', taskId);
 
             if (error) {
-                console.error("Error deleting task:", error);
+                console.error("❌ Erro ao deletar no Supabase:", error);
                 alert("Erro ao excluir pauta definitivamente: " + error.message);
                 return;
             }
 
+            // 3. Update local state para sincronização instantânea
+            console.log('✨ Exclusão concluída. Atualizando estado local...');
             setTasks(prev => prev.filter(t => t.id !== taskId));
             setArchivedTasks(prev => prev.filter(t => t.id !== taskId));
         } catch (error) {
-            console.error("Unexpected error deleting task:", error);
+            console.error("💥 Erro inesperado ao excluir pauta:", error);
         }
     };
 
