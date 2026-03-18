@@ -6,87 +6,81 @@ import type { Task, TaskStatus, TaskType } from '../types/kanban';
 import { useData } from '../contexts/DataContext';
 import TaskModal from '../components/TaskModal';
 import CreateTaskModal from '../components/CreateTaskModal';
-import CreateInaugurationModal from '../components/CreateInaugurationModal';
+import TaskTeamAvatars from '../components/TaskTeamAvatars';
 import './Dashboard.css';
 
-const COLUMNS: { id: TaskStatus; title: string }[] = [
-    { id: 'solicitado', title: 'Solicitação' },
-    { id: 'producao', title: 'Em Produção' },
-    { id: 'correcao', title: 'Correção/Aprovação' },
-    { id: 'aprovado', title: 'Aprovado' },
-    { id: 'publicado', title: 'Publicado' },
-    { id: 'cancelado', title: 'Reprovado/Cancelado' },
-    { id: 'inauguracao', title: 'Inauguração' }
+const FLOW_COLUMNS: { id: TaskStatus; title: string }[] = [
+    { id: 'solicitado',  title: 'Solicitação' },
+    { id: 'producao',    title: 'Em Produção' },
+    { id: 'correcao',    title: 'Correção/Aprovação' },
+    { id: 'aprovado',    title: 'Aprovado' },
+    { id: 'publicado',   title: 'Publicado' },
+    { id: 'cancelado',   title: 'Reprovado/Cancelado' },
 ];
+
+// ── Regra da coluna espelho de Inauguração ────────────────────────────────────
+// Aparece quando: type inclui inauguracao + aba preenchida + não arquivado.
+const isInaugCard = (task: Task) =>
+    !task.archived &&
+    task.type.includes('inauguracao') &&
+    !!(task.inauguracao_tipo || task.inauguracao_checklist?.length);
 
 export default function Dashboard() {
     const { tasks, team, loading, updateTaskStatus, updateTask, addTask, archivedTasks, unarchiveTask, searchTerm } = useData();
     const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [isCreateInaugModalOpen, setIsCreateInaugModalOpen] = useState(false);
     const [showArchive, setShowArchive] = useState(false);
 
-    // --- Search Filtering ---
+    // ── Filtro de busca ───────────────────────────────────────────────────────
     const filteredTasks = tasks.filter(task => {
         if (!searchTerm) return true;
         const term = searchTerm.toLowerCase();
 
-        // 1. Title & Description
-        const matchesContent =
-            task.title.toLowerCase().includes(term) ||
-            task.description?.toLowerCase().includes(term);
-        if (matchesContent) return true;
+        if (task.title.toLowerCase().includes(term)) return true;
+        if (task.description?.toLowerCase().includes(term)) return true;
 
-        // 2. Types/Badges
         const typeLabels: Record<string, string> = {
-            'release': 'release pauta',
-            'arte': 'arte gráfica design',
-            'video': 'vídeo audiovisual',
-            'foto': 'fotos fotografia',
-            'inauguracao': 'inauguração evento'
+            release: 'release pauta',
+            arte: 'arte gráfica design',
+            video: 'vídeo audiovisual',
+            foto: 'fotos fotografia',
+            inauguracao: 'inauguração evento',
         };
-        const matchesType = task.type.some(t => typeLabels[t]?.includes(term));
-        if (matchesType) return true;
-
-        // 3. Secretarias (any task)
-        const matchesSecretaria = task.inauguracao_secretarias?.some(s => s.toLowerCase().includes(term));
-        if (matchesSecretaria) return true;
-
-        // 4. Assignees (Team Members)
-        const matchesAssignees = task.assignees?.some(name => name.toLowerCase().includes(term));
-        if (matchesAssignees) return true;
-
-        // 5. Inauguration specific details
-        if (task.status === 'inauguracao' || task.type.includes('inauguracao')) {
-            const matchesInaug =
-                task.inauguracao_nome?.toLowerCase().includes(term) ||
-                task.inauguracao_endereco?.toLowerCase().includes(term);
-            if (matchesInaug) return true;
-        }
+        if (task.type.some(t => typeLabels[t]?.includes(term))) return true;
+        if (task.inauguracao_secretarias?.some(s => s.toLowerCase().includes(term))) return true;
+        if (task.secretarias?.some(s => s.toLowerCase().includes(term))) return true;
+        if (task.assignees?.some(n => n.toLowerCase().includes(term))) return true;
+        if (task.inauguracao_nome?.toLowerCase().includes(term)) return true;
+        if (task.inauguracao_endereco?.toLowerCase().includes(term)) return true;
 
         return false;
     });
 
-    // Helper to format type badge
-    const getTypeBadge = (types: TaskType[]) => {
-        return (
-            <div className="task-badges-container">
-                {types.map(t => {
-                    switch (t) {
-                        case 'release': return <span key={t} className="badge-tag badge-release">📝 Release</span>;
-                        case 'arte': return <span key={t} className="badge-tag badge-arte">🎨 Arte Gráfica</span>;
-                        case 'video': return <span key={t} className="badge-tag badge-video">🎬 Vídeo</span>;
-                        case 'foto': return <span key={t} className="badge-tag badge-foto">📸 Fotos</span>;
-                        case 'post': return <span key={t} className="badge-tag badge-post">📱 Post</span>;
-                        default: return null;
-                    }
-                })}
-            </div>
-        );
-    };
+    // ── Badges de tipo ────────────────────────────────────────────────────────
+    // Regra: badge de inauguração só aparece se a aba tiver campos preenchidos.
+    // As outras abas ainda usam só task.type (a ser refinado aba a aba futuramente).
+    const getTypeBadge = (types: TaskType[], task: Task) => (
+        <div className="task-badges-container">
+            {types.map(t => {
+                switch (t) {
+                    case 'release':     return <span key={t} className="badge-tag badge-release">📝 Release</span>;
+                    case 'arte':        return <span key={t} className="badge-tag badge-arte">🎨 Arte Gráfica</span>;
+                    case 'video':       return <span key={t} className="badge-tag badge-video">🎬 Vídeo</span>;
+                    case 'foto':        return <span key={t} className="badge-tag badge-foto">📸 Fotos</span>;
+                    case 'post':        return <span key={t} className="badge-tag badge-post">📱 Post</span>;
+                    case 'inauguracao':
+                        // Só mostra se a aba de inauguração tiver sido preenchida
+                        return isInaugCard(task)
+                            ? <span key={t} className="badge-tag badge-inauguracao">🏛️ Inauguração</span>
+                            : null;
+                    default: return null;
+                }
+            })}
+        </div>
+    );
 
-    // Helper to format date
+    // ── Formatação de data ────────────────────────────────────────────────────
     const formatDueDate = (date: Date | null) => {
         if (!date) return null;
         const isOverdue = date < new Date() && date.toDateString() !== new Date().toDateString();
@@ -98,15 +92,11 @@ export default function Dashboard() {
         );
     };
 
-    // Drag and Drop Flow
+    // ── Drag & Drop ───────────────────────────────────────────────────────────
     const handleDragStart = (e: React.DragEvent, taskId: string, taskStatus: TaskStatus) => {
         setDraggedTaskId(taskId);
         e.dataTransfer.effectAllowed = 'move';
-
-        // Add data to dataTransfer for easier access in drag over
         e.dataTransfer.setData('taskStatus', taskStatus);
-
-        // Add a slight transparency to original card being dragged
         e.currentTarget.classList.add('dragging');
     };
 
@@ -123,17 +113,10 @@ export default function Dashboard() {
     const handleDrop = async (e: React.DragEvent, targetColumnId: TaskStatus) => {
         e.preventDefault();
         if (!draggedTaskId) return;
-
-        const draggedTask = tasks.find(t => t.id === draggedTaskId);
-        if (!draggedTask) return;
-
-        // Block dragging from or to the 'inauguracao' column (silently cancel)
-        if (targetColumnId === 'inauguracao' && draggedTask.status !== 'inauguracao') return;
-        if (draggedTask.status === 'inauguracao' && targetColumnId !== 'inauguracao') return;
-
         await updateTaskStatus(draggedTaskId, targetColumnId);
     };
 
+    // ── Handlers ──────────────────────────────────────────────────────────────
     const handleUpdateTask = async (updatedTask: Task) => {
         await updateTask(updatedTask);
         if (selectedTask?.id === updatedTask.id) setSelectedTask(updatedTask);
@@ -145,11 +128,128 @@ export default function Dashboard() {
         return success;
     };
 
-    const handleCreateInaugTask = async (newTask: Task): Promise<boolean> => {
-        const success = await addTask(newTask);
-        if (success) setIsCreateInaugModalOpen(false);
-        return success;
+    // ── Card de inauguração (espelho na coluna Inauguração) ───────────────────
+    const renderInaugCard = (task: Task) => {
+        const tipoLabel = task.inauguracao_tipo === 'master' ? 'Master' : 'Simples';
+        const checklist = task.inauguracao_checklist || [];
+        const done = checklist.filter(i => i.done).length;
+        const total = checklist.length;
+        const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+        const secretarias = task.inauguracao_secretarias || task.secretarias || [];
+
+        return (
+            <div
+                key={`inaug-${task.id}`}
+                className="kanban-card priority-alta"
+                style={{ borderLeft: '3px solid hsl(330, 55%, 55%)', cursor: 'pointer' }}
+                onClick={() => setSelectedTask(task)}
+            >
+                <div className="card-header">
+                    <div className="task-badges-container">
+                        <span className="badge-tag badge-inauguracao">🏛️ Inauguração</span>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '1px 7px', borderRadius: '99px', background: 'hsla(330,55%,88%,1)', color: 'hsl(330,55%,38%)' }}>
+                            {tipoLabel}
+                        </span>
+                    </div>
+                    <button className="icon-btn-small" onClick={e => { e.stopPropagation(); setSelectedTask(task); }}>
+                        <MoreHorizontal size={16} />
+                    </button>
+                </div>
+
+                <h3 className="card-title">{task.title}</h3>
+
+                {/* Secretarias */}
+                {secretarias.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, margin: '4px 0' }}>
+                        {secretarias.map(s => (
+                            <span key={s} style={{ fontSize: '0.67rem', padding: '1px 6px', borderRadius: '99px', background: 'hsla(330,50%,88%,1)', color: 'hsl(330,50%,38%)', border: '1px solid hsla(330,40%,80%,1)' }}>
+                                {s}
+                            </span>
+                        ))}
+                    </div>
+                )}
+
+                {/* Status da pauta de origem */}
+                <div style={{ fontSize: '0.7rem', color: 'hsl(var(--color-text-muted))', marginBottom: 4 }}>
+                    Status da pauta: <strong style={{ color: 'hsl(var(--color-text))' }}>{task.status.toUpperCase()}</strong>
+                </div>
+
+                {/* Checklist */}
+                {total > 0 && (
+                    <div style={{ marginTop: 4 }}>
+                        <div style={{ fontSize: '0.7rem', color: 'hsl(330,45%,45%)', fontWeight: 600, marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
+                            <span>{done === total ? '✅ Checklist completo' : `☑️ ${done}/${total}`}</span>
+                            <span>{pct}%</span>
+                        </div>
+                        <div style={{ height: 4, borderRadius: 99, background: 'hsla(330,40%,88%,1)', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${pct}%`, background: done === total ? 'hsl(140,55%,45%)' : 'hsl(330,55%,55%)', borderRadius: 99, transition: 'width 0.3s' }} />
+                        </div>
+                    </div>
+                )}
+
+                <div className="card-footer" style={{ marginTop: 8 }}>
+                    <div className="card-meta">{formatDueDate(task.dueDate)}</div>
+                    <TaskTeamAvatars task={task} team={team} />
+                </div>
+            </div>
+        );
     };
+
+    // ── Card normal ───────────────────────────────────────────────────────────
+    const renderCard = (task: Task) => (
+        <div
+            key={task.id}
+            className={`kanban-card priority-${task.priority}`}
+            draggable
+            onDragStart={e => handleDragStart(e, task.id, task.status)}
+            onDragEnd={handleDragEnd}
+            onClick={() => setSelectedTask(task)}
+        >
+            <div className="card-header">
+                {getTypeBadge(task.type, task)}
+                <button className="icon-btn-small">
+                    <MoreHorizontal size={16} />
+                </button>
+            </div>
+
+            <h3 className="card-title">{task.title}</h3>
+
+            {/* Secretaria badge */}
+            {(task.secretarias || task.inauguracao_secretarias || []).length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginBottom: 4 }}>
+                    {(task.secretarias || task.inauguracao_secretarias || []).map(s => (
+                        <span key={s} style={{
+                            fontSize: '0.72rem', fontWeight: 600,
+                            padding: '2px 8px', borderRadius: '99px',
+                            background: 'hsl(var(--color-primary) / 0.08)',
+                            color: 'hsl(var(--color-primary))',
+                            border: '1px solid hsl(var(--color-primary) / 0.2)',
+                        }}>
+                            🏛️ {s}
+                        </span>
+                    ))}
+                </div>
+            )}
+
+            <p className="card-desc">{task.description}</p>
+
+            <div className="card-footer">
+                <div className="card-meta">
+                    {formatDueDate(task.dueDate)}
+                    {task.comments.length > 0 && (
+                        <span className="meta-item"><MessageSquare size={12} /> {task.comments.length}</span>
+                    )}
+                    {task.attachments.length > 0 && (
+                        <span className="meta-item"><Paperclip size={12} /> {task.attachments.length}</span>
+                    )}
+                </div>
+                <TaskTeamAvatars task={task} team={team} />
+            </div>
+        </div>
+    );
+
+    // ── Tasks da coluna Inauguração (espelho) ─────────────────────────────────
+    const inaugTasks = filteredTasks.filter(isInaugCard);
 
     return (
         <div className="dashboard-container">
@@ -164,13 +264,6 @@ export default function Dashboard() {
                         <span>Nova Pauta</span>
                     </button>
                     <button
-                        className="btn-primary btn-inauguracao"
-                        onClick={() => setIsCreateInaugModalOpen(true)}
-                    >
-                        <Plus size={18} />
-                        <span>Nova Inauguração</span>
-                    </button>
-                    <button
                         className="btn-secondary"
                         onClick={() => setShowArchive(v => !v)}
                         style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', opacity: archivedTasks.length === 0 ? 0.5 : 1 }}
@@ -182,196 +275,62 @@ export default function Dashboard() {
             </div>
 
             <div className="kanban-board">
-                {loading && <div style={{ padding: '2rem', width: '100%', textAlign: 'center' }}>Carregando pautas...</div>}
-                {!loading && COLUMNS.map((column) => {
-                    const columnTasks = filteredTasks.filter(task => task.status === column.id);
+                {loading && (
+                    <div style={{ padding: '2rem', width: '100%', textAlign: 'center' }}>
+                        Carregando pautas...
+                    </div>
+                )}
+
+                {/* ── Colunas do fluxo normal ── */}
+                {!loading && FLOW_COLUMNS.map(column => {
+                    const columnTasks = filteredTasks.filter(t => t.status === column.id && !t.archived);
 
                     return (
                         <div
                             key={column.id}
-                            className={`kanban-column${column.id === 'inauguracao' ? ' inauguracao-column' : ''}`}
+                            className="kanban-column"
                             onDragOver={handleDragOver}
-                            onDrop={(e) => handleDrop(e, column.id)}
+                            onDrop={e => handleDrop(e, column.id)}
                         >
                             <div className="column-header" data-status={column.id}>
                                 <h2>{column.title}</h2>
                                 <span className="task-count">{columnTasks.length}</span>
                             </div>
-
                             <div className="column-content">
                                 {columnTasks.length === 0 && searchTerm ? (
                                     <div className="empty-column-search">Nenhuma pauta encontrada</div>
-                                ) : columnTasks.map(task => (
-                                    <div
-                                        key={task.id}
-                                        className={`kanban-card priority-${task.priority}`}
-                                        draggable
-                                        onDragStart={(e) => handleDragStart(e, task.id, task.status)}
-                                        onDragEnd={handleDragEnd}
-                                        onClick={() => setSelectedTask(task)}
-                                    >
-                                        <div className="card-header">
-                                            {getTypeBadge(task.type)}
-                                            <button className="icon-btn-small">
-                                                <MoreHorizontal size={16} />
-                                            </button>
-                                        </div>
-
-                                        <h3 className="card-title">{task.title}</h3>
-
-                                        {/* Secretaria badge — only for non-inauguration cards */}
-                                        {task.inauguracao_secretarias && task.inauguracao_secretarias.length > 0 && task.status !== 'inauguracao' && (
-                                            <span style={{
-                                                display: 'inline-flex', alignItems: 'center', gap: 3,
-                                                fontSize: '0.72rem', fontWeight: 600,
-                                                padding: '2px 8px', borderRadius: '99px',
-                                                background: 'hsl(var(--color-primary) / 0.08)',
-                                                color: 'hsl(var(--color-primary))',
-                                                border: '1px solid hsl(var(--color-primary) / 0.2)',
-                                                marginBottom: '2px'
-                                            }}>
-                                                🏛️ {task.inauguracao_secretarias.join(', ')}
-                                            </span>
-                                        )}
-
-                                        {/* Inauguration card: clean summary */}
-                                        {task.status === 'inauguracao' ? (() => {
-                                            const tipoLabel = task.inauguracao_tipo === 'master' ? 'Master' : 'Simples';
-
-                                            return (
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', margin: '6px 0' }}>
-                                                    {/* Tipo badge */}
-                                                    <div>
-                                                        <span style={{ fontSize: '0.65rem', fontWeight: 700, padding: '1px 7px', borderRadius: '99px', background: 'hsla(330, 55%, 88%, 1)', color: 'hsl(330, 55%, 38%)', letterSpacing: '0.04em' }}>
-                                                            {tipoLabel}
-                                                        </span>
-                                                    </div>
-
-                                                    {/* Secretaria tags */}
-                                                    {task.inauguracao_secretarias && task.inauguracao_secretarias.length > 0 && (
-                                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
-                                                            {task.inauguracao_secretarias.map(s => (
-                                                                <span key={s} style={{ fontSize: '0.67rem', padding: '1px 6px', borderRadius: '99px', background: 'hsla(330, 50%, 88%, 1)', color: 'hsl(330, 50%, 38%)', border: '1px solid hsla(330, 40%, 80%, 1)' }}>{s}</span>
-                                                            ))}
-                                                        </div>
-                                                    )}
-
-                                                    {/* Checklist progress */}
-                                                    {task.inauguracao_checklist && task.inauguracao_checklist.length > 0 ? (() => {
-                                                        const done = task.inauguracao_checklist!.filter(i => i.done).length;
-                                                        const total = task.inauguracao_checklist!.length;
-                                                        const pct = Math.round((done / total) * 100);
-                                                        return (
-                                                            <div style={{ marginTop: '2px' }}>
-                                                                <div style={{ fontSize: '0.7rem', color: 'hsl(330, 45%, 45%)', fontWeight: 600, marginBottom: '3px', display: 'flex', justifyContent: 'space-between' }}>
-                                                                    <span>{done === total ? '✅ Checklist completo' : `☑️ Checklist: ${done}/${total}`}</span>
-                                                                </div>
-                                                                <div style={{ height: '4px', borderRadius: '99px', background: 'hsla(330, 40%, 88%, 1)', overflow: 'hidden' }}>
-                                                                    <div style={{ height: '100%', width: `${pct}%`, background: done === total ? 'hsl(140, 55%, 45%)' : 'hsl(330, 55%, 55%)', borderRadius: '99px', transition: 'width 0.3s' }} />
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })() : (
-                                                        <div style={{ fontSize: '0.7rem', color: 'hsl(var(--color-text-muted))', fontStyle: 'italic' }}>Sem checklist</div>
-                                                    )}
-                                                </div>
-                                            );
-                                        })() : (
-                                            <p className="card-desc">{task.description}</p>
-                                        )}
-                                        <div className="card-footer">
-                                            <div className="card-meta">
-                                                {formatDueDate(task.dueDate)}
-                                                {task.comments.length > 0 && (
-                                                    <span className="meta-item">
-                                                        <MessageSquare size={12} /> {task.comments.length}
-                                                    </span>
-                                                )}
-                                                {task.attachments.length > 0 && (
-                                                    <span className="meta-item">
-                                                        <Paperclip size={12} /> {task.attachments.length}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="card-assignee">
-                                                {(() => {
-                                                    const creatorsArray = task.creator ? task.creator.split(',').map(s => s.trim()).filter(Boolean) : [];
-                                                    const assigneesArray = task.assignees || [];
-                                                    const allPeople = Array.from(new Set([...creatorsArray, ...assigneesArray]));
-
-                                                    if (allPeople.length === 0) {
-                                                        return (
-                                                            <div className="unassigned">
-                                                                Equipe não definida
-                                                            </div>
-                                                        );
-                                                    }
-
-                                                    return (
-                                                        <div className="team-avatars" style={{ display: 'flex', flexDirection: 'row' }}>
-                                                            {allPeople.map((person, index) => {
-                                                                const member = team.find(m => m.name === person);
-                                                                return member?.avatar_url ? (
-                                                                    <img 
-                                                                        key={person} 
-                                                                        src={member.avatar_url} 
-                                                                        alt={person} 
-                                                                        className="avatar-small" 
-                                                                        style={{ border: `2px solid hsl(var(--color-surface))`, objectFit: 'cover', marginLeft: index > 0 ? '-8px' : '0', width: 28, height: 28, borderRadius: '50%' }}
-                                                                        title={person} 
-                                                                    />
-                                                                ) : (
-                                                                    <div key={person} className="avatar-placeholder avatar-small" style={{ border: `2px solid hsl(var(--color-surface))`, background: 'linear-gradient(135deg, hsl(var(--color-primary)), hsl(var(--color-accent)))', color: '#fff', fontSize: '0.75rem', marginLeft: index > 0 ? '-8px' : '0', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }} title={person}>
-                                                                        {person.charAt(0)}
-                                                                    </div>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    );
-                                                })()}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-
-                                <button
-                                    className="add-card-btn"
-                                    onClick={() => column.id === 'inauguracao'
-                                        ? setIsCreateInaugModalOpen(true)
-                                        : setIsCreateModalOpen(true)
-                                    }
-                                >
+                                ) : (
+                                    columnTasks.map(renderCard)
+                                )}
+                                <button className="add-card-btn" onClick={() => setIsCreateModalOpen(true)}>
                                     <Plus size={16} /> Adicionar Cartão
                                 </button>
                             </div>
                         </div>
                     );
                 })}
+
+                {/* ── Coluna Inauguração (espelho) ── */}
+                {!loading && (
+                    <div className="kanban-column inauguracao-column">
+                        <div className="column-header" data-status="inauguracao">
+                            <h2>Inauguração</h2>
+                            <span className="task-count">{inaugTasks.length}</span>
+                        </div>
+                        <div className="column-content">
+                            {inaugTasks.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'hsl(330,40%,60%)', fontSize: '0.85rem', fontStyle: 'italic' }}>
+                                    Pautas com a aba de Inauguração preenchida aparecerão aqui automaticamente.
+                                </div>
+                            ) : (
+                                inaugTasks.map(renderInaugCard)
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {selectedTask && (
-                <TaskModal
-                    task={selectedTask}
-                    onClose={() => setSelectedTask(null)}
-                    onUpdateTask={handleUpdateTask}
-                />
-            )}
-
-            {isCreateModalOpen && (
-                <CreateTaskModal
-                    onClose={() => setIsCreateModalOpen(false)}
-                    onCreate={handleCreateTask}
-                />
-            )}
-
-            {isCreateInaugModalOpen && (
-                <CreateInaugurationModal
-                    onClose={() => setIsCreateInaugModalOpen(false)}
-                    onCreate={handleCreateInaugTask}
-                />
-            )}
-
-            {/* Archive / History Section */}
+            {/* ── Histórico ── */}
             {showArchive && (
                 <div className="glass" style={{ marginTop: '2rem', padding: '1.5rem', borderRadius: 'var(--radius-lg)' }}>
                     <h2 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -396,10 +355,7 @@ export default function Dashboard() {
                                     <button
                                         className="btn-secondary small"
                                         style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            unarchiveTask(task.id);
-                                        }}
+                                        onClick={e => { e.stopPropagation(); unarchiveTask(task.id); }}
                                     >
                                         <RotateCcw size={14} /> Desarquivar
                                     </button>
@@ -408,6 +364,22 @@ export default function Dashboard() {
                         </div>
                     )}
                 </div>
+            )}
+
+            {/* ── Modais ── */}
+            {selectedTask && (
+                <TaskModal
+                    task={selectedTask}
+                    onClose={() => setSelectedTask(null)}
+                    onUpdateTask={handleUpdateTask}
+                />
+            )}
+
+            {isCreateModalOpen && (
+                <CreateTaskModal
+                    onClose={() => setIsCreateModalOpen(false)}
+                    onCreate={handleCreateTask}
+                />
             )}
         </div>
     );

@@ -1023,11 +1023,175 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                             ABA: INAUGURAÇÃO
                         ════════════════════════════════════════ */}
                         {activeTab === 'inauguracao' && (
-                            <div className="modal-body" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem 2rem' }}>
-                                <div style={{ textAlign: 'center' }}>
-                                    <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🏛️</div>
-                                    <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>Aba de Inauguração</h3>
-                                    <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: 400, margin: '0 auto' }}>Os campos específicos de inauguração serão migrados para cá em breve.</p>
+                            <div className="modal-body">
+                                <div className="modal-main-col-premium" style={{ gap: 0 }}>
+
+                                    {/* Tipo de Inauguração */}
+                                    <div className="modal-section-group-premium">
+                                        <div className="section-header-premium">
+                                            <span className="section-number-premium">🏛️</span>
+                                            <h3>Tipo de Inauguração</h3>
+                                        </div>
+
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                            {/* Simples */}
+                                            <label
+                                                style={{
+                                                    display: 'flex', alignItems: 'center', gap: '1rem',
+                                                    padding: '1.25rem', borderRadius: 16, cursor: 'pointer',
+                                                    border: `2.5px solid ${editedTask.inauguracao_tipo === 'simples' ? '#e11d48' : '#f1f5f9'}`,
+                                                    background: editedTask.inauguracao_tipo === 'simples' ? '#fff1f2' : '#ffffff',
+                                                    boxShadow: editedTask.inauguracao_tipo === 'simples' ? '0 4px 12px rgba(225,29,72,0.1)' : 'none',
+                                                    transition: 'all 0.2s',
+                                                }}
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name="inauguracao_tipo"
+                                                    value="simples"
+                                                    checked={editedTask.inauguracao_tipo === 'simples'}
+                                                    onChange={() => {
+                                                        handleFieldChange('inauguracao_tipo', 'simples');
+                                                        // Resetar checklist para o tipo simples
+                                                        handleFieldChange('inauguracao_checklist', [
+                                                            { id: 'placa', label: 'Placa de inauguração', done: false },
+                                                            { id: 'backdrop', label: 'Backdrop', done: false },
+                                                        ]);
+                                                    }}
+                                                    style={{ accentColor: '#e11d48', width: 20, height: 20 }}
+                                                />
+                                                <div>
+                                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#1e293b' }}>Inauguração Simples</div>
+                                                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: 2 }}>Placa + Backdrop</div>
+                                                </div>
+                                            </label>
+
+                                            {/* Master */}
+                                            <label
+                                                style={{
+                                                    display: 'flex', alignItems: 'center', gap: '1rem',
+                                                    padding: '1.25rem', borderRadius: 16, cursor: 'pointer',
+                                                    border: `2.5px solid ${editedTask.inauguracao_tipo === 'master' ? '#e11d48' : '#f1f5f9'}`,
+                                                    background: editedTask.inauguracao_tipo === 'master' ? '#fff1f2' : '#ffffff',
+                                                    boxShadow: editedTask.inauguracao_tipo === 'master' ? '0 4px 12px rgba(225,29,72,0.1)' : 'none',
+                                                    transition: 'all 0.2s',
+                                                }}
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name="inauguracao_tipo"
+                                                    value="master"
+                                                    checked={editedTask.inauguracao_tipo === 'master'}
+                                                    onChange={() => {
+                                                        handleFieldChange('inauguracao_tipo', 'master');
+                                                        // Resetar checklist para o tipo master
+                                                        handleFieldChange('inauguracao_checklist', [
+                                                            { id: 'placa', label: 'Placa de inauguração', done: false },
+                                                            { id: 'backdrops', label: 'Backdrops / banners', done: false },
+                                                            { id: 'telao', label: '1 Telão', done: false },
+                                                            { id: 'video_telao', label: 'Vídeo para telão', done: false },
+                                                        ]);
+                                                    }}
+                                                    style={{ accentColor: '#e11d48', width: 20, height: 20 }}
+                                                />
+                                                <div>
+                                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#1e293b' }}>Inauguração Master</div>
+                                                    <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: 2 }}>Placa + Backdrops + Telão + Vídeo</div>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    {/* Checklist de Materiais */}
+                                    {editedTask.inauguracao_tipo && (
+                                        <div className="modal-section-group-premium alternate-bg-premium">
+                                            <div className="section-header-premium">
+                                                <span className="section-number-premium">02</span>
+                                                <h3>
+                                                    Checklist de Materiais
+                                                    {/* Badge "tudo pronto" */}
+                                                    {(editedTask.inauguracao_checklist || []).length > 0 &&
+                                                     (editedTask.inauguracao_checklist || []).every(i => i.done) && (
+                                                        <span style={{
+                                                            marginLeft: 8, fontSize: '0.7rem', fontWeight: 700,
+                                                            color: '#059669', background: '#ecfdf5',
+                                                            padding: '2px 8px', borderRadius: 6,
+                                                        }}>
+                                                            ✅ Tudo pronto!
+                                                        </span>
+                                                    )}
+                                                </h3>
+                                            </div>
+
+                                            <div style={{ background: 'white', padding: '1.25rem', borderRadius: 16, border: '1.5px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                                {(editedTask.inauguracao_checklist || []).map(item => (
+                                                    <label
+                                                        key={item.id}
+                                                        style={{
+                                                            display: 'flex', alignItems: 'center', gap: '0.75rem',
+                                                            fontSize: '0.9rem', fontWeight: 500,
+                                                            color: item.done ? '#94a3b8' : '#334155',
+                                                            cursor: 'pointer', transition: 'all 0.2s',
+                                                            textDecoration: item.done ? 'line-through' : 'none',
+                                                        }}
+                                                    >
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={item.done}
+                                                            onChange={() => {
+                                                                const updated = (editedTask.inauguracao_checklist || []).map(i =>
+                                                                    i.id === item.id ? { ...i, done: !i.done } : i
+                                                                );
+                                                                handleFieldChange('inauguracao_checklist', updated);
+                                                            }}
+                                                            style={{ accentColor: '#e11d48', width: 18, height: 18 }}
+                                                        />
+                                                        {item.label}
+                                                    </label>
+                                                ))}
+                                            </div>
+
+                                            {/* Barra de progresso */}
+                                            {(editedTask.inauguracao_checklist || []).length > 0 && (() => {
+                                                const total = (editedTask.inauguracao_checklist || []).length;
+                                                const done = (editedTask.inauguracao_checklist || []).filter(i => i.done).length;
+                                                const pct = Math.round((done / total) * 100);
+                                                return (
+                                                    <div style={{ marginTop: '0.75rem' }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#64748b', fontWeight: 600, marginBottom: 4 }}>
+                                                            <span>{done} de {total} concluídos</span>
+                                                            <span>{pct}%</span>
+                                                        </div>
+                                                        <div style={{ height: 6, borderRadius: 99, background: '#f1f5f9', overflow: 'hidden' }}>
+                                                            <div style={{
+                                                                height: '100%', width: `${pct}%`,
+                                                                background: done === total ? '#10b981' : '#e11d48',
+                                                                borderRadius: 99, transition: 'width 0.3s',
+                                                            }} />
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+                                    )}
+
+                                    {/* Placeholder quando tipo não foi escolhido */}
+                                    {!editedTask.inauguracao_tipo && (
+                                        <div className="modal-section-group-premium" style={{ borderBottom: 'none' }}>
+                                            <div style={{ textAlign: 'center', padding: '2rem', background: '#f8fafc', borderRadius: 16, border: '2px dashed #e2e8f0' }}>
+                                                <div style={{ fontSize: '2rem', marginBottom: 8 }}>🏛️</div>
+                                                <div style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 500 }}>
+                                                    Selecione o tipo de inauguração acima para ver o checklist de materiais.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Discussão */}
+                                    <section className="modal-section-group-premium" style={{ borderBottom: 'none' }}>
+                                        <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#1e293b', marginBottom: '1.5rem' }}>Discussão da Inauguração</h3>
+                                        {renderCommentsByTab('inauguracao')}
+                                    </section>
                                 </div>
                             </div>
                         )}
