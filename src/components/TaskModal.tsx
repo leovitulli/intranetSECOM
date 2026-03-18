@@ -349,7 +349,10 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                     autoFocus
                                 />
                             ) : (
-                                <h2 onClick={() => setIsEditingTitle(true)} style={{ cursor: 'pointer', margin: 0 }}>
+                                <h2
+                                    onClick={() => setIsEditingTitle(true)}
+                                    style={{ cursor: 'pointer', margin: 0, fontSize: '1.35rem', fontWeight: 800, lineHeight: 1.2, color: '#0f172a' }}
+                                >
                                     {editedTask.title}
                                 </h2>
                             )}
@@ -523,7 +526,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                     </div>
 
                                     <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                        <button className="btn-primary small" onClick={() => setIsEditingAgendamento(false)}>Concluir Agendamento</button>
+                                        <button className="btn-primary small" onClick={async () => { setIsEditingAgendamento(false); await handleSave(); }}>Concluir Agendamento</button>
                                     </div>
                                 </div>
                             ) : (
@@ -617,7 +620,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                         </div>
                                     )}
                                     <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                        <button className="btn-primary small" onClick={() => setIsEditingEquipe(false)}>Concluir Equipe</button>
+                                        <button className="btn-primary small" onClick={async () => { setIsEditingEquipe(false); await handleSave(); }}>Concluir Equipe</button>
                                     </div>
                                 </div>
                             ) : (
@@ -700,7 +703,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                         </div>
                                     </div>
                                     <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'flex-end' }}>
-                                        <button className="btn-primary small" onClick={() => setIsEditingExtras(false)}>Concluir Configurações</button>
+                                        <button className="btn-primary small" onClick={async () => { setIsEditingExtras(false); await handleSave(); }}>Concluir Configurações</button>
                                     </div>
                                 </div>
                             ) : (
