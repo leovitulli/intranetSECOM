@@ -890,3 +890,442 @@
     grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
 }
+/* ─── Nova Pauta Header Premium ─────────────────────────────────────────────── */
+.nova-pauta-modal {
+    display: flex;
+    flex-direction: column;
+}
+
+.nova-pauta-header-premium {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: white;
+    flex-shrink: 0;
+    gap: 1rem;
+}
+
+.header-left-premium {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.header-icon-premium {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.header-titles-premium {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.header-titles-premium h2 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.header-subtitle-premium {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.close-btn-premium {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    border: none;
+    border-radius: 10px;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.close-btn-premium:hover {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+/* ─── Body Premium ───────────────────────────────────────────────────────────── */
+.nova-pauta-body-premium {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ─── Tabs Bar Premium ───────────────────────────────────────────────────────── */
+.tabs-bar-premium {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0 2rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: white;
+    flex-shrink: 0;
+    overflow-x: auto;
+}
+
+.tab-btn-premium {
+    padding: 0.875rem 1.25rem;
+    background: none;
+    border: none;
+    border-bottom: 2.5px solid transparent;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    margin-bottom: -1px;
+}
+
+.tab-btn-premium:hover {
+    color: #475569;
+}
+
+.tab-btn-premium.active {
+    color: #3b82f6;
+    border-bottom-color: #3b82f6;
+    font-weight: 700;
+}
+
+.tab-btn-premium.has-type {
+    color: #64748b;
+}
+
+.tab-btn-premium.has-type.active {
+    color: #3b82f6;
+}
+
+/* ─── Inputs Premium ─────────────────────────────────────────────────────────── */
+.input-premium {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    background: white;
+    font-size: 0.875rem;
+    color: #1e293b;
+    font-weight: 500;
+    outline: none;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.input-premium:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.input-premium-textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    background: white;
+    font-size: 0.875rem;
+    color: #1e293b;
+    font-weight: 400;
+    outline: none;
+    transition: all 0.2s;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.6;
+}
+
+.input-premium-textarea:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.field-label-premium {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.nova-pauta-field-premium {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fields-grid-2-premium {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+/* ─── Toggle Premium ─────────────────────────────────────────────────────────── */
+.pauta-externa-toggle-card-premium {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    background: white;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.pauta-externa-toggle-card-premium.active {
+    background: #eff6ff;
+    border-color: #93c5fd;
+}
+
+.toggle-title-premium {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.toggle-description-premium {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+.toggle-switch-premium {
+    width: 42px;
+    height: 24px;
+    background: #e2e8f0;
+    border-radius: 12px;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.toggle-switch-premium.on {
+    background: #3b82f6;
+}
+
+.toggle-knob-premium {
+    width: 18px;
+    height: 18px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.toggle-switch-premium.on .toggle-knob-premium {
+    transform: translateX(18px);
+}
+
+/* ─── Priority Pills Premium ─────────────────────────────────────────────────── */
+.prio-pill-premium {
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    border: 1.5px solid #e2e8f0;
+    background: white;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.prio-pill-premium.baixa.active,
+.prio-pill-premium.baixa:hover {
+    background: #ecfdf5;
+    border-color: #6ee7b7;
+    color: #065f46;
+}
+
+.prio-pill-premium.media.active,
+.prio-pill-premium.media:hover {
+    background: #fffbeb;
+    border-color: #fcd34d;
+    color: #92400e;
+}
+
+.prio-pill-premium.alta.active,
+.prio-pill-premium.alta:hover {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #991b1b;
+}
+
+/* ─── Status Badge Premium ───────────────────────────────────────────────────── */
+.status-badge-premium {
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 6px 14px;
+    text-align: center;
+}
+
+.status-badge-premium.solicitado  { background: #f1f5f9; color: #475569; }
+.status-badge-premium.producao    { background: #eff6ff; color: #1d4ed8; }
+.status-badge-premium.correcao    { background: #fff7ed; color: #c2410c; }
+.status-badge-premium.aprovado    { background: #ecfdf5; color: #065f46; }
+.status-badge-premium.publicado   { background: #f5f3ff; color: #5b21b6; }
+.status-badge-premium.cancelado   { background: #fef2f2; color: #991b1b; }
+
+/* ─── Btn Primary ────────────────────────────────────────────────────────────── */
+.btn-primary {
+    padding: 0.65rem 1.25rem;
+    background: #1e293b;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.btn-primary:hover {
+    background: #0f172a;
+}
+
+.btn-primary.small {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    border-radius: 8px;
+}
+
+/* ─── Activity List ──────────────────────────────────────────────────────────── */
+.activity-list::-webkit-scrollbar {
+    width: 4px;
+}
+.activity-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+.activity-list::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 4px;
+}
+
+/* ─── Responsividade Premium ────────────────────────────────────────────────── */
+
+@media (max-width: 1200px) {
+    .modal-overlay .modal-content {
+        max-width: 95%;
+        max-height: 96vh;
+    }
+}
+
+@media (max-width: 1024px) {
+    .modal-side-col-premium {
+        width: 280px;
+    }
+}
+
+@media (max-width: 992px) {
+    .modal-body {
+        flex-direction: column;
+    }
+    
+    .modal-side-col-premium {
+        width: 100%;
+        border-left: none;
+        border-top: 1.5px solid #e2e8f0;
+        background: white;
+    }
+    
+    .modal-main-col-premium {
+        max-height: none;
+        overflow-y: visible;
+    }
+    
+    .modal-content.nova-pauta-modal {
+        overflow-y: auto;
+    }
+}
+
+@media (max-width: 768px) {
+    .nova-pauta-header-premium {
+        padding: 1rem 1.25rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .header-left-premium {
+        width: 100%;
+    }
+    
+    .header-titles-premium h2 {
+        font-size: 1.15rem;
+        white-space: normal;
+        line-height: 1.3;
+    }
+    
+    .header-icon-premium {
+        width: 38px;
+        height: 38px;
+    }
+    
+    .tabs-bar-premium {
+        padding: 0 1rem;
+    }
+    
+    .modal-section-group-premium {
+        padding: 1.5rem 1rem;
+    }
+    
+    .fields-grid-2-premium {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .modal-overlay {
+        padding: 0;
+    }
+    
+    .modal-overlay .modal-content {
+        height: 100vh;
+        max-height: 100vh;
+        width: 100vw;
+        border-radius: 0;
+    }
+    
+    .tabs-bar-premium {
+        display: flex;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .tab-btn-premium {
+        padding: 0.75rem 1rem;
+        font-size: 0.75rem;
+    }
+}
