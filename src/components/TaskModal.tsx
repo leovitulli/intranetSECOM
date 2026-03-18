@@ -327,16 +327,15 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                 {/* ── Header Premium ── */}
                 <div className="nova-pauta-header-premium">
                     <div className="header-left-premium">
-                        <div className="header-icon-premium" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }}>
+                        <div className="header-icon-premium">
                             <FileText size={24} />
                         </div>
                         <div className="header-titles-premium">
-                            <span className="header-subtitle-premium">Detalhamento da Pauta</span>
                             {isEditingTitle ? (
                                 <input
                                     type="text"
                                     className="input-premium title-input-premium"
-                                    style={{ margin: 0, padding: '4px 8px', height: 'auto' }}
+                                    style={{ margin: 0, padding: '4px 8px', height: 'auto', fontSize: '1.5rem', fontWeight: 800 }}
                                     value={editTitleContent}
                                     onChange={e => setEditTitleContent(e.target.value)}
                                     onBlur={() => {
@@ -349,42 +348,30 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                     autoFocus
                                 />
                             ) : (
-                                <h2
-                                    onClick={() => setIsEditingTitle(true)}
-                                    style={{ cursor: 'pointer', margin: 0, fontSize: '1.35rem', fontWeight: 800, lineHeight: 1.2, color: '#0f172a' }}
-                                >
+                                <h2 title="Clique para editar o título" onClick={() => setIsEditingTitle(true)} style={{ cursor: 'pointer' }}>
                                     {editedTask.title}
                                 </h2>
                             )}
+                            <span className="header-subtitle-premium">Detalhamento da Pauta</span>
                         </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                         <select
+
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexShrink: 0 }}>
+                        <select
                             className="select-premium"
-                            style={{ 
-                                width: 'auto', 
-                                padding: '6px 16px', 
-                                borderRadius: '20px', 
-                                fontSize: '0.75rem', 
-                                fontWeight: 800,
-                                border: '1.5px solid #e2e8f0'
-                            }}
+                            style={{ width: 'auto', padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, border: '1.5px solid #e2e8f0', background: 'white' }}
                             value={editedTask.priority}
                             onChange={(e) => handleFieldChange('priority', e.target.value as any)}
                         >
-                            <option value="baixa">Prioridade Baixa</option>
-                            <option value="media">Prioridade Média</option>
-                            <option value="alta">Prioridade Alta</option>
+                            <option value="baixa">🟢 Baixa</option>
+                            <option value="media">🟡 Média</option>
+                            <option value="alta">🔴 Alta</option>
                         </select>
 
-                        <div style={{ 
-                            fontSize: '0.75rem', 
-                            fontWeight: 800, 
-                            padding: '6px 16px', 
-                            borderRadius: '20px', 
-                            background: '#f1f5f9', 
-                            color: '#475569',
-                            border: '1.5px solid #e2e8f0'
+                        <div style={{
+                            fontSize: '0.7rem', fontWeight: 800, padding: '6px 12px',
+                            borderRadius: '20px', background: '#f1f5f9', color: '#475569',
+                            border: '1.5px solid #e2e8f0', whiteSpace: 'nowrap'
                         }}>
                             {editedTask.status.toUpperCase()}
                         </div>
