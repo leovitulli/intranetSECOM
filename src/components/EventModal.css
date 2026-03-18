@@ -1,69 +1,90 @@
 /* EventModal.css */
-.event-modal {
-    max-width: 500px;
+.event-modal-premium {
+    max-width: 800px;
+    background: #ffffff;
+    border-radius: 24px;
 }
 
-.event-form {
-    padding: 2rem 2.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-    max-height: calc(90vh - 100px);
-    overflow-y: auto;
-}
-
-.event-form .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.event-form label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: hsl(var(--color-text));
-}
-
-.event-form input {
-    padding: 0.85rem 1rem;
-    border-radius: var(--radius-md);
-    border: 1px solid hsl(var(--color-border));
-    background-color: hsl(var(--color-surface) / 0.5);
-    color: hsl(var(--color-text));
-    font-size: 0.95rem;
-    font-family: inherit;
-}
-
-.event-form input:focus {
-    outline: none;
-    border-color: hsl(var(--color-primary));
-}
-
-.team-checkboxes {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    padding: 1rem;
-    border: 1px solid hsl(var(--color-border));
-    border-radius: var(--radius-md);
-    background-color: hsl(var(--color-surface-hover) / 0.5);
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-.team-checkbox {
+.team-member-pill-premium {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 1rem;
+    padding: 0.75rem 1.25rem;
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    user-select: none;
+}
+
+.team-member-pill-premium:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+    transform: translateY(-2px);
+}
+
+.team-member-pill-premium.active {
+    border-color: #3b82f6;
+    background: #eff6ff;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+.team-member-pill-premium .color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.team-member-pill-premium .member-info-premium {
+    display: flex;
+    flex-direction: column;
+}
+
+.team-member-pill-premium .member-info-premium .name {
     font-size: 0.9rem;
-    cursor: pointer;
+    font-weight: 700;
+    color: #1e293b;
 }
 
-.team-checkbox input {
-    cursor: pointer;
-    width: auto;
+.team-member-pill-premium .member-info-premium .role {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
 }
 
-.team-checkbox small {
-    color: hsl(var(--color-text-muted));
+.team-checkboxes-premium {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+    padding: 0.5rem;
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+/* Custom Scrollbar */
+.team-checkboxes-premium::-webkit-scrollbar {
+    width: 6px;
+}
+
+.team-checkboxes-premium::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 10px;
+}
+
+.team-checkboxes-premium::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+.team-checkboxes-premium::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+@media (max-width: 640px) {
+    .team-checkboxes-premium {
+        grid-template-columns: 1fr;
+    }
 }

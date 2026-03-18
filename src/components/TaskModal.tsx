@@ -324,110 +324,89 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
             <div className="modal-content nova-pauta-modal" onClick={e => e.stopPropagation()}>
                 
 
-                {/* ── Header Premium (padrão) ── */}
+                {/* ── Header Premium ── */}
                 <div className="nova-pauta-header-premium">
                     <div className="header-left-premium">
-                        <div className="header-icon-premium">
-                            <FileText size={20} />
+                        <div className="header-icon-premium" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }}>
+                            <FileText size={24} />
                         </div>
                         <div className="header-titles-premium">
-                            <span className="header-subtitle-premium">Gestão da Pauta</span>
+                            <span className="header-subtitle-premium">Detalhamento da Pauta</span>
                             {isEditingTitle ? (
-                                <h2 style={{ margin: 0 }}>
-                                    <input
-                                        type="text"
-                                        className="edit-textarea"
-                                        style={{ fontSize: '1.25rem', fontWeight: 700, border: '1px solid #cbd5e1', borderRadius: '6px', padding: '2px 8px', width: '100%', minWidth: '300px' }}
-                                        value={editTitleContent}
-                                        onChange={e => setEditTitleContent(e.target.value)}
-                                        onBlur={() => {
-                                            setIsEditingTitle(false);
-                                            if (editTitleContent.trim() && editTitleContent !== editedTask.title) {
-                                                handleFieldChange('title', editTitleContent.trim());
-                                            } else {
-                                                setEditTitleContent(editedTask.title);
-                                            }
-                                        }}
-                                        onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-                                        autoFocus
-                                    />
-                                </h2>
+                                <input
+                                    type="text"
+                                    className="input-premium title-input-premium"
+                                    style={{ margin: 0, padding: '4px 8px', height: 'auto' }}
+                                    value={editTitleContent}
+                                    onChange={e => setEditTitleContent(e.target.value)}
+                                    onBlur={() => {
+                                        setIsEditingTitle(false);
+                                        if (editTitleContent.trim() && editTitleContent !== editedTask.title) {
+                                            handleFieldChange('title', editTitleContent.trim());
+                                        }
+                                    }}
+                                    onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+                                    autoFocus
+                                />
                             ) : (
-                                <h2 onClick={() => setIsEditingTitle(true)} style={{ cursor: 'pointer', margin: 0 }} title="Clique para editar o título">
+                                <h2 onClick={() => setIsEditingTitle(true)} style={{ cursor: 'pointer', margin: 0 }}>
                                     {editedTask.title}
                                 </h2>
                             )}
                         </div>
                     </div>
-                    <button className="close-btn-premium" onClick={onClose} title="Fechar">
-                        <X size={20} />
-                    </button>
-                </div>
+                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                         <select
+                            className="select-premium"
+                            style={{ 
+                                width: 'auto', 
+                                padding: '6px 16px', 
+                                borderRadius: '20px', 
+                                fontSize: '0.75rem', 
+                                fontWeight: 800,
+                                border: '1.5px solid #e2e8f0'
+                            }}
+                            value={editedTask.priority}
+                            onChange={(e) => handleFieldChange('priority', e.target.value as any)}
+                        >
+                            <option value="baixa">Prioridade Baixa</option>
+                            <option value="media">Prioridade Média</option>
+                            <option value="alta">Prioridade Alta</option>
+                        </select>
 
-                {/* ── Faixa de Status e Ações ── */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.75rem', padding: '0.5rem 2rem', borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }}>
-                    <select
-                        className="select-premium"
-                        style={{ 
-                            width: 'auto', 
-                            padding: '4px 12px', 
+                        <div style={{ 
+                            fontSize: '0.75rem', 
+                            fontWeight: 800, 
+                            padding: '6px 16px', 
                             borderRadius: '20px', 
-                            fontSize: '0.7rem', 
-                            fontWeight: 700, 
-                            border: `1.5px solid ${
-                                editedTask.priority === 'baixa' ? '#16a34a' : 
-                                editedTask.priority === 'media' ? '#f59e0b' : '#dc2626'
-                            }`, 
-                            color: `${
-                                editedTask.priority === 'baixa' ? '#15803d' : 
-                                editedTask.priority === 'media' ? '#b45309' : '#b91c1c'
-                            }`, 
-                            background: `${
-                                editedTask.priority === 'baixa' ? '#f0fdf4' : 
-                                editedTask.priority === 'media' ? '#fef3c7' : '#fef2f2'
-                            }` 
-                        }}
-                        value={editedTask.priority}
-                        onChange={(e) => handleFieldChange('priority', e.target.value as any)}
-                    >
-                        <option value="baixa">Baixa</option>
-                        <option value="media">Média</option>
-                        <option value="alta">Alta</option>
-                    </select>
+                            background: '#f1f5f9', 
+                            color: '#475569',
+                            border: '1.5px solid #e2e8f0'
+                        }}>
+                            {editedTask.status.toUpperCase()}
+                        </div>
 
-                    <span style={{ fontSize: '0.7rem', fontWeight: 600, padding: '4px 10px', borderRadius: '20px', background: '#e2e8f0', color: '#475569' }}>
-                        {editedTask.status.toUpperCase()}
-                    </span>
-
-                    <button
-                        className="btn-archive-header"
-                        style={{ fontSize: '0.7rem', padding: '4px 10px' }}
-                        onClick={async () => {
-                            if (confirm('Arquivar esta pauta? Ela ficará visível na aba de Histórico.')) {
-                                await archiveTask(task.id);
-                                if (onArchive) onArchive();
-                                onClose();
-                            }
-                        }}
-                    >
-                        <Archive size={12} /> Arquivar
-                    </button>
+                        <button className="close-btn-premium" onClick={onClose} title="Fechar">
+                            <X size={20} />
+                        </button>
+                    </div>
                 </div>
 
-                {/* --- Barra de Abas --- */}
-                <div className="tabs-bar-premium" style={{ padding: '0 2rem', borderBottom: '1px solid #e2e8f0', margin: 0, position: 'sticky', top: 0, background: '#fff', zIndex: 10, flexShrink: 0, display: 'flex', overflowX: 'auto' }}>
-                    <button type="button" className={`tab-btn-premium ${activeTab === 'geral' ? 'active' : ''}`} onClick={() => setActiveTab('geral')}>Geral</button>
-                    <button type="button" data-tab="release" className={`tab-btn-premium ${activeTab === 'release' ? 'active' : ''} ${editedTask.type.includes('release') ? 'has-type' : ''}`} onClick={() => setActiveTab('release')}>📝 Release</button>
-                    <button type="button" data-tab="post" className={`tab-btn-premium ${activeTab === 'post' ? 'active' : ''} ${editedTask.type.includes('post') ? 'has-type' : ''}`} onClick={() => setActiveTab('post')}>📱 Post</button>
-                    <button type="button" data-tab="video" className={`tab-btn-premium ${activeTab === 'video' ? 'active' : ''} ${editedTask.type.includes('video') ? 'has-type' : ''}`} onClick={() => setActiveTab('video')}>🎬 Vídeo</button>
-                    <button type="button" data-tab="foto" className={`tab-btn-premium ${activeTab === 'foto' ? 'active' : ''} ${editedTask.type.includes('foto') ? 'has-type' : ''}`} onClick={() => setActiveTab('foto')}>📸 Foto</button>
-                    <button type="button" data-tab="arte" className={`tab-btn-premium ${activeTab === 'arte' ? 'active' : ''} ${editedTask.type.includes('arte') ? 'has-type' : ''}`} onClick={() => setActiveTab('arte')}>🎨 Arte</button>
-                    <button type="button" data-tab="inauguracao" className={`tab-btn-premium ${activeTab === 'inauguracao' ? 'active' : ''} ${editedTask.type.includes('inauguracao') ? 'has-type' : ''}`} onClick={() => setActiveTab('inauguracao')}>🏛️ Inauguração</button>
-                </div>
+                <div className="nova-pauta-body-premium">
+                    {/* --- Barra de Abas Premium --- */}
+                    <div className="tabs-bar-premium">
+                        <button type="button" className={`tab-btn-premium ${activeTab === 'geral' ? 'active' : ''}`} onClick={() => setActiveTab('geral')}>Geral</button>
+                        <button type="button" data-tab="release" className={`tab-btn-premium ${activeTab === 'release' ? 'active' : ''} ${editedTask.type.includes('release') ? 'has-type' : ''}`} onClick={() => setActiveTab('release')}>📝 Release</button>
+                        <button type="button" data-tab="post" className={`tab-btn-premium ${activeTab === 'post' ? 'active' : ''} ${editedTask.type.includes('post') ? 'has-type' : ''}`} onClick={() => setActiveTab('post')}>📱 Post</button>
+                        <button type="button" data-tab="video" className={`tab-btn-premium ${activeTab === 'video' ? 'active' : ''} ${editedTask.type.includes('video') ? 'has-type' : ''}`} onClick={() => setActiveTab('video')}>🎬 Vídeo</button>
+                        <button type="button" data-tab="foto" className={`tab-btn-premium ${activeTab === 'foto' ? 'active' : ''} ${editedTask.type.includes('foto') ? 'has-type' : ''}`} onClick={() => setActiveTab('foto')}>📸 Foto</button>
+                        <button type="button" data-tab="arte" className={`tab-btn-premium ${activeTab === 'arte' ? 'active' : ''} ${editedTask.type.includes('arte') ? 'has-type' : ''}`} onClick={() => setActiveTab('arte')}>🎨 Arte</button>
+                        <button type="button" data-tab="inauguracao" className={`tab-btn-premium ${activeTab === 'inauguracao' ? 'active' : ''} ${editedTask.type.includes('inauguracao') ? 'has-type' : ''}`} onClick={() => setActiveTab('inauguracao')}>🏛️ Inauguração</button>
+                    </div>
 
-                {activeTab === 'geral' && (
-                <div className="modal-body">
-                    <div className="modal-main-col-premium" style={{ gap: "0" }}>
+                    {activeTab === 'geral' && (
+                        <div className="modal-body">
+                            <div className="modal-main-col-premium" style={{ gap: "0" }}>
                         {/* --- Seção 01: Informações da Pauta --- */}
                         <div className="modal-section-group-premium">
                             <div className="section-header-premium">
@@ -917,9 +896,9 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                 </div>
                             </div>
                         )}
-                    </div>
-                </div>
-                )}
+                            </div>
+                        </div>
+                    )}
 
                 {activeTab === 'release' && (
                     <div className="modal-body">
@@ -1325,6 +1304,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                         </div>
                     </div>
                 )}
+                </div>{/* fim nova-pauta-body-premium */}
             </div>
 
             {viewingFile && (

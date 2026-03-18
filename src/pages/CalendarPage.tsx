@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Building2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Building2, X } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import TaskModal from '../components/TaskModal';
 import EventModal from '../components/EventModal';
@@ -50,19 +50,44 @@ export default function CalendarPage() {
         const isNoFilterSelected = selectedFilters.length === 0;
 
         const mappedTasks: CalendarEvent[] = tasks
-            .filter(t => t.dueDate)
+            .filter(t => {
+                // Nova Lógica Inteligente: A pauta precisa ter PELO MENOS UMA dessas datas
+                return t.pauta_data || t.inauguracao_data || t.video_captacao_data || t.arte_entrega_data || t.dueDate;
+            })
             .filter(t => {
                 if (isNoFilterSelected) return true;
                 if (selectedFilters.includes('inauguracao') && (t.status === 'inauguracao' || t.type.includes('inauguracao'))) return true;
-                return t.type.some(type => selectedFilters.includes(type));
+                return (t.type || []).some(type => selectedFilters.includes(type));
             })
-            .map(t => ({
-                id: `task-${t.id}`,
-                title: t.status === 'inauguracao' ? (t.inauguracao_nome || t.title) : t.title,
-                type: t.status === 'inauguracao' ? 'inauguracao' : 'pauta',
-                date: t.dueDate!,
-                priority: t.priority
-            }));
+            .map(t => {
+                // Prioridade de exibição no calendário:
+                // 1. Pauta Geral ou Inauguração (O evento em si)
+                // 2. Captação de Vídeo ou Entrega de Arte (A produção)
+                // 3. Due Date (O prazo genérico)
+                let eventDate: Date;
+                
+                if (t.pauta_data) {
+                    eventDate = new Date(t.pauta_data + 'T12:00:00');
+                } else if (t.inauguracao_data) {
+                    eventDate = t.inauguracao_data;
+                } else if (t.status === 'inauguracao' && t.dueDate) {
+                    eventDate = t.dueDate;
+                } else if (t.type.includes('video') && t.video_captacao_data) {
+                    eventDate = t.video_captacao_data;
+                } else if (t.type.includes('arte') && t.arte_entrega_data) {
+                    eventDate = t.arte_entrega_data;
+                } else {
+                    eventDate = t.dueDate || t.createdAt;
+                }
+
+                return {
+                    id: `task-${t.id}`,
+                    title: t.status === 'inauguracao' ? (t.inauguracao_nome || t.title) : t.title,
+                    type: t.status === 'inauguracao' ? 'inauguracao' : 'pauta',
+                    date: eventDate,
+                    priority: t.priority
+                };
+            });
 
         const mappedAgenda: CalendarEvent[] = agendaEvents
             .filter(() => isNoFilterSelected || selectedFilters.includes('release') || selectedFilters.includes('video') || selectedFilters.includes('foto'))
@@ -285,48 +310,70 @@ export default function CalendarPage() {
 
             {isModalOpen && (
                 <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
-                    <div className="modal-content small-modal" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2 className="modal-title">Nova Data no Calendário</h2>
-                        </div>
-                        <form onSubmit={handleAddEvent} className="simple-form">
-                            <div className="form-group">
-                                <label>Nome do Evento / Data Especial *</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={newEventTitle}
-                                    onChange={e => setNewEventTitle(e.target.value)}
-                                    placeholder="Ex: Aniversário da Cidade"
-                                />
+                    <div className="modal-content nova-pauta-modal" style={{ maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
+                        <div className="nova-pauta-header-premium">
+                            <div className="header-left-premium">
+                                <div className="header-icon-premium" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
+                                    <Plus size={24} />
+                                </div>
+                                <div className="header-titles-premium">
+                                    <span className="header-subtitle-premium">Adicione feriados ou datas comemorativas</span>
+                                    <h2>Nova Data no Calendário</h2>
+                                </div>
                             </div>
+                            <button className="close-btn-premium" onClick={() => setIsModalOpen(false)} title="Fechar">
+                                <X size={20} />
+                            </button>
+                        </div>
 
-                            <div className="form-row">
-                                <div className="form-group flex-1">
-                                    <label>Data *</label>
+                        <form onSubmit={handleAddEvent} className="nova-pauta-body-premium">
+                            <div className="modal-section-group-premium">
+                                <div className="section-header-premium">
+                                    <span className="section-number-premium">01</span>
+                                    <h3>Informações do Evento</h3>
+                                </div>
+                                <div className="nova-pauta-field-premium">
+                                    <label className="field-label-premium">Nome do Evento / Data Especial *</label>
                                     <input
-                                        type="date"
+                                        type="text"
+                                        className="input-premium title-input-premium"
                                         required
-                                        value={newEventDate}
-                                        onChange={e => setNewEventDate(e.target.value)}
+                                        autoFocus
+                                        value={newEventTitle}
+                                        onChange={e => setNewEventTitle(e.target.value)}
+                                        placeholder="Ex: Aniversário da Cidade"
                                     />
                                 </div>
-                                <div className="form-group flex-1">
-                                    <label>Tipo *</label>
-                                    <select
-                                        value={newEventType}
-                                        onChange={e => setNewEventType(e.target.value as any)}
-                                    >
-                                        <option value="comemorativa">Data Comemorativa</option>
-                                        <option value="feriado">Feriado</option>
-                                        <option value="pauta">Pauta Agendada</option>
-                                    </select>
+
+                                <div className="fields-grid-2-premium mt-1-premium">
+                                    <div className="nova-pauta-field-premium">
+                                        <label className="field-label-premium">Data *</label>
+                                        <input
+                                            type="date"
+                                            className="input-premium"
+                                            required
+                                            value={newEventDate}
+                                            onChange={e => setNewEventDate(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="nova-pauta-field-premium">
+                                        <label className="field-label-premium">Tipo de Registro *</label>
+                                        <select
+                                            className="select-premium"
+                                            value={newEventType}
+                                            onChange={e => setNewEventType(e.target.value as any)}
+                                        >
+                                            <option value="comemorativa">Data Comemorativa</option>
+                                            <option value="feriado">Feriado</option>
+                                            <option value="pauta">Pauta Agendada</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="form-actions" style={{ marginTop: '1.5rem' }}>
-                                <button type="button" className="btn-secondary" onClick={() => setIsModalOpen(false)}>Cancelar</button>
-                                <button type="submit" className="btn-primary">Salvar no Calendário</button>
+                            <div className="nova-pauta-footer-premium">
+                                <button type="button" className="btn-cancel-premium" onClick={() => setIsModalOpen(false)}>Cancelar</button>
+                                <button type="submit" className="btn-save-premium">Salvar no Calendário</button>
                             </div>
                         </form>
                     </div>
