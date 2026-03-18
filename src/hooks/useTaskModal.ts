@@ -4,7 +4,7 @@ import { ptBR } from 'date-fns/locale';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
-import type { Task, Comment, TaskType } from '../types/kanban';
+import type { Task, Comment } from '../types/kanban';
 import type { Attachment } from '../types/kanban';
 
 // ─── Validação de UUID real (substitui o hack task.id.includes('-')) ───────────

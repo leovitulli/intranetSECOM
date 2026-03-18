@@ -1,4 +1,3 @@
-import React from 'react';
 import type { Task, TaskType } from '../types/kanban';
 import {
     X, Send, Paperclip, FileText, Image as ImageIcon, Video,
