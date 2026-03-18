@@ -4,13 +4,12 @@ import type { TeamMember } from '../types/team';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import TeamMemberModal from '../components/TeamMemberModal';
-import { supabase, getSupabaseAdmin } from '../lib/supabaseClient';
 import './ProfileTeamTab.css';
 
 
 export default function ProfileTeamTab() {
     const { user: currentUser } = useAuth();
-    const { team, loading, searchTerm } = useData();
+    const { team, loading, searchTerm, addTeamMember, updateTeamMember, deleteTeamMember, resetUserPassword } = useData();
     const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'desenvolvedor';
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
@@ -25,46 +24,21 @@ export default function ProfileTeamTab() {
         const tempId = 'new-' + Date.now();
         setBusy(tempId, true);
         try {
-            // 1. Verificar se o e-mail já existe na tabela users antes de qualquer coisa
-            if (member.email) {
-                const { data: existingUser } = await supabase
-                    .from('users')
-                    .select('id')
-                    .eq('email', member.email)
-                    .single();
-                
-                if (existingUser) {
-                    throw new Error(`O e-mail "${member.email}" já está cadastrado no sistema.`);
-                }
-            }
-
-            let authUserId: string | undefined;
-
-            if (member.hasLogin && member.email && password) {
-                console.log('🏁 Iniciando Auth para:', member.email);
-                const { data: signUpData, error: signUpError } = await getSupabaseAdmin().auth.signUp({
-                    email: member.email,
-                    password,
-                    options: { data: { name: member.name } }
-                });
-                
-                if (signUpError) throw signUpError;
-                authUserId = signUpData.user?.id;
-                console.log('✅ Auth criado. ID:', authUserId);
-            }
-
-            // Com a nova Arquitetura Atômica (Migração 09), o Trigger SQL 'on_auth_user_created'
-            // criará automaticamente o perfil na tabela public.users assim que o auth.signUp for concluído.
-            // Isso garante transacionalidade e evita usuários "fantasma".
+            console.log('🏁 Solicitando criação de membro:', member.name);
+            const success = await addTeamMember(member, password);
             
-            console.log('🎉 Auth concluído. O Trigger do banco criará o perfil automaticamente.');
-            setIsModalOpen(false);
-            alert(`✅ Solicitação de cadastro para ${member.name} enviada com sucesso!\n\nO perfil será ativado automaticamente em instantes.`);
+            if (success) {
+                setIsModalOpen(false);
+                setEditingMember(null);
+                // Não precisamos de alert aqui se quisermos algo mais fluido, 
+                // mas como o usuário gosta de confirmação, vou manter uma curta.
+                console.log('✅ Membro criado com sucesso!');
+            }
         } catch (err: any) {
             console.error('Create member error:', err);
             const msg = err.message || '';
             if (msg.includes('already registered') || msg.includes('identity_already_exists')) {
-                alert(`❌ E-mail "${member.email}" já está em uso.\n\nSe ele não aparece na lista, remova-o no Supabase Dashboard > Authentication primeiro.`);
+                alert(`❌ E-mail "${member.email}" já está em uso.\n\nSe ele não aparece na lista, remova-o no Supabase Dashboard primeiro.`);
             } else {
                 alert(`❌ Falha no cadastro: ${msg}`);
             }
@@ -81,34 +55,22 @@ export default function ProfileTeamTab() {
             if (!oldMember) throw new Error('Colaborador não encontrado.');
 
             const isEmailChanging = oldMember.email !== member.email;
+            const updatedMember = { ...member };
 
-            const payload: any = {
-                name: member.name,
-                role: member.role,
-                phone: member.phone || null,
-                job_titles: member.job_titles || [],
-                has_login: member.hasLogin,
-            };
-
-            // If email is changing, we track it as pending and force a logout
             if (isEmailChanging) {
-                payload.pending_email = member.email;
-                payload.security_stamp = (oldMember.security_stamp || 0) + 1;
-                // We keep the old email in the main 'email' column until synced
-                // so they can still log in one last time to confirm.
-                delete payload.email;
-            } else {
-                payload.email = member.email;
+                updatedMember.pending_email = member.email;
+                updatedMember.security_stamp = (oldMember.security_stamp || 0) + 1;
+                // Mantemos o e-mail antigo no campo 'email' até a confirmação
+                updatedMember.email = oldMember.email;
             }
 
-            const { error } = await supabase.from('users').update(payload).eq('id', member.id);
-            if (error) throw error;
+            await updateTeamMember(updatedMember);
 
             setIsModalOpen(false);
             setEditingMember(null);
 
             if (isEmailChanging) {
-                alert(`⚠️ O e-mail foi alterado para pendente: ${member.email}.\n\nPara segurança, a sessão atual do usuário foi invalidada. Ele precisará confirmar a mudança no próximo acesso.`);
+                alert(`⚠️ O e-mail foi alterado para pendente: ${member.email}.\n\nO usuário precisará confirmar a mudança.`);
             }
         } catch (err: any) {
             console.error('Edit member error:', err);
@@ -132,8 +94,7 @@ export default function ProfileTeamTab() {
 
         setBusy(member.id, true);
         try {
-            const { error } = await supabase.from('users').delete().eq('id', member.id);
-            if (error) throw error;
+            await deleteTeamMember(member.id);
         } catch (error: any) {
             alert(`❌ Erro ao remover: ${error.message}`);
         } finally {
@@ -153,19 +114,10 @@ export default function ProfileTeamTab() {
 
         setBusy(member.id, true);
         try {
+            await resetUserPassword(targetEmail);
             if (hasPendingSync) {
-                // If it's a pending sync, we trigger a re-invite or reset to the NEW email
-                const { error } = await supabase.auth.resetPasswordForEmail(targetEmail, {
-                    redirectTo: `${window.location.origin}/login`
-                });
-                if (error) throw error;
                 alert(`📧 Sincronização iniciada! Um e-mail de confirmação foi enviado para o novo endereço: ${targetEmail}`);
             } else {
-                // Normal password reset
-                const { error } = await supabase.auth.resetPasswordForEmail(targetEmail, {
-                    redirectTo: `${window.location.origin}/login`
-                });
-                if (error) throw error;
                 alert(`📧 E-mail de redefinição de senha enviado para ${targetEmail}`);
             }
         } catch (error: any) {

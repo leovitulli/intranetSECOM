@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase, getSupabaseAdmin } from '../lib/supabaseClient';
 import { useAuth } from './AuthContext';
 import type { Task } from '../types/kanban';
 import type { TeamMember } from '../types/team';
@@ -16,7 +16,11 @@ interface DataContextType {
     updateTaskStatus: (taskId: string, newStatus: Task['status']) => Promise<void>;
     updateTask: (updatedTask: Task) => Promise<void>;
     addTask: (task: Omit<Task, 'id' | 'comments' | 'attachments'>) => Promise<boolean>;
+    addTeamMember: (member: TeamMember, password?: string) => Promise<boolean>;
     deleteTask: (taskId: string) => Promise<void>;
+    updateTeamMember: (member: TeamMember) => Promise<void>;
+    deleteTeamMember: (id: string) => Promise<void>;
+    resetUserPassword: (email: string) => Promise<void>;
     archiveTask: (taskId: string) => Promise<void>;
     unarchiveTask: (taskId: string) => Promise<void>;
     addSuggestion: (title: string, description: string, department: string, author: string, attachmentUrls?: string[]) => Promise<void>;
@@ -622,6 +626,116 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         })));
     };
 
+    const addTeamMember = async (member: TeamMember, password?: string): Promise<boolean> => {
+        try {
+            console.log("👥 Iniciando criação de membro da equipe:", member.name);
+            let authUserId: string | undefined;
+
+            if (member.hasLogin && member.email && password) {
+                // Usuário com Login: Auth primeiro (o trigger do banco cria o perfil)
+                const { data: signUpData, error: signUpError } = await getSupabaseAdmin().auth.signUp({
+                    email: member.email,
+                    password,
+                    options: { 
+                        data: { 
+                            name: member.name,
+                            role: member.role,
+                            has_login: true,
+                            job_titles: member.job_titles
+                        } 
+                    }
+                });
+                
+                if (signUpError) throw signUpError;
+                authUserId = signUpData.user?.id;
+            } else {
+                // Usuário sem Login: Criar direto na tabela public.users
+                const { data, error } = await supabase.from('users').insert([{
+                    name: member.name,
+                    role: member.role,
+                    email: member.email || null,
+                    phone: member.phone || null,
+                    job_titles: member.job_titles || [],
+                    has_login: false,
+                    avatar_url: member.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random`
+                }]).select().single();
+                
+                if (error) throw error;
+                authUserId = data.id;
+            }
+
+            if (authUserId) {
+                // Optimistic UI Update: Inserir imediatamente na lista local
+                const newMember: TeamMember = {
+                    ...member,
+                    id: authUserId,
+                    hasLogin: member.hasLogin,
+                    color: 'hsl(210, 100%, 50%)',
+                    avatar_url: member.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random`
+                };
+                
+                setTeam(prev => {
+                    const exists = prev.some(m => m.id === authUserId);
+                    if (exists) return prev;
+                    return [...prev, newMember].sort((a, b) => a.name.localeCompare(b.name));
+                });
+                
+                console.log("✅ Membro criado e adicionado ao estado local.");
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Add team member error:', error);
+            throw error;
+        }
+    };
+
+    const updateTeamMember = async (member: TeamMember) => {
+        try {
+            const payload: any = {
+                name: member.name,
+                role: member.role,
+                phone: member.phone || null,
+                job_titles: member.job_titles || [],
+                has_login: member.hasLogin,
+                email: member.email,
+                pending_email: member.pending_email || null,
+                security_stamp: member.security_stamp || 0
+            };
+
+            const { error } = await supabase.from('users').update(payload).eq('id', member.id);
+            if (error) throw error;
+
+            setTeam(prev => prev.map(m => m.id === member.id ? member : m));
+        } catch (error) {
+            console.error('Update team member error:', error);
+            throw error;
+        }
+    };
+
+    const deleteTeamMember = async (id: string) => {
+        try {
+            const { error } = await supabase.from('users').delete().eq('id', id);
+            if (error) throw error;
+            setTeam(prev => prev.filter(m => m.id !== id));
+        } catch (error) {
+            console.error('Delete team member error:', error);
+            throw error;
+        }
+    };
+
+    const resetUserPassword = async (email: string) => {
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: `${window.location.origin}/login`
+            });
+            if (error) throw error;
+        } catch (error) {
+            console.error('Reset password error:', error);
+            throw error;
+        }
+    };
+
     const removeJobFunction = async (id: string) => {
         const jobToRemove = jobFunctions.find(j => j.id === id);
         if (!jobToRemove) return;
@@ -935,6 +1049,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             loading, updateTaskStatus, updateTask, addTask, deleteTask, archiveTask,
             unarchiveTask, addSuggestion, deleteSuggestion, addJobFunction, updateJobFunction, removeJobFunction,
             addEvent, updateEvent, deleteEvent,
+            addTeamMember, updateTeamMember, deleteTeamMember, resetUserPassword,
             searchTerm, setSearchTerm
         }}>
             {children}
