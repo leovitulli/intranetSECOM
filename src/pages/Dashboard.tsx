@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { Task, TaskStatus, TaskType } from '../types/kanban';
 import { useData } from '../contexts/DataContext';
+import { useAuth } from '../contexts/AuthContext';
 import TaskModal from '../components/TaskModal';
 import CreateTaskModal from '../components/CreateTaskModal';
 import TaskTeamAvatars from '../components/TaskTeamAvatars';
@@ -26,6 +27,7 @@ const isInaugCard = (task: Task) =>
     !!(task.inauguracao_tipo || task.inauguracao_checklist?.length);
 
 export default function Dashboard() {
+    const { user } = useAuth();
     const { tasks, team, loading, updateTaskStatus, updateTask, addTask, archivedTasks, unarchiveTask, searchTerm } = useData();
     const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -200,7 +202,7 @@ export default function Dashboard() {
         <div
             key={task.id}
             className={`kanban-card priority-${task.priority}`}
-            draggable
+            draggable={user?.role !== 'viewer'}
             onDragStart={e => handleDragStart(e, task.id, task.status)}
             onDragEnd={handleDragEnd}
             onClick={() => setSelectedTask(task)}
@@ -259,10 +261,12 @@ export default function Dashboard() {
                     <p className="subtitle">Acompanhe e organize as demandas da SECOM</p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <button className="btn-primary" onClick={() => setIsCreateModalOpen(true)}>
-                        <Plus size={18} />
-                        <span>Nova Pauta</span>
-                    </button>
+                    {user?.role !== 'viewer' && (
+                        <button className="btn-primary" onClick={() => setIsCreateModalOpen(true)}>
+                            <Plus size={18} />
+                            <span>Nova Pauta</span>
+                        </button>
+                    )}
                     <button
                         className="btn-secondary"
                         onClick={() => setShowArchive(v => !v)}
@@ -302,9 +306,11 @@ export default function Dashboard() {
                                 ) : (
                                     columnTasks.map(renderCard)
                                 )}
-                                <button className="add-card-btn" onClick={() => setIsCreateModalOpen(true)}>
-                                    <Plus size={16} /> Adicionar Cartão
-                                </button>
+                                {user?.role !== 'viewer' && (
+                                    <button className="add-card-btn" onClick={() => setIsCreateModalOpen(true)}>
+                                        <Plus size={16} /> Adicionar Cartão
+                                    </button>
+                                )}
                             </div>
                         </div>
                     );

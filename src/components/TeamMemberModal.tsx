@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import type { TeamMember } from '../types/team';
 // Importa shared em vez do CSS próprio duplicado
 import '../styles/shared-modal.css';
+import './TeamMemberModal.css';
 
 interface TeamMemberModalProps {
     member?: TeamMember | null;
@@ -191,7 +192,6 @@ export default function TeamMemberModal({ member, onClose, onSave }: TeamMemberM
                                     <option value="user">Usuário Comum</option>
                                     <option value="admin">Administrador</option>
                                     <option value="viewer">Somente Visualização</option>
-                                    <option value="motorista">Motorista (Sem Acesso)</option>
                                     {isDev && <option value="desenvolvedor">Desenvolvedor</option>}
                                 </select>
                             </div>

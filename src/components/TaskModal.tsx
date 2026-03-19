@@ -11,6 +11,7 @@ import './TaskModal.css';
 import SecretariasMultiSelect from './SecretariasMultiSelect';
 import TeamMultiSelect from './TeamMultiSelect';
 import { useTaskModal } from '../hooks/useTaskModal';
+import { useAuth } from '../contexts/AuthContext';
 import { useState } from 'react';
 
 interface TaskModalProps {
@@ -94,6 +95,7 @@ function FileIcon({ type }: { type: string }) {
 // ─── Componente principal ─────────────────────────────────────────────────────
 export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: TaskModalProps) {
     const [viewingFile, setViewingFile] = useState<Attachment | null>(null);
+    const isViewer = useAuth().user?.role === 'viewer';
 
     const {
         user, editedTask, hasUnsavedChanges,
@@ -148,20 +150,22 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                     )}
                 </div>
 
-                <form onSubmit={handleAddComment} className="comment-input-area">
-                    <img src={user?.avatar} alt="You" className="comment-avatar" />
-                    <div className="input-wrapper">
-                        <input
-                            type="text"
-                            placeholder={tabName === 'geral' ? 'Escreva um comentário geral...' : `Comentar sobre ${tabName}...`}
-                            value={newComment}
-                            onChange={e => setNewComment(e.target.value)}
-                        />
-                        <button type="submit" disabled={!newComment.trim()}>
-                            <Send size={18} />
-                        </button>
-                    </div>
-                </form>
+                {!isViewer && (
+                    <form onSubmit={handleAddComment} className="comment-input-area">
+                        <img src={user?.avatar} alt="You" className="comment-avatar" />
+                        <div className="input-wrapper">
+                            <input
+                                type="text"
+                                placeholder={tabName === 'geral' ? 'Escreva um comentário geral...' : `Comentar sobre ${tabName}...`}
+                                value={newComment}
+                                onChange={e => setNewComment(e.target.value)}
+                            />
+                            <button type="submit" disabled={!newComment.trim()}>
+                                <Send size={18} />
+                            </button>
+                        </div>
+                    </form>
+                )}
             </>
         );
     };
@@ -202,7 +206,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                         autoFocus
                                     />
                                 ) : (
-                                    <h2 title="Clique para editar o título" onClick={() => setIsEditingTitle(true)} style={{ cursor: 'pointer' }}>
+                                    <h2 title={!isViewer ? "Clique para editar o título" : ""} onClick={() => !isViewer && setIsEditingTitle(true)} style={{ cursor: !isViewer ? 'pointer' : 'default' }}>
                                         {editedTask.title}
                                     </h2>
                                 )}
@@ -216,6 +220,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                 style={{ width: 'auto', padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700, border: '1.5px solid #e2e8f0', background: 'white' }}
                                 value={editedTask.priority}
                                 onChange={e => handleFieldChange('priority', e.target.value as any)}
+                                disabled={isViewer}
                             >
                                 <option value="baixa">🟢 Baixa</option>
                                 <option value="media">🟡 Média</option>
@@ -269,7 +274,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                         <div className="section-header-premium">
                                             <span className="section-number-premium">01</span>
                                             <h3>Informações da Pauta</h3>
-                                            {!isEditingDesc && (
+                                            {!isEditingDesc && !isViewer && (
                                                 <button className="btn-edit-premium" onClick={() => setIsEditingDesc(true)}>Editar</button>
                                             )}
                                         </div>
@@ -301,7 +306,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                         <div className="section-header-premium">
                                             <span className="section-number-premium">02</span>
                                             <h3>Agendamento e Local</h3>
-                                            {!isEditingAgendamento && (
+                                            {!isEditingAgendamento && !isViewer && (
                                                 <button className="btn-edit-premium" onClick={() => setIsEditingAgendamento(true)}>Editar</button>
                                             )}
                                         </div>
@@ -413,7 +418,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                         <div className="section-header-premium">
                                             <span className="section-number-premium">03</span>
                                             <h3>Equipe e Responsáveis</h3>
-                                            {!isEditingEquipe && (
+                                            {!isEditingEquipe && !isViewer && (
                                                 <button className="btn-edit-premium" onClick={() => setIsEditingEquipe(true)}>Editar</button>
                                             )}
                                         </div>
@@ -492,7 +497,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                         <div className="section-header-premium">
                                             <span className="section-number-premium">04</span>
                                             <h3>Configurações Extras</h3>
-                                            {!isEditingExtras && (
+                                            {!isEditingExtras && !isViewer && (
                                                 <button className="btn-edit-premium" onClick={() => setIsEditingExtras(true)}>Editar</button>
                                             )}
                                         </div>
@@ -561,10 +566,14 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                         <div className="section-header-premium">
                                             <span className="section-number-premium">05</span>
                                             <h3>Anexos ({(editedTask.attachments || []).length})</h3>
-                                            <button className="btn-edit-premium" style={{ gap: 6 }} onClick={() => fileInputRef.current?.click()} disabled={uploadingAttachments}>
-                                                {uploadingAttachments ? 'Enviando...' : <><Plus size={14} /> Adicionar</>}
-                                            </button>
-                                            <input type="file" ref={fileInputRef} style={{ display: 'none' }} multiple onChange={handleFileUpload} />
+                                            {!isViewer && (
+                                                <>
+                                                    <button className="btn-edit-premium" style={{ gap: 6 }} onClick={() => fileInputRef.current?.click()} disabled={uploadingAttachments}>
+                                                        {uploadingAttachments ? 'Enviando...' : <><Plus size={14} /> Adicionar</>}
+                                                    </button>
+                                                    <input type="file" ref={fileInputRef} style={{ display: 'none' }} multiple onChange={handleFileUpload} />
+                                                </>
+                                            )}
                                         </div>
 
                                         {(editedTask.attachments || []).length > 0 ? (
@@ -578,22 +587,28 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                                         onMouseOver={e => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'; }}
                                                         onMouseOut={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = '0 1px 2px rgba(0,0,0,0.03)'; }}
                                                     >
-                                                        <div style={{ width: 42, height: 42, background: '#f8fafc', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
-                                                            <FileIcon type={att.type} />
+                                                        <div style={{ width: 42, height: 42, background: '#f8fafc', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', overflow: 'hidden' }}>
+                                                            {att.type === 'image' ? (
+                                                                <img src={att.url} alt={att.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                            ) : (
+                                                                <FileIcon type={att.type} />
+                                                            )}
                                                         </div>
                                                         <div style={{ flex: 1, overflow: 'hidden' }}>
                                                             <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{att.name}</div>
                                                             <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 600 }}>{att.size}</div>
                                                         </div>
-                                                        <button
-                                                            className="att-delete-btn-premium"
-                                                            onClick={e => { e.stopPropagation(); handleRemoveAttachment(att); }}
-                                                            style={{ background: 'none', border: 'none', color: '#cbd5e1', padding: 6, cursor: 'pointer', transition: 'all 0.2s', borderRadius: 6 }}
-                                                            onMouseOver={e => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = '#fef2f2'; }}
-                                                            onMouseOut={e => { e.currentTarget.style.color = '#cbd5e1'; e.currentTarget.style.background = 'none'; }}
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
+                                                        {!isViewer && (
+                                                            <button
+                                                                className="att-delete-btn-premium"
+                                                                onClick={e => { e.stopPropagation(); handleRemoveAttachment(att); }}
+                                                                style={{ background: 'none', border: 'none', color: '#cbd5e1', padding: 6, cursor: 'pointer', transition: 'all 0.2s', borderRadius: 6 }}
+                                                                onMouseOver={e => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = '#fef2f2'; }}
+                                                                onMouseOut={e => { e.currentTarget.style.color = '#cbd5e1'; e.currentTarget.style.background = 'none'; }}
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
@@ -1035,6 +1050,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                                 style={{ width: '100%', padding: 8, borderRadius: 10, fontSize: '0.85rem', fontWeight: 600 }}
                                                 value={editedTask.status}
                                                 onChange={e => handleFieldChange('status', e.target.value)}
+                                                disabled={isViewer}
                                             >
                                                 <option value="solicitado">Mudar para: Solicitado</option>
                                                 <option value="producao">Mudar para: Em Produção</option>
@@ -1049,14 +1065,16 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                     <div className="side-section-premium">
                                         <div className="side-title-premium" style={{ color: '#64748b' }}>GESTÃO</div>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                            {editedTask.archived ? (
-                                                <button className="btn-side-action-premium" style={{ background: '#ecfdf5', color: '#065f46', borderColor: '#a7f3d0' }} onClick={async () => { await unarchiveTask(task.id); onClose(); }}>
-                                                    <RotateCcw size={16} /> Reativar Pauta
-                                                </button>
-                                            ) : (
-                                                <button className="btn-side-action-premium" onClick={() => handleArchive(onArchive)}>
-                                                    <Archive size={16} /> Arquivar Pauta
-                                                </button>
+                                            {!isViewer && (
+                                                editedTask.archived ? (
+                                                    <button className="btn-side-action-premium" style={{ background: '#ecfdf5', color: '#065f46', borderColor: '#a7f3d0' }} onClick={async () => { await unarchiveTask(task.id); onClose(); }}>
+                                                        <RotateCcw size={16} /> Reativar Pauta
+                                                    </button>
+                                                ) : (
+                                                    <button className="btn-side-action-premium" onClick={() => handleArchive(onArchive)}>
+                                                        <Archive size={16} /> Arquivar Pauta
+                                                    </button>
+                                                )
                                             )}
                                             {(user?.role === 'admin' || user?.role === 'desenvolvedor') && (
                                                 <button className="btn-side-action-premium danger" style={{ marginTop: '0.5rem' }} onClick={handleDelete}>
@@ -1066,26 +1084,33 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                         </div>
                                     </div>
 
-                                    <div className="side-section-premium" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                        <div className="side-title-premium" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748b' }}>
-                                            <Activity size={14} /> HISTÓRICO DE ATIVIDADES
+                                    {(user?.role === 'admin' || user?.role === 'desenvolvedor') && (
+                                        <div className="side-section-premium" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                                            <div className="side-title-premium" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748b' }}>
+                                                <Activity size={14} /> HISTÓRICO DE ATIVIDADES
+                                            </div>
+                                            <div className="activity-list" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14, maxHeight: 420, overflowY: 'auto', paddingRight: 8, marginTop: 4 }}>
+                                                {activityLogs.filter(log => !log.details.includes('Banco de Dados')).length > 0 ? 
+                                                    activityLogs
+                                                        .filter(log => !log.details.includes('Banco de Dados'))
+                                                        .map((log, idx) => (
+                                                        <div key={log.id} style={{ fontSize: '0.75rem', borderLeft: '2px solid #f1f5f9', paddingLeft: 14, position: 'relative' }}>
+                                                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: idx === 0 ? '#3b82f6' : '#e2e8f0', position: 'absolute', left: -5, top: 4, boxShadow: idx === 0 ? '0 0 0 3px rgba(59,130,246,0.15)' : 'none' }}></div>
+                                                            <div style={{ fontWeight: 700, color: '#334155' }}>{log.user_name}</div>
+                                                            <div style={{ color: '#64748b', margin: '3px 0', lineHeight: 1.4 }}>
+                                                                {log.details.includes('Pauta criada via RPC Blindada') ? 'Pauta criada com sucesso' : log.details}
+                                                            </div>
+                                                            <div style={{ color: '#cbd5e1', fontSize: '0.65rem', fontWeight: 600 }}>{format(new Date(log.created_at), "dd MMM, HH:mm", { locale: ptBR })}</div>
+                                                        </div>
+                                                    )) : (
+                                                    <div style={{ textAlign: 'center', padding: '2rem 0', color: '#cbd5e1' }}>
+                                                        <Activity size={20} style={{ opacity: 0.3, marginBottom: 8 }} />
+                                                        <p style={{ fontSize: '0.7rem', fontStyle: 'italic', margin: 0 }}>Nenhuma atividade registrada.</p>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="activity-list" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14, maxHeight: 420, overflowY: 'auto', paddingRight: 8, marginTop: 4 }}>
-                                            {activityLogs.length > 0 ? activityLogs.map((log, idx) => (
-                                                <div key={log.id} style={{ fontSize: '0.75rem', borderLeft: '2px solid #f1f5f9', paddingLeft: 14, position: 'relative' }}>
-                                                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: idx === 0 ? '#3b82f6' : '#e2e8f0', position: 'absolute', left: -5, top: 4, boxShadow: idx === 0 ? '0 0 0 3px rgba(59,130,246,0.15)' : 'none' }}></div>
-                                                    <div style={{ fontWeight: 700, color: '#334155' }}>{log.user_name}</div>
-                                                    <div style={{ color: '#64748b', margin: '3px 0', lineHeight: 1.4 }}>{log.details}</div>
-                                                    <div style={{ color: '#cbd5e1', fontSize: '0.65rem', fontWeight: 600 }}>{format(new Date(log.created_at), "dd MMM, HH:mm", { locale: ptBR })}</div>
-                                                </div>
-                                            )) : (
-                                                <div style={{ textAlign: 'center', padding: '2rem 0', color: '#cbd5e1' }}>
-                                                    <Activity size={20} style={{ opacity: 0.3, marginBottom: 8 }} />
-                                                    <p style={{ fontSize: '0.7rem', fontStyle: 'italic', margin: 0 }}>Nenhuma atividade registrada.</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
+                                    )}
                                 </div> {/* Fim modal-side-col-premium */}
                             </div> {/* Fim modal-body */}
                         </div>{/* fim nova-pauta-body-premium */}
@@ -1117,7 +1142,11 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                 </div> {/* fim modal-overlay */}
 
             {viewingFile && (
-                <FileViewer attachment={viewingFile} onClose={() => setViewingFile(null)} />
+                <FileViewer 
+                    attachment={viewingFile} 
+                    attachments={editedTask.attachments || []} 
+                    onClose={() => setViewingFile(null)} 
+                />
             )}
         </>
     );

@@ -263,6 +263,7 @@ export default function Cronograma() {
             {viewingFile && (
                 <FileViewer
                     attachment={viewingFile}
+                    attachments={tasks.find(t => t.attachments?.some(a => a.id === viewingFile.id))?.attachments || []}
                     onClose={() => setViewingFile(null)}
                 />
             )}

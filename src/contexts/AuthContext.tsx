@@ -31,9 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         let isActive = true;
 
-        // Tenta recuperar sessão existente do cache local primeiro
-        // para evitar piscar a LoadingScreen em usuários já logados
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
             if (!isActive) return;
             if (session?.user) {
                 fetchProfile(session.user);
@@ -46,15 +44,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             async (event: AuthChangeEvent, session: Session | null) => {
                 if (!isActive) return;
 
-                // SIGNED_IN já foi tratado pelo getSession acima na primeira carga
-                // Aqui só trata mudanças subsequentes
                 if (event === 'SIGNED_OUT') {
                     setUser(null);
                     setIsLoading(false);
                 } else if (event === 'SIGNED_IN' && session?.user) {
                     await fetchProfile(session.user);
                 } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-                    // Token renovado — não precisa rebuscar perfil
                     setIsLoading(false);
                 }
             }
@@ -66,7 +61,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
     }, []);
 
-    // Realtime: logout forçado por security stamp
     useEffect(() => {
         if (!user?.id) return;
 
@@ -107,7 +101,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 });
             } else if (error) {
                 console.error('Error fetching profile:', error);
-                // Fallback: usa dados do auth
                 setUser({
                     id: authUser.id,
                     name: authUser.email || 'Usuário',
@@ -129,7 +122,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
     };
 
-    // Mostra LoadingScreen só enquanto resolve a sessão inicial
     if (isLoading) return <LoadingScreen />;
 
     return (

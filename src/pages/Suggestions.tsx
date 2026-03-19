@@ -175,11 +175,12 @@ export default function Suggestions() {
 
             <div className="suggestions-layout">
                 {/* Form Column */}
-                <div className="suggestions-form-wrapper glass">
-                    <h2>Enviar Nova Sugestão</h2>
-                    <p className="text-muted" style={{ marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-                        Descreva sua ideia ou necessidade. A equipe de comunicação será notificada e avaliará.
-                    </p>
+                {user?.role !== 'viewer' ? (
+                    <div className="suggestions-form-wrapper glass">
+                        <h2>Enviar Nova Sugestão</h2>
+                        <p className="text-muted" style={{ marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                            Descreva sua ideia ou necessidade. A equipe de comunicação será notificada e avaliará.
+                        </p>
 
                     <form className="suggestion-form" onSubmit={handleSubmit}>
                         <div className="form-group">
@@ -327,6 +328,17 @@ export default function Suggestions() {
                         </button>
                     </form>
                 </div>
+                ) : (
+                    <div className="suggestions-form-wrapper glass" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '3rem 2rem' }}>
+                        <div style={{ background: 'hsl(var(--color-primary) / 0.1)', color: 'hsl(var(--color-primary))', width: 64, height: 64, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
+                            <Eye size={32} />
+                        </div>
+                        <h2 style={{ marginBottom: '0.5rem' }}>Modo Visualização</h2>
+                        <p className="text-muted" style={{ fontSize: '0.9rem' }}>
+                            Seu perfil possui acesso apenas para consulta. O envio de novas sugestões de pauta não está disponível para este nível de permissão.
+                        </p>
+                    </div>
+                )}
 
                 {/* Inbox Column */}
                 <div className="suggestions-inbox">
@@ -477,6 +489,7 @@ export default function Suggestions() {
             {viewingFile && (
                 <FileViewer
                     attachment={viewingFile}
+                    attachments={suggestions.find(s => s.attachments?.some((a: any) => a.id === viewingFile.id))?.attachments || [viewingFile]}
                     onClose={() => setViewingFile(null)}
                 />
             )}

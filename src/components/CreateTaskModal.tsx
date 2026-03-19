@@ -137,9 +137,6 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                 // ✅ secretarias salvo no campo correto (usado nos badges do kanban)
                 secretarias,
                 // Mantém campo legado em sincronia
-                inauguracao_secretarias: secretarias,
-
-                // Agendamento
                 pauta_data: pautaData,
                 pauta_horario: (pautaHorarioStart && pautaHorarioEnd)
                     ? `${pautaHorarioStart} às ${pautaHorarioEnd}`
@@ -151,12 +148,12 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
 
                 // Vídeo
                 video_captacao_equipe: videoCaptacaoEquipe.length > 0 ? videoCaptacaoEquipe : undefined,
-                video_captacao_data: videoCaptacaoData ? new Date(videoCaptacaoData) : undefined,
+                video_captacao_data: videoCaptacaoData ? new Date(videoCaptacaoData) : null,
                 video_edicao_equipe: videoEdicaoEquipe.length > 0 ? videoEdicaoEquipe : undefined,
-                video_edicao_data: videoEdicaoData ? new Date(videoEdicaoData) : undefined,
+                video_edicao_data: videoEdicaoData ? new Date(videoEdicaoData) : null,
                 video_briefing: videoBriefing || undefined,
                 video_necessidades: videoNecessidades.length > 0 ? videoNecessidades : undefined,
-                video_entrega_data: videoEntregaData ? new Date(videoEntregaData) : undefined,
+                video_entrega_data: videoEntregaData ? new Date(videoEntregaData) : null,
 
                 // Inauguração
                 inauguracao_tipo: types.includes('inauguracao') ? inaugTipo : undefined,

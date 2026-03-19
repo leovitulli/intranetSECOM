@@ -227,56 +227,89 @@ export function useTaskModal(task: Task, onUpdateTask: (t: Task) => void, onClos
 
     /** Remove anexo com confirmação via modal interno */
     const handleRemoveAttachment = (att: Attachment) => {
-        openConfirm(
-            'Excluir Anexo',
-            `Deseja realmente excluir "${att.name}"?`,
-            async () => {
-                try {
-                    const urlParts = att.url.split('/task-attachments/');
-                    if (urlParts.length === 2) {
-                        const { error } = await supabase.storage
-                            .from('task-attachments')
-                            .remove([urlParts[1]]);
+        const confirmed = window.confirm(`🗑️ EXCLUIR ANEXO?\n\nDeseja realmente excluir "${att.name}"? Esta ação não pode ser desfeita.`);
 
-                        if (error) console.error('Erro ao remover arquivo do storage:', error);
-                    }
-
-                    const updatedAttachments = (editedTask.attachments || []).filter(a => a.id !== att.id);
-                    setEditedTask(prev => ({ ...prev, attachments: updatedAttachments }));
-                    onUpdateTask({ ...task, attachments: updatedAttachments });
-                } catch (err) {
-                    console.error('Erro inesperado ao excluir anexo:', err);
+        if (confirmed) {
+            try {
+                console.log('🛠️ Iniciando remoção do anexo no storage e no banco...');
+                const urlParts = att.url.split('/task-attachments/');
+                if (urlParts.length === 2) {
+                    supabase.storage
+                        .from('task-attachments')
+                        .remove([urlParts[1]])
+                        .then(({ error }: { error: any }) => {
+                            if (error) console.error('Erro ao remover arquivo do storage:', error);
+                        });
                 }
+
+                const updatedAttachments = (editedTask.attachments || []).filter(a => a.id !== att.id);
+                setEditedTask(prev => ({ ...prev, attachments: updatedAttachments }));
+                
+                // 1. Sincronizar remoção dos anexos no banco
+                supabase
+                    .from('tasks')
+                    .update({ attachments: updatedAttachments })
+                    .eq('id', task.id)
+                    .then(async ({ error }) => {
+                        if (error) {
+                            console.error('❌ ERRO AO EXCLUIR NO BANCO:', error);
+                            alert(`ERRO DE BANCO: ${error.message}\n\nA alteração NÃO foi salva.`);
+                        } else {
+                            console.log('✅ Remoção sincronizada no banco de dados com sucesso.');
+                            
+                            // 2. Registrar o LOG PROFISSIONAL diretamente via frontend para evitar erros de trigger
+                            await supabase.from('task_logs').insert({
+                                task_id: task.id,
+                                user_id: user?.id,
+                                user_name: user?.full_name || 'Sistema',
+                                details: `Removeu fotos/arquivos anexados: ${att.name}`
+                            });
+                            
+                            onUpdateTask({ ...task, attachments: updatedAttachments });
+                        }
+                    });
+            } catch (err: any) {
+                console.error('❌ ERRO INESPERADO:', err);
+                alert(`ERRO INESPERADO: ${err.message || 'Falha ao processar exclusão.'}`);
             }
-        );
+        }
     };
 
     /** Arquivar pauta com confirmação */
     const handleArchive = (onArchive?: () => void) => {
-        openConfirm(
-            'Arquivar Pauta',
-            'Deseja mover esta pauta para o arquivo histórico?',
-            async () => {
-                await archiveTask(task.id);
+        const confirmed = window.confirm('📦 DESEJA ARQUIVAR ESTA PAUTA?\n\nEla será movida do Kanban para o arquivo histórico.');
+
+        if (confirmed) {
+            try {
+                console.log('🛠️ Arquivando pauta...');
+                archiveTask(task.id);
                 if (onArchive) onArchive();
+                console.log('✅ Arquivado com sucesso, fechando modal.');
                 onClose();
+            } catch (err) {
+                console.error('❌ Erro ao arquivar:', err);
+                alert('Erro ao arquivar pauta.');
             }
-        );
+        }
     };
 
     /** Excluir pauta com confirmação */
     const handleDelete = () => {
-        console.log('🚀 Tentando excluir pauta:', task.id);
-        openConfirm(
-            '⚠️ Excluir Definitivamente',
-            'Esta ação apagará todos os dados, anexos e comentários de forma irreversível.',
-            async () => {
-                console.log('🛠️ Confirmação recebida, chamando deleteTask...');
-                await deleteTask(task.id);
-                console.log('✅ deleteTask finalizado, fechando modal.');
+        console.log('🚀 Iniciando processo de exclusão para ID:', task.id);
+        
+        const confirmed = window.confirm('⚠️ EXCLUIR DEFINITIVAMENTE?\n\nEsta ação apagará todos os dados, anexos e comentários de forma irreversível e não pode ser desfeita.');
+        
+        if (confirmed) {
+            try {
+                console.log('🛠️ Confirmação nativa recebida, chamando deleteTask via DataContext...');
+                deleteTask(task.id);
+                console.log('✅ Deleção concluída, fechando modal.');
                 onClose();
+            } catch (err) {
+                console.error('❌ Erro durante a exclusão:', err);
+                alert('Erro ao excluir pauta.');
             }
-        );
+        }
     };
 
     /** Descarta alterações locais */
