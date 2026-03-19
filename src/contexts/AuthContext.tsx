@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         let isActive = true;
 
-        supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
+        supabase.auth.getSession().then(({ data: { session } }: { data: { session: any } }) => {
             if (!isActive) return;
             if (session?.user) {
                 fetchProfile(session.user);
