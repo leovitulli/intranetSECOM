@@ -9,12 +9,9 @@ import {
     Users, 
     TrendingUp, 
     Zap, 
-    Search,
-    ChevronDown,
     AlertCircle,
     Building2,
-    CalendarDays,
-    X
+    CalendarDays
 } from 'lucide-react';
 import { 
     startOfDay, 
@@ -54,7 +51,7 @@ import './ReportsPremium.css';
 type FilterPeriod = 'today' | 'week' | 'month' | 'lastMonth' | 'custom';
 
 export default function ReportsPremium() {
-    const { tasks, secretarias, loading } = useData();
+    const { tasks, loading } = useData();
     const [period, setPeriod] = useState<FilterPeriod>('month');
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
