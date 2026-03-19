@@ -48,6 +48,7 @@ import {
     Bar
 } from 'recharts';
 import TaskModal from '../components/TaskModal';
+import SecretariasMultiSelect from '../components/SecretariasMultiSelect';
 import './ReportsPremium.css';
 
 type FilterPeriod = 'today' | 'week' | 'month' | 'lastMonth' | 'custom';
@@ -61,9 +62,6 @@ export default function ReportsPremium() {
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [searchTerm] = useState('');
     const [selectedSecretarias, setSelectedSecretarias] = useState<string[]>([]);
-    const [secSearchQuery, setSecSearchQuery] = useState('');
-    const [isSecDropdownOpen, setIsSecDropdownOpen] = useState(false);
-    const secDropdownRef = useRef<HTMLDivElement>(null);
     const [activeTabCharts, setActiveTabCharts] = useState<'assuntos' | 'concluidos' | 'status'>('assuntos');
     const [showDateSelector, setShowDateSelector] = useState(false);
     const tableRef = useRef<HTMLDivElement>(null);
@@ -354,77 +352,14 @@ export default function ReportsPremium() {
                 </div>
 
                 <div className="header-filters-row">
-                    {/* Filtro de Secretarias Padrão Site (Replicando TaskModal) */}
-                    <div className="multi-select-premium-container" ref={secDropdownRef}>
+                    {/* Filtro de Secretarias Oficial do Site (Replicando TaskModal) */}
+                    <div className="official-multi-select-wrapper">
                         <label className="filter-standard-label">DEPARTAMENTO / SECRETARIA SOLICITANTE</label>
-                        <div 
-                            className={`multi-select-trigger-premium ${isSecDropdownOpen ? 'open' : ''}`}
-                            onClick={() => setIsSecDropdownOpen(!isSecDropdownOpen)}
-                        >
-                            <div className="selected-tags-container">
-                                {selectedSecretarias.length > 0 ? (
-                                    selectedSecretarias.map(sec => (
-                                        <span key={sec} className="selection-tag-premium">
-                                            {sec}
-                                            <button 
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setSelectedSecretarias(prev => prev.filter(s => s !== sec));
-                                                }}
-                                            >
-                                                <X size={12} />
-                                            </button>
-                                        </span>
-                                    ))
-                                ) : (
-                                    <span className="placeholder-text">Selecione as secretarias...</span>
-                                )}
-                            </div>
-                            <ChevronDown size={18} color="#2563eb" className="trigger-icon" />
-                        </div>
-
-                        {isSecDropdownOpen && (
-                            <>
-                                <div className="dropdown-overlay-transparent" onClick={() => setIsSecDropdownOpen(false)} />
-                                <div className="standard-dropdown-premium shadow-2xl">
-                                    <div className="search-field-wrapper-premium">
-                                        <Search size={16} color="#94a3b8" />
-                                        <input 
-                                            type="text" 
-                                            placeholder="Buscar secretaria..." 
-                                            value={secSearchQuery}
-                                            onChange={(e) => setSecSearchQuery(e.target.value)}
-                                            onClick={(e) => e.stopPropagation()}
-                                            autoFocus
-                                        />
-                                    </div>
-                                    <div className="options-list-premium">
-                                        {secretarias
-                                            .map(s => s.nome)
-                                            .filter(sec => 
-                                                sec.toLowerCase().includes(secSearchQuery.toLowerCase())
-                                            )
-                                            .sort()
-                                            .map(sec => (
-                                                <div 
-                                                    key={sec}
-                                                    className={`option-item-premium ${selectedSecretarias.includes(sec) ? 'selected' : ''}`}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setSelectedSecretarias(prev => 
-                                                            prev.includes(sec) ? prev.filter(s => s !== sec) : [...prev, sec]
-                                                        );
-                                                    }}
-                                                >
-                                                    <div className="check-box-premium" />
-                                                    {sec}
-                                                </div>
-                                            ))
-                                        }
-                                    </div>
-                                </div>
-                            </>
-                        )}
+                        <SecretariasMultiSelect 
+                            selected={selectedSecretarias}
+                            onChange={(v) => setSelectedSecretarias(v)}
+                            placeholder="Buscar secretarias..."
+                        />
                     </div>
 
                     <div className="period-pill">
