@@ -40,7 +40,9 @@ import {
     Pie, 
     Legend,
     AreaChart,
-    Area
+    Area,
+    BarChart,
+    Bar
 } from 'recharts';
 import TaskModal from '../components/TaskModal';
 import './ReportsPremium.css';
@@ -58,6 +60,7 @@ export default function ReportsPremium() {
     const [selectedSecretarias, setSelectedSecretarias] = useState<string[]>([]);
     const [secSearchQuery, setSecSearchQuery] = useState('');
     const [isSecDropdownOpen, setIsSecDropdownOpen] = useState(false);
+    const [activeTabCharts, setActiveTabCharts] = useState<'assuntos' | 'concluidos' | 'status'>('assuntos');
     const [showDateSelector, setShowDateSelector] = useState(false);
     const tableRef = useRef<HTMLDivElement>(null);
 
@@ -173,10 +176,11 @@ export default function ReportsPremium() {
             completed,
             completedGrowth,
             avgLeadTime: Math.abs(Math.round(avgLeadTime)),
-            inProgress: filteredTasks.filter(t => ['producao', 'correcao'].includes(t.status)).length,
-            inaugurations: filteredTasks.filter(t => t.type.includes('inauguracao') || t.status === 'inauguracao').length,
+            inProgress: filteredTasks.filter(t => t.status === 'producao').length,
+            inaugurations: filteredTasks.filter(t => t.status === 'inauguracao' || t.type.includes('inauguracao')).length,
             approved: filteredTasks.filter(t => t.status === 'aprovado').length,
-            correcting: filteredTasks.filter(t => t.status === 'correcao').length
+            correcting: filteredTasks.filter(t => t.status === 'correcao').length,
+            rejected: filteredTasks.filter(t => t.status === 'cancelado').length
         };
     }, [filteredTasks, prevPeriodTasks]);
 
@@ -220,6 +224,51 @@ export default function ReportsPremium() {
             { name: 'Fotografia', value: counts.foto, color: '#10b981', filter: 'foto' },
             { name: 'Inaugurações', value: counts.inauguracao, color: '#8b5cf6', filter: 'inauguracao' },
             { name: 'Arte/Design', value: counts.arte, color: '#6366f1', filter: 'arte' },
+        ].filter(d => d.value > 0);
+    }, [filteredTasks]);
+
+    // Chart Data: Status Geral (Barras)
+    const taskStatusData = useMemo(() => {
+        const counts = { 
+            solicitado: filteredTasks.filter(t => t.status === 'solicitado').length,
+            producao: filteredTasks.filter(t => t.status === 'producao').length,
+            correcao: filteredTasks.filter(t => t.status === 'correcao').length,
+            aprovado: filteredTasks.filter(t => t.status === 'aprovado').length,
+            publicado: filteredTasks.filter(t => t.status === 'publicado').length,
+            cancelado: filteredTasks.filter(t => t.status === 'cancelado').length,
+            inauguracao: filteredTasks.filter(t => t.status === 'inauguracao').length
+        };
+
+        return [
+            { name: 'Solicitado', value: counts.solicitado, color: '#3b82f6' },
+            { name: 'Em Produção', value: counts.producao, color: '#6366f1' },
+            { name: 'Correção', value: counts.correcao, color: '#8b5cf6' },
+            { name: 'Aprovado', value: counts.aprovado, color: '#a855f7' },
+            { name: 'Publicado', value: counts.publicado, color: '#d946ef' },
+            { name: 'Cancelado', value: counts.cancelado, color: '#ef4444' },
+            { name: 'Inauguração', value: counts.inauguracao, color: '#f59e0b' }
+        ];
+    }, [filteredTasks]);
+
+    // Chart Data: Publicações Concluídas por Tipo
+    const completedByMaterialData = useMemo(() => {
+        const completed = filteredTasks.filter(t => t.status === 'publicado');
+        const counts = { release: 0, post: 0, video: 0, foto: 0, arte: 0 };
+        
+        completed.forEach(t => {
+            if (t.type.includes('release')) counts.release++;
+            if (t.type.includes('post')) counts.post++;
+            if (t.type.includes('video')) counts.video++;
+            if (t.type.includes('foto')) counts.foto++;
+            if (t.type.includes('arte')) counts.arte++;
+        });
+
+        return [
+            { name: 'Release', value: counts.release, color: '#3b82f6' },
+            { name: 'Rede Social', value: counts.post, color: '#10b981' },
+            { name: 'Vídeos', value: counts.video, color: '#f59e0b' },
+            { name: 'Fotos', value: counts.foto, color: '#059669' },
+            { name: 'Artes', value: counts.arte, color: '#6366f1' }
         ].filter(d => d.value > 0);
     }, [filteredTasks]);
 
@@ -475,15 +524,15 @@ export default function ReportsPremium() {
 
                 {/* 6. REPROVADAS */}
                 <div 
-                    className={`elite-card clickable red ${activeFilter?.value === 'correcao' ? 'active' : ''}`}
-                    onClick={() => { setActiveFilter({ type: 'status', value: 'correcao' }); scrollToTable(); }}
+                    className={`elite-card clickable red ${activeFilter?.value === 'cancelado' ? 'active' : ''}`}
+                    onClick={() => { setActiveFilter({ type: 'status', value: 'cancelado' }); scrollToTable(); }}
                 >
                     <div className="elite-icon-box red">
                         <AlertCircle size={32} />
                     </div>
                     <div className="elite-card-content">
                         <div className="elite-label">REPROVADAS</div>
-                        <div className="elite-value">{stats.correcting}</div>
+                        <div className="elite-value">{stats.rejected}</div>
                         <div className="elite-desc">Canceladas ou reprovadas</div>
                     </div>
                 </div>
@@ -552,32 +601,85 @@ export default function ReportsPremium() {
                     </div>
                 </div>
 
-                {/* Funil de Gargalos */}
+                {/* Bloco de Gráficos com Abas */}
                 <div className="pro-chart-box glass-panel half">
-                    <div className="chart-header-pro">
-                        <h3><PieChartIcon size={18} /> Assuntos & Materiais</h3>
-                        <p>Distribuição por tipo de conteúdo</p>
+                    <div className="chart-header-tabs-pro">
+                        <div className="tabs-pro-inner">
+                            <button 
+                                className={activeTabCharts === 'assuntos' ? 'active' : ''} 
+                                onClick={() => setActiveTabCharts('assuntos')}
+                            >
+                                Assuntos
+                            </button>
+                            <button 
+                                className={activeTabCharts === 'concluidos' ? 'active' : ''} 
+                                onClick={() => setActiveTabCharts('concluidos')}
+                            >
+                                Concluídos
+                            </button>
+                            <button 
+                                className={activeTabCharts === 'status' ? 'active' : ''} 
+                                onClick={() => setActiveTabCharts('status')}
+                            >
+                                Status
+                            </button>
+                        </div>
                     </div>
+
                     <div className="chart-container-pro">
-                        <ResponsiveContainer width="100%" height={260}>
-                            <PieChart>
-                                <Pie
-                                    data={materialTypeData}
-                                    innerRadius={60}
-                                    outerRadius={80}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                    onClick={(data) => setActiveFilter({ type: 'type', value: data.filter || '' })}
-                                    style={{ cursor: 'pointer' }}
-                                >
-                                    {materialTypeData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                                <Legend iconType="circle" />
-                            </PieChart>
-                        </ResponsiveContainer>
+                        {activeTabCharts === 'assuntos' && (
+                            <ResponsiveContainer width="100%" height={260}>
+                                <PieChart>
+                                    <Pie
+                                        data={materialTypeData}
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                        onClick={(data) => setActiveFilter({ type: 'type', value: data.filter || '' })}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        {materialTypeData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip />
+                                    <Legend iconType="circle" />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        )}
+
+                        {activeTabCharts === 'concluidos' && (
+                            <ResponsiveContainer width="100%" height={260}>
+                                <BarChart data={completedByMaterialData}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={11} />
+                                    <YAxis axisLine={false} tickLine={false} fontSize={11} />
+                                    <Tooltip cursor={{ fill: '#f8fafc' }} />
+                                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                                        {completedByMaterialData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
+
+                        {activeTabCharts === 'status' && (
+                            <ResponsiveContainer width="100%" height={260}>
+                                <BarChart data={taskStatusData}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={10} />
+                                    <YAxis axisLine={false} tickLine={false} fontSize={10} />
+                                    <Tooltip cursor={{ fill: '#f8fafc' }} />
+                                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                                        {taskStatusData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
                     </div>
                 </div>
 
