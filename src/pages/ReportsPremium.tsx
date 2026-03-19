@@ -60,7 +60,6 @@ export default function ReportsPremium() {
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [searchTerm] = useState('');
     const [selectedSecretarias, setSelectedSecretarias] = useState<string[]>([]);
-    const [secSearchQuery, setSecSearchQuery] = useState('');
     const [isSecDropdownOpen, setIsSecDropdownOpen] = useState(false);
     const [activeTabCharts, setActiveTabCharts] = useState<'assuntos' | 'concluidos' | 'status'>('assuntos');
     const [showDateSelector, setShowDateSelector] = useState(false);
@@ -317,8 +316,8 @@ export default function ReportsPremium() {
                 }
                 if (activeFilter.type === 'type') return t.type.includes(activeFilter.value as any);
                 if (activeFilter.type === 'secretaria') {
-                    return t.secretarias?.includes(activeFilter.value) || 
-                           t.inauguracao_secretarias?.includes(activeFilter.value) || 
+                    return t.secretarias?.some(s => s === activeFilter.value) || 
+                           t.inauguracao_secretarias?.some(s => s === activeFilter.value) || 
                            (activeFilter.value === 'Geral / Diversos' && 
                             (!t.secretarias || t.secretarias.length === 0) && 
                             (!t.inauguracao_secretarias || t.inauguracao_secretarias.length === 0));
@@ -369,24 +368,11 @@ export default function ReportsPremium() {
 
                         {isSecDropdownOpen && (
                             <>
-                                <div className="dropdown-overlay" onClick={() => { setIsSecDropdownOpen(false); setSecSearchQuery(''); }} />
+                                <div className="dropdown-overlay" onClick={() => { setIsSecDropdownOpen(false); }} />
                                 <div className="standard-dropdown shadow-2xl">
-                                    <div className="search-field-wrapper">
-                                        <Search size={16} color="#94a3b8" />
-                                        <input 
-                                            type="text" 
-                                            placeholder="Buscar secretaria..." 
-                                            value={secSearchQuery}
-                                            onChange={(e) => setSecSearchQuery(e.target.value)}
-                                            autoFocus
-                                        />
-                                    </div>
                                     <div className="standard-options">
                                         {secretarias
                                             .map(s => s.nome)
-                                            .filter(sec => 
-                                                sec.toLowerCase().includes(secSearchQuery.toLowerCase())
-                                            )
                                             .sort()
                                             .map(sec => (
                                                 <div 
