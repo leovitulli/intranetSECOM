@@ -135,8 +135,9 @@ export default function ReportsPremium() {
         const total = filteredTasks.length;
         const totalPrev = prevPeriodTasks.length;
         
-        const completed = filteredTasks.filter(t => t.status === 'publicado').length;
-        const completedPrev = prevPeriodTasks.filter(t => t.status === 'publicado').length;
+        // Pautas Concluídas = Publicadas + Canceladas (Esforço de trabalho realizado)
+        const completed = filteredTasks.filter(t => t.status === 'publicado' || t.status === 'cancelado').length;
+        const completedPrev = prevPeriodTasks.filter(t => t.status === 'publicado' || t.status === 'cancelado').length;
 
         const growth = totalPrev > 0 ? ((total - totalPrev) / totalPrev) * 100 : 0;
         const completedGrowth = completedPrev > 0 ? ((completed - completedPrev) / completedPrev) * 100 : 0;
@@ -179,23 +180,45 @@ export default function ReportsPremium() {
         ];
     }, [filteredTasks]);
 
-    // Chart Data: Ranking de Responsáveis
-    const responsibleRanking = useMemo(() => {
+    // Chart Data: Ranking de Secretarias (Solicitantes)
+    const rankingSecretarias = useMemo(() => {
         const counts: Record<string, number> = {};
         filteredTasks.forEach(t => {
-            if (t.assignees && t.assignees.length > 0) {
-                t.assignees.forEach(id => {
-                    counts[id] = (counts[id] || 0) + 1;
-                });
-            } else {
-                counts['Sem Responsável'] = (counts['Sem Responsável'] || 0) + 1;
-            }
+            const secs = t.inauguracao_secretarias && t.inauguracao_secretarias.length > 0 
+                ? t.inauguracao_secretarias 
+                : ['Geral / Diversos'];
+            
+            secs.forEach(sec => {
+                counts[sec] = (counts[sec] || 0) + 1;
+            });
         });
 
         return Object.entries(counts)
             .map(([name, count]) => ({ name, count }))
             .sort((a, b) => b.count - a.count)
-            .slice(0, 10);
+            .slice(0, 8);
+    }, [filteredTasks]);
+
+    // Chart Data: Tipos de Material (Assuntos)
+    const materialTypeData = useMemo(() => {
+        const counts = { release: 0, post: 0, video: 0, foto: 0, inauguracao: 0, arte: 0 };
+        filteredTasks.forEach(t => {
+            if (t.type.includes('release')) counts.release++;
+            if (t.type.includes('post')) counts.post++;
+            if (t.type.includes('video')) counts.video++;
+            if (t.type.includes('foto')) counts.foto++;
+            if (t.type.includes('inauguracao')) counts.inauguracao++;
+            if (t.type.includes('arte')) counts.arte++;
+        });
+
+        return [
+            { name: 'Releases', value: counts.release, color: '#3b82f6', filter: 'release' },
+            { name: 'Social Media', value: counts.post, color: '#f59e0b', filter: 'post' },
+            { name: 'Vídeo/Reels', value: counts.video, color: '#f43f5e', filter: 'video' },
+            { name: 'Fotografia', value: counts.foto, color: '#10b981', filter: 'foto' },
+            { name: 'Inaugurações', value: counts.inauguracao, color: '#8b5cf6', filter: 'inauguracao' },
+            { name: 'Arte/Design', value: counts.arte, color: '#6366f1', filter: 'arte' },
+        ].filter(d => d.value > 0);
     }, [filteredTasks]);
 
     // Daily production trend
@@ -385,47 +408,61 @@ export default function ReportsPremium() {
                 {/* Funil de Gargalos */}
                 <div className="pro-chart-box glass-panel half">
                     <div className="chart-header-pro">
-                        <h3><Gauge size={18} /> Funil de Status (Gargalos)</h3>
+                        <h3><PieChartIcon size={18} /> Assuntos & Materiais</h3>
+                        <p>Distribuição por tipo de conteúdo</p>
                     </div>
                     <div className="chart-container-pro">
                         <ResponsiveContainer width="100%" height={260}>
-                            <BarChart data={funnelData} layout="vertical" margin={{ left: 20 }}>
-                                <XAxis type="number" hide />
-                                <YAxis dataKey="stage" type="category" axisLine={false} tickLine={false} fontSize={12} width={80} />
-                                <Tooltip cursor={{ fill: 'rgba(0,0,0,0.02)' }} />
-                                <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={20}>
-                                    {funnelData.map((entry, index) => (
+                            <PieChart>
+                                <Pie
+                                    data={materialTypeData}
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                    onClick={(data) => setActiveFilter({ type: 'type', value: data.filter || '' })}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    {materialTypeData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={entry.color} />
                                     ))}
-                                </Bar>
-                            </BarChart>
+                                </Pie>
+                                <Tooltip />
+                                <Legend iconType="circle" />
+                            </PieChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                {/* Ranking Humano */}
+                {/* Ranking de Secretarias */}
                 <div className="pro-chart-box glass-panel half">
                     <div className="chart-header-pro">
-                        <h3><Users size={18} /> Ranking de Responsáveis</h3>
+                        <h3><Users size={18} /> Ranking de Secretarias</h3>
+                        <p>Demandas por órgão municipal</p>
                     </div>
                     <div className="chart-container-pro">
-                        {responsibleRanking.length > 0 ? (
+                        {rankingSecretarias.length > 0 ? (
                             <div className="ranking-pro-list">
-                                {responsibleRanking.map((item, idx) => (
-                                    <div key={item.name} className="ranking-pro-item">
+                                {rankingSecretarias.map((item, idx) => (
+                                    <div 
+                                        key={item.name} 
+                                        className="ranking-pro-item" 
+                                        onClick={() => setActiveFilter({ type: 'secretaria', value: item.name })}
+                                        style={{ cursor: 'pointer' }}
+                                    >
                                         <div className="ranking-pro-info">
                                             <span className="rank-pos">{idx + 1}</span>
                                             <span className="rank-name">{item.name}</span>
                                         </div>
                                         <div className="rank-bar-container">
-                                            <div className="rank-bar" style={{ width: `${(item.count / responsibleRanking[0].count) * 100}%` }}></div>
+                                            <div className="rank-bar" style={{ width: `${(item.count / rankingSecretarias[0].count) * 100}%` }}></div>
                                             <span className="rank-value">{item.count}</span>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <div className="empty-state">Sem dados de responsáveis.</div>
+                            <div className="empty-state">Sem dados de secretarias.</div>
                         )}
                     </div>
                 </div>
