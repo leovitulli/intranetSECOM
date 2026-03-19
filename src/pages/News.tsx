@@ -35,6 +35,7 @@ export default function News() {
     const [showModal, setShowModal] = useState(false);
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [filterCategory, setFilterCategory] = useState('');
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
     // Form state
     const [formTitle, setFormTitle] = useState('');
@@ -155,9 +156,14 @@ export default function News() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Remover este informe do mural?')) return;
-        await supabase.from('news').delete().eq('id', id);
-        setNews(prev => prev.filter(n => n.id !== id));
+        setConfirmDeleteId(id);
+    };
+
+    const handleDeleteConfirmed = async () => {
+        if (!confirmDeleteId) return;
+        await supabase.from('news').delete().eq('id', confirmDeleteId);
+        setNews(prev => prev.filter(n => n.id !== confirmDeleteId));
+        setConfirmDeleteId(null);
     };
 
     const handleTogglePin = async (item: NewsItem) => {
@@ -368,6 +374,20 @@ export default function News() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de confirmação de exclusão */}
+            {confirmDeleteId && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={() => setConfirmDeleteId(null)}>
+                    <div onClick={e => e.stopPropagation()} style={{ background: 'white', borderRadius: 16, padding: '1.75rem', maxWidth: 380, width: '100%', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+                        <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem', fontWeight: 700, color: '#1e293b' }}>Remover informe</h3>
+                        <p style={{ margin: '0 0 1.25rem', fontSize: '0.875rem', color: '#64748b' }}>Tem certeza que deseja remover este informe do mural? Esta ação não pode ser desfeita.</p>
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                            <button onClick={() => setConfirmDeleteId(null)} style={{ padding: '8px 18px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: 'white', color: '#475569', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
+                            <button onClick={handleDeleteConfirmed} style={{ padding: '8px 18px', borderRadius: 10, border: 'none', background: '#ef4444', color: 'white', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', fontFamily: 'inherit' }}>Remover</button>
+                        </div>
                     </div>
                 </div>
             )}

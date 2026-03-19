@@ -27,23 +27,35 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     useEffect(() => {
         let isActive = true;
+
+        // Tenta recuperar sessão existente do cache local primeiro
+        // para evitar piscar a LoadingScreen em usuários já logados
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (!isActive) return;
+            if (session?.user) {
+                fetchProfile(session.user);
+            } else {
+                setIsLoading(false);
+            }
+        });
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event: AuthChangeEvent, session: Session | null) => {
                 if (!isActive) return;
 
-                console.log('🔐 Auth event:', event);
-
-                if (session?.user) {
-                    await fetchProfile(session.user);
-                } else {
+                // SIGNED_IN já foi tratado pelo getSession acima na primeira carga
+                // Aqui só trata mudanças subsequentes
+                if (event === 'SIGNED_OUT') {
                     setUser(null);
                     setIsLoading(false);
-                    setIsInitialLoad(false);
+                } else if (event === 'SIGNED_IN' && session?.user) {
+                    await fetchProfile(session.user);
+                } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+                    // Token renovado — não precisa rebuscar perfil
+                    setIsLoading(false);
                 }
             }
         );
@@ -54,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
     }, []);
 
-    // Realtime listener for security stamp
+    // Realtime: logout forçado por security stamp
     useEffect(() => {
         if (!user?.id) return;
 
@@ -62,61 +74,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .channel(`user-security-${user.id}`)
             .on(
                 'postgres_changes',
-                {
-                    event: 'UPDATE',
-                    schema: 'public',
-                    table: 'users',
-                    filter: `id=eq.${user.id}`
-                },
+                { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${user.id}` },
                 (payload: any) => {
                     const newStamp = payload.new.security_stamp;
                     if (newStamp !== undefined && newStamp > (user.security_stamp || 0)) {
-                        console.log('🛡️ Security stamp changed. Forcing logout...');
                         logout();
-                        alert('Sua sessão foi encerrada por motivos de segurança (alteração de credenciais). Por favor, realize o login novamente.');
                     }
                 }
             )
             .subscribe();
 
-        return () => {
-            supabase.removeChannel(channel);
-        };
+        return () => { supabase.removeChannel(channel); };
     }, [user?.id, user?.security_stamp]);
 
     const fetchProfile = async (authUser: User) => {
-        // Only set global isLoading on first fetch to prevent unmounting app shell on refresh
         try {
             const { data, error } = await supabase
                 .from('users')
-                .select('*')
+                .select('id, name, avatar_url, role, job_titles, security_stamp, email')
                 .eq('id', authUser.id)
                 .single();
 
             if (data) {
-                const profile = data as any;
                 setUser({
-                    id: profile.id,
-                    name: profile.name,
-                    avatar: profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&background=random`,
-                    role: profile.role,
-                    job_titles: profile.job_titles || [],
-                    security_stamp: profile.security_stamp || 0,
-                    email: profile.email || authUser.email || ''
+                    id: data.id,
+                    name: data.name,
+                    avatar: data.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=random`,
+                    role: data.role,
+                    job_titles: data.job_titles || [],
+                    security_stamp: data.security_stamp || 0,
+                    email: data.email || authUser.email || '',
                 });
             } else if (error) {
-                console.error("Error fetching profile:", error);
+                console.error('Error fetching profile:', error);
+                // Fallback: usa dados do auth
                 setUser({
                     id: authUser.id,
                     name: authUser.email || 'Usuário',
                     avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(authUser.email || 'U')}&background=random`,
                     role: 'user',
                     security_stamp: 0,
-                    email: authUser.email || ''
+                    email: authUser.email || '',
                 });
             }
         } catch (e) {
-            console.error("Critical error in fetchProfile:", e);
+            console.error('Critical error in fetchProfile:', e);
         } finally {
             setIsLoading(false);
         }
@@ -127,9 +129,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
     };
 
+    // Mostra LoadingScreen só enquanto resolve a sessão inicial
+    if (isLoading) return <LoadingScreen />;
+
     return (
         <AuthContext.Provider value={{ isAuthenticated: !!user, user, isLoading, logout, fetchProfile }}>
-            {isInitialLoad && isLoading ? <LoadingScreen /> : children}
+            {children}
         </AuthContext.Provider>
     );
 }

@@ -642,64 +642,73 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
     const addTeamMember = async (member: TeamMember, password?: string): Promise<boolean> => {
         try {
-            console.log("👥 Iniciando criação de membro da equipe:", member.name);
             let authUserId: string | undefined;
+            const avatarUrl = member.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random`;
 
             if (member.hasLogin && member.email && password) {
-                // Usuário com Login: Auth primeiro (o trigger do banco cria o perfil)
+                // 1. Criar no Auth
                 const { data: signUpData, error: signUpError } = await getSupabaseAdmin().auth.signUp({
                     email: member.email,
                     password,
-                    options: { 
-                        data: { 
-                            name: member.name,
-                            role: member.role,
-                            has_login: true,
-                            job_titles: member.job_titles
-                        } 
-                    }
+                    options: { data: { name: member.name } }
                 });
-                
+
                 if (signUpError) throw signUpError;
                 authUserId = signUpData.user?.id;
+
+                if (!authUserId) throw new Error('Usuário criado no Auth mas sem ID retornado.');
+
+                // 2. Criar perfil manualmente (não depende de trigger)
+                // Tenta inserir; se o trigger já criou, faz upsert
+                const { error: profileError } = await supabase.from('users').upsert([{
+                    id: authUserId,
+                    name: member.name,
+                    role: member.role.toLowerCase(),
+                    email: member.email.toLowerCase().trim(),
+                    phone: member.phone || null,
+                    job_titles: member.job_titles || [],
+                    has_login: true,
+                    avatar_url: avatarUrl,
+                }], { onConflict: 'id' });
+
+                if (profileError) {
+                    console.error('Erro ao criar perfil após Auth:', profileError);
+                    // Não bloqueia — o trigger pode ter criado o perfil
+                }
             } else {
-                // Usuário sem Login: Criar direto na tabela public.users
+                // Usuário sem login: inserir direto na tabela
                 const { data, error } = await supabase.from('users').insert([{
                     name: member.name,
-                    role: member.role,
+                    role: member.role.toLowerCase(),
                     email: member.email || null,
                     phone: member.phone || null,
                     job_titles: member.job_titles || [],
                     has_login: false,
-                    avatar_url: member.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random`
+                    avatar_url: avatarUrl,
                 }]).select().single();
-                
+
                 if (error) throw error;
                 authUserId = data.id;
             }
 
             if (authUserId) {
-                // Optimistic UI Update: Inserir imediatamente na lista local
                 const newMember: TeamMember = {
                     ...member,
                     id: authUserId,
                     hasLogin: member.hasLogin,
                     color: 'hsl(210, 100%, 50%)',
-                    avatar_url: member.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random`
+                    avatar_url: avatarUrl,
                 };
-                
                 setTeam(prev => {
                     const exists = prev.some(m => m.id === authUserId);
                     if (exists) return prev;
                     return [...prev, newMember].sort((a, b) => a.name.localeCompare(b.name));
                 });
-                
-                console.log("✅ Membro criado e adicionado ao estado local.");
                 return true;
             }
             return false;
         } catch (error) {
-            console.error('Add team member error:', error);
+            console.error('Erro ao criar membro:', error);
             throw error;
         }
     };

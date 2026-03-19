@@ -36,6 +36,8 @@ export default function CalendarPage() {
 
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [selectedAgendaEvent, setSelectedAgendaEvent] = useState<AgendaEvent | null>(null);
+    const [confirmDeleteEventId, setConfirmDeleteEventId] = useState<string | null>(null);
+    const [calendarError, setCalendarError] = useState('');
 
     // Filter State
     const [selectedFilters, setSelectedFilters] = useState<string[]>(['release', 'arte', 'video', 'foto', 'inauguracao', 'sistema']);
@@ -400,21 +402,38 @@ export default function CalendarPage() {
                         try {
                             await updateEvent(savedEvent);
                             setSelectedAgendaEvent(null);
+                            setCalendarError('');
                         } catch (error) {
-                            alert('Erro ao atualizar agenda.');
+                            setCalendarError('Erro ao atualizar evento. Tente novamente.');
                         }
                     }}
                     onDelete={async (id) => {
-                        if (confirm("Tem certeza que deseja excluir esta agenda?")) {
-                            try {
-                                await deleteEvent(id);
-                                setSelectedAgendaEvent(null);
-                            } catch (error) {
-                                alert("Erro ao excluir agenda.");
-                            }
-                        }
+                        setConfirmDeleteEventId(id);
+                        setSelectedAgendaEvent(null);
                     }}
                 />
+            )}
+
+            {/* Erro inline do calendário */}
+            {calendarError && (
+                <div style={{ position: 'fixed', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)', zIndex: 9999, background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 12, padding: '12px 20px', color: '#991b1b', fontWeight: 600, fontSize: '0.875rem', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {calendarError}
+                    <button onClick={() => setCalendarError('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#991b1b', padding: 0, marginLeft: 4 }}>✕</button>
+                </div>
+            )}
+
+            {/* Modal de confirmação de exclusão de evento */}
+            {confirmDeleteEventId && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={() => setConfirmDeleteEventId(null)}>
+                    <div onClick={e => e.stopPropagation()} style={{ background: 'white', borderRadius: 16, padding: '1.75rem', maxWidth: 380, width: '100%', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+                        <h3 style={{ margin: '0 0 0.5rem', fontSize: '1rem', fontWeight: 700, color: '#1e293b' }}>Excluir evento</h3>
+                        <p style={{ margin: '0 0 1.25rem', fontSize: '0.875rem', color: '#64748b' }}>Tem certeza que deseja excluir este evento do calendário?</p>
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                            <button onClick={() => setConfirmDeleteEventId(null)} style={{ padding: '8px 18px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: 'white', color: '#475569', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', fontFamily: 'inherit' }}>Cancelar</button>
+                            <button onClick={async () => { try { await deleteEvent(confirmDeleteEventId); } catch { setCalendarError('Erro ao excluir evento.'); } finally { setConfirmDeleteEventId(null); } }} style={{ padding: '8px 18px', borderRadius: 10, border: 'none', background: '#ef4444', color: 'white', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', fontFamily: 'inherit' }}>Excluir</button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
