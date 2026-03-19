@@ -63,6 +63,8 @@ export default function ReportsPremium() {
     const [activeFilter, setActiveFilter] = useState<{ type: 'type' | 'status' | 'secretaria' | 'responsible', value: string } | null>(null);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedSecretarias, setSelectedSecretarias] = useState<string[]>([]);
+    const [showDateSelector, setShowDateSelector] = useState(false);
     const tableRef = useRef<HTMLDivElement>(null);
 
     const scrollToTable = () => {
@@ -108,9 +110,21 @@ export default function ReportsPremium() {
         return allTasks.filter(task => {
             if (!task.createdAt) return false;
             const date = typeof task.createdAt === 'string' ? new Date(task.createdAt) : task.createdAt;
-            return isWithinInterval(date, { start, end });
+            
+            const isInPeriod = isWithinInterval(date, { start, end });
+            if (!isInPeriod) return false;
+
+            // Filtro Multi-Secretarias
+            if (selectedSecretarias.length > 0) {
+                const taskSecs = task.inauguracao_secretarias || [];
+                // Se tarefa não tem secretaria e filtramos por algo, ou se não bate com as selecionadas
+                if (taskSecs.length === 0) return selectedSecretarias.includes('Geral / Diversos');
+                return taskSecs.some(sec => selectedSecretarias.includes(sec));
+            }
+
+            return true;
         });
-    }, [period, customStart, customEnd, allTasks]);
+    }, [period, customStart, customEnd, allTasks, selectedSecretarias]);
 
     // Comparison data for last period (performance trending)
     const prevPeriodTasks = useMemo(() => {
@@ -314,18 +328,40 @@ export default function ReportsPremium() {
                 </div>
             </header>
 
-            {period === 'custom' && (
-                <div className="custom-range-selector glass-panel">
-                    <div className="input-group">
-                        <label>Início</label>
-                        <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} />
-                    </div>
-                    <div className="input-group">
-                        <label>Fim</label>
-                        <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
+            {/* Header de Filtros Premium */}
+            <div className="filters-row-pro glass-panel">
+                <div className="filter-group">
+                    <label><Users size={14} /> Secretarias (Multi-seleção)</label>
+                    <div className="sec-multi-pills">
+                        {['Geral / Diversos', 'Gabinete', 'SDS', 'SMS', 'SME', 'SMSO', 'SMADS', 'SMP', 'SMT'].map(sec => (
+                            <button 
+                                key={sec}
+                                className={`sec-pill ${selectedSecretarias.includes(sec) ? 'active' : ''}`}
+                                onClick={() => {
+                                    setSelectedSecretarias(prev => 
+                                        prev.includes(sec) ? prev.filter(s => s !== sec) : [...prev, sec]
+                                    );
+                                }}
+                            >
+                                {sec}
+                            </button>
+                        ))}
                     </div>
                 </div>
-            )}
+
+                {period === 'custom' && (
+                    <div className="date-inputs-pro">
+                        <div className="input-field">
+                            <label>Início</label>
+                            <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} />
+                        </div>
+                        <div className="input-field">
+                            <label>Término</label>
+                            <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {/* KPI Cards: Grid de 8 Cards (2x4) */}
             <div className="stats-grid-elite-8">
