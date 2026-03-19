@@ -66,6 +66,7 @@ export default function ReportsPremium() {
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedSecretarias, setSelectedSecretarias] = useState<string[]>([]);
+    const [secSearchQuery, setSecSearchQuery] = useState('');
     const [isSecDropdownOpen, setIsSecDropdownOpen] = useState(false);
     const [showDateSelector, setShowDateSelector] = useState(false);
     const tableRef = useRef<HTMLDivElement>(null);
@@ -357,24 +358,39 @@ export default function ReportsPremium() {
                         
                         {isSecDropdownOpen && (
                             <>
-                                <div className="dropdown-overlay" onClick={() => setIsSecDropdownOpen(false)} />
+                                <div className="dropdown-overlay" onClick={() => { setIsSecDropdownOpen(false); setSecSearchQuery(''); }} />
                                 <div className="select-dropdown glass-panel">
-                                    {['Geral / Diversos', 'Gabinete', 'SDS', 'SMS', 'SME', 'SMSO', 'SMADS', 'SMP', 'SMT'].map(sec => (
-                                        <div 
-                                            key={sec}
-                                            className={`dropdown-item ${selectedSecretarias.includes(sec) ? 'selected' : ''}`}
-                                            onClick={() => {
-                                                setSelectedSecretarias(prev => 
-                                                    prev.includes(sec) ? prev.filter(s => s !== sec) : [...prev, sec]
-                                                );
-                                            }}
-                                        >
-                                            <div className="check-box">
-                                                {selectedSecretarias.includes(sec) && <div className="inner-check" />}
+                                    <div className="search-input-field">
+                                        <Search size={16} />
+                                        <input 
+                                            type="text" 
+                                            placeholder="Buscar secretaria..." 
+                                            value={secSearchQuery}
+                                            onChange={(e) => setSecSearchQuery(e.target.value)}
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <div className="dropdown-options">
+                                        {['Geral / Diversos', 'Gabinete', 'SDS', 'SMS', 'SME', 'SMSO', 'SMADS', 'SMP', 'SMT', 'SVCS - Secretaria do Verde', 'SVCS - Gestão de Resíduos', 'SVCS - Bem-estar Animal', 'SRC - Receita', 'SIURB - Infraestrutura'].filter(sec => 
+                                            sec.toLowerCase().includes(secSearchQuery.toLowerCase())
+                                        ).map(sec => (
+                                            <div 
+                                                key={sec}
+                                                className={`dropdown-item ${selectedSecretarias.includes(sec) ? 'selected' : ''}`}
+                                                onClick={() => {
+                                                    setSelectedSecretarias(prev => 
+                                                        prev.includes(sec) ? prev.filter(s => s !== sec) : [...prev, sec]
+                                                    );
+                                                    setSecSearchQuery(''); // Volta ao nada após selecionar
+                                                }}
+                                            >
+                                                <div className="check-box">
+                                                    {selectedSecretarias.includes(sec) && <div className="inner-check" />}
+                                                </div>
+                                                {sec}
                                             </div>
-                                            {sec}
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
                                 </div>
                             </>
                         )}
