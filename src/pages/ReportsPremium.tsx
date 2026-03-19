@@ -30,6 +30,7 @@ import {
     format
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useRef } from 'react';
 import { useData } from '../contexts/DataContext';
 import type { Task } from '../types/kanban';
 import { 
@@ -62,6 +63,11 @@ export default function ReportsPremium() {
     const [activeFilter, setActiveFilter] = useState<{ type: 'type' | 'status' | 'secretaria' | 'responsible', value: string } | null>(null);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const tableRef = useRef<HTMLDivElement>(null);
+
+    const scrollToTable = () => {
+        tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
 
     // Pre-processing tasks for analytics
     const allTasks = useMemo(() => {
@@ -256,9 +262,14 @@ export default function ReportsPremium() {
 
         if (activeFilter) {
             list = list.filter(t => {
-                if (activeFilter.type === 'status') return t.status === activeFilter.value;
+                if (activeFilter.type === 'status') {
+                    if (activeFilter.value === 'concluida') {
+                        return t.status === 'publicado' || t.status === 'cancelado';
+                    }
+                    return t.status === activeFilter.value;
+                }
                 if (activeFilter.type === 'type') return t.type.includes(activeFilter.value as any);
-                if (activeFilter.type === 'responsible') return t.assignees?.includes(activeFilter.value);
+                if (activeFilter.type === 'secretaria') return t.inauguracao_secretarias?.includes(activeFilter.value) || (activeFilter.value === 'Geral / Diversos' && (!t.inauguracao_secretarias || t.inauguracao_secretarias.length === 0));
                 return true;
             });
         }
@@ -316,7 +327,10 @@ export default function ReportsPremium() {
 
             {/* KPI Cards: Estilo Premium */}
             <div className="stats-grid-elite">
-                <div className="elite-card">
+                <div 
+                    className={`elite-card clickable ${!activeFilter ? 'active' : ''}`}
+                    onClick={() => { setActiveFilter(null); scrollToTable(); }}
+                >
                     <div className="elite-card-top">
                         <div className="elite-icon-box blue"><Target /></div>
                         {stats.growth !== 0 && (
@@ -332,7 +346,10 @@ export default function ReportsPremium() {
                     <div className="elite-progress-bg"><div className="elite-progress-bar blue" style={{ width: '100%' }}></div></div>
                 </div>
 
-                <div className="elite-card">
+                <div 
+                    className={`elite-card clickable ${activeFilter?.value === 'concluida' ? 'active' : ''}`}
+                    onClick={() => { setActiveFilter({ type: 'status', value: 'concluida' }); scrollToTable(); }}
+                >
                     <div className="elite-card-top">
                         <div className="elite-icon-box green"><CheckCircle2 /></div>
                         {stats.completedGrowth !== 0 && (
@@ -348,7 +365,10 @@ export default function ReportsPremium() {
                     <div className="elite-progress-bg"><div className="elite-progress-bar green" style={{ width: `${(stats.completed/stats.total)*100}%` }}></div></div>
                 </div>
 
-                <div className="elite-card">
+                <div 
+                    className={`elite-card clickable ${activeFilter?.value === 'publicado' ? 'active' : ''}`}
+                    onClick={() => { setActiveFilter({ type: 'status', value: 'publicado' }); scrollToTable(); }}
+                >
                     <div className="elite-card-top">
                         <div className="elite-icon-box orange"><Clock /></div>
                     </div>
@@ -358,7 +378,10 @@ export default function ReportsPremium() {
                     <div className="elite-progress-bg"><div className="elite-progress-bar orange" style={{ width: stats.avgLeadTime > 5 ? '100%' : '40%' }}></div></div>
                 </div>
 
-                <div className="elite-card">
+                <div 
+                    className={`elite-card clickable ${activeFilter?.value === 'publicado' ? 'active' : ''}`}
+                    onClick={() => { setActiveFilter({ type: 'status', value: 'publicado' }); scrollToTable(); }}
+                >
                     <div className="elite-card-top">
                         <div className="elite-icon-box purple"><Zap /></div>
                     </div>
@@ -469,7 +492,7 @@ export default function ReportsPremium() {
             </div>
 
             {/* Listagem Avançada */}
-            <section className="advanced-list glass-panel">
+            <section className="advanced-list glass-panel" ref={tableRef}>
                 <div className="list-header-pro">
                     <div className="list-title">
                         <h2>Explorador de Pautas</h2>

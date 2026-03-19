@@ -101,9 +101,21 @@
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.elite-card:hover {
+.elite-card.clickable {
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.elite-card.clickable:hover {
     transform: translateY(-5px);
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.05);
+    border-color: #cbd5e1;
+}
+
+.elite-card.clickable.active {
+    background: #fdfdfd;
+    border-color: #3b82f6;
+    box-shadow: 0 8px 16px rgba(59, 130, 246, 0.08);
 }
 
 .elite-card-top {
