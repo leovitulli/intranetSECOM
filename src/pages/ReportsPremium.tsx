@@ -511,8 +511,8 @@ export default function ReportsPremium() {
 
                 {/* 5. APROVADO */}
                 <div 
-                    className={`elite-card clickable purple ${activeFilter?.value === 'aprovada' ? 'active' : ''}`}
-                    onClick={() => { setActiveFilter({ type: 'status', value: 'aprovada' }); scrollToTable(); }}
+                    className={`elite-card clickable purple ${activeFilter?.value === 'aprovado' ? 'active' : ''}`}
+                    onClick={() => { setActiveFilter({ type: 'status', value: 'aprovado' }); scrollToTable(); }}
                 >
                     <div className="elite-icon-box purple">
                         <Zap size={32} />
