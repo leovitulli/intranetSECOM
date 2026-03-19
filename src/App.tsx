@@ -14,7 +14,6 @@ const News = lazy(() => import('./pages/News'));
 const Agenda = lazy(() => import('./pages/Agenda'));
 const Suggestions = lazy(() => import('./pages/Suggestions'));
 const CalendarPage = lazy(() => import('./pages/CalendarPage'));
-const Reports = lazy(() => import('./pages/Reports'));
 const ReportsPremium = lazy(() => import('./pages/ReportsPremium'));
 const Profile = lazy(() => import('./pages/Profile'));
 const SendNotification = lazy(() => import('./pages/SendNotification'));
@@ -41,8 +40,7 @@ function AppRoutes() {
               <Route path="agenda" element={<Agenda />} />
               <Route path="calendario" element={<CalendarPage />} />
               <Route path="sugestoes" element={<Suggestions />} />
-              <Route path="relatorios" element={user && (user.role === 'admin' || user.role === 'desenvolvedor') ? <Reports /> : <Navigate to="/" />} />
-              <Route path="produtividade-premium" element={user && (user.role === 'admin' || user.role === 'desenvolvedor') ? <ReportsPremium /> : <Navigate to="/" />} />
+              <Route path="relatorios" element={user && (user.role === 'admin' || user.role === 'desenvolvedor') ? <ReportsPremium /> : <Navigate to="/" />} />
               <Route path="noticias" element={<News />} />
               <Route path="perfil" element={<Profile />} />
               <Route path="notificacoes" element={<SendNotification />} />
