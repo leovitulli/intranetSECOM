@@ -52,7 +52,7 @@ import './ReportsPremium.css';
 type FilterPeriod = 'today' | 'week' | 'month' | 'lastMonth' | 'custom';
 
 export default function ReportsPremium() {
-    const { tasks, loading } = useData();
+    const { tasks, secretarias, loading } = useData();
     const [period, setPeriod] = useState<FilterPeriod>('month');
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
@@ -316,7 +316,13 @@ export default function ReportsPremium() {
                     return t.status === activeFilter.value;
                 }
                 if (activeFilter.type === 'type') return t.type.includes(activeFilter.value as any);
-                if (activeFilter.type === 'secretaria') return t.inauguracao_secretarias?.includes(activeFilter.value) || (activeFilter.value === 'Geral / Diversos' && (!t.inauguracao_secretarias || t.inauguracao_secretarias.length === 0));
+                if (activeFilter.type === 'secretaria') {
+                    return t.secretarias?.includes(activeFilter.value) || 
+                           t.inauguracao_secretarias?.includes(activeFilter.value) || 
+                           (activeFilter.value === 'Geral / Diversos' && 
+                            (!t.secretarias || t.secretarias.length === 0) && 
+                            (!t.inauguracao_secretarias || t.inauguracao_secretarias.length === 0));
+                }
                 return true;
             });
         }
@@ -376,22 +382,27 @@ export default function ReportsPremium() {
                                         />
                                     </div>
                                     <div className="standard-options">
-                                        {['Geral / Diversos', 'Gabinete', 'SDS', 'SMS', 'SME', 'SMSO', 'SMADS', 'SMP', 'SMT', 'SVCS - Secretaria do Verde', 'SVCS - Gestão de Resíduos', 'SVCS - Bem-estar Animal', 'SRC - Receita', 'SIURB - Infraestrutura'].filter(sec => 
-                                            sec.toLowerCase().includes(secSearchQuery.toLowerCase())
-                                        ).map(sec => (
-                                            <div 
-                                                key={sec}
-                                                className={`standard-option ${selectedSecretarias.includes(sec) ? 'selected' : ''}`}
-                                                onClick={() => {
-                                                    setSelectedSecretarias(prev => 
-                                                        prev.includes(sec) ? prev.filter(s => s !== sec) : [...prev, sec]
-                                                    );
-                                                }}
-                                            >
-                                                <div className="check-indicator" />
-                                                {sec}
-                                            </div>
-                                        ))}
+                                        {secretarias
+                                            .map(s => s.nome)
+                                            .filter(sec => 
+                                                sec.toLowerCase().includes(secSearchQuery.toLowerCase())
+                                            )
+                                            .sort()
+                                            .map(sec => (
+                                                <div 
+                                                    key={sec}
+                                                    className={`standard-option ${selectedSecretarias.includes(sec) ? 'selected' : ''}`}
+                                                    onClick={() => {
+                                                        setSelectedSecretarias(prev => 
+                                                            prev.includes(sec) ? prev.filter(s => s !== sec) : [...prev, sec]
+                                                        );
+                                                    }}
+                                                >
+                                                    <div className="check-indicator" />
+                                                    {sec}
+                                                </div>
+                                            ))
+                                        }
                                     </div>
                                 </div>
                             </>
