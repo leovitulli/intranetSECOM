@@ -90,7 +90,7 @@ export default function Layout() {
                         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                     >
                         <BarChart3 size={20} />
-                        <span>Relatórios BI</span>
+                        <span>Produtividade</span>
                     </NavLink>
 
                     {isAdmin && (
