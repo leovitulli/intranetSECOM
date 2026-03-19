@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, Download, ChevronLeft, ChevronRight, File as FileIcon, Image as ImageIcon } from 'lucide-react';
+import { X, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import './FileViewer.css';
 
 interface Attachment {

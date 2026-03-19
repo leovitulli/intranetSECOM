@@ -250,7 +250,7 @@ export function useTaskModal(task: Task, onUpdateTask: (t: Task) => void, onClos
                     .from('tasks')
                     .update({ attachments: updatedAttachments })
                     .eq('id', task.id)
-                    .then(async ({ error }) => {
+                    .then(async ({ error }: { error: any }) => {
                         if (error) {
                             console.error('❌ ERRO AO EXCLUIR NO BANCO:', error);
                             alert(`ERRO DE BANCO: ${error.message}\n\nA alteração NÃO foi salva.`);
@@ -261,7 +261,7 @@ export function useTaskModal(task: Task, onUpdateTask: (t: Task) => void, onClos
                             await supabase.from('task_logs').insert({
                                 task_id: task.id,
                                 user_id: user?.id,
-                                user_name: user?.full_name || 'Sistema',
+                                user_name: user?.name || 'Sistema',
                                 details: `Removeu fotos/arquivos anexados: ${att.name}`
                             });
                             
