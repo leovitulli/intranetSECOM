@@ -498,19 +498,6 @@ export default function ReportsPremium() {
                         <h2>Explorador de Pautas</h2>
                         <span className="count-tag">{displayedTasks.length} resultados</span>
                     </div>
-                    <div className="list-actions">
-                        <div className="search-box-pro">
-                            <Search size={16} />
-                            <input 
-                                type="text" 
-                                placeholder="Buscar nos resultados..." 
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <button className="pro-action-btn"><Filter size={14} /> Filtros</button>
-                        <button className="pro-action-btn primary"><Download size={14} /> Exportar</button>
-                    </div>
                 </div>
 
                 <div className="pro-table-wrapper">
@@ -520,15 +507,14 @@ export default function ReportsPremium() {
                                 <th>PAUTA</th>
                                 <th>STATUS</th>
                                 <th>DATA CRIAÇÃO</th>
-                                <th>PRIORIDADE</th>
-                                <th>EQUIPE</th>
+                                <th>DATA FINALIZADA</th>
+                                <th>SECRETARIAS</th>
                             </tr>
                         </thead>
                         <tbody>
                             {displayedTasks.map(task => (
                                 <tr key={task.id} onClick={() => setSelectedTask(task)}>
                                     <td className="task-title-cell">
-                                        <span className="task-id">#{task.id.slice(0, 4)}</span>
                                         {task.title}
                                     </td>
                                     <td>
@@ -538,18 +524,17 @@ export default function ReportsPremium() {
                                     </td>
                                     <td>{task.createdAt ? format(new Date(task.createdAt), 'dd/MM/yyyy') : '-'}</td>
                                     <td>
-                                        <span className={`pro-badge priority-${task.priority}`}>
-                                            {task.priority.toUpperCase()}
-                                        </span>
+                                        {task.status === 'publicado' || task.status === 'cancelado' 
+                                            ? (task.dueDate ? format(new Date(task.dueDate), 'dd/MM/yyyy') : 'Concluído')
+                                            : '-'
+                                        }
                                     </td>
                                     <td>
-                                        <div className="responsible-avatars">
-                                            {task.assignees?.map(id => (
-                                                <div key={id} className="avatar-mini" title={id}>
-                                                    {id.charAt(0)}
-                                                </div>
+                                        <div className="task-secretarias">
+                                            {task.inauguracao_secretarias?.map(sec => (
+                                                <span key={sec} className="sec-tag-mini">{sec}</span>
                                             ))}
-                                            {(!task.assignees || task.assignees.length === 0) && '-'}
+                                            {(!task.inauguracao_secretarias || task.inauguracao_secretarias.length === 0) && '-'}
                                         </div>
                                     </td>
                                 </tr>
