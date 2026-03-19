@@ -1,5 +1,7 @@
 import { 
     BarChart3,
+    BarChart2,
+    Activity,
     CheckCircle2, 
     Clock, 
     PieChart as PieChartIcon, 
@@ -601,7 +603,7 @@ export default function ReportsPremium() {
                     </div>
                 </div>
 
-                {/* Bloco de Gráficos com Abas */}
+                {/* Bloco de Gráficos com Abas Premium */}
                 <div className="pro-chart-box glass-panel half">
                     <div className="chart-header-tabs-pro">
                         <div className="tabs-pro-inner">
@@ -628,57 +630,75 @@ export default function ReportsPremium() {
 
                     <div className="chart-container-pro">
                         {activeTabCharts === 'assuntos' && (
-                            <ResponsiveContainer width="100%" height={260}>
-                                <PieChart>
-                                    <Pie
-                                        data={materialTypeData}
-                                        innerRadius={60}
-                                        outerRadius={80}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                        onClick={(data) => setActiveFilter({ type: 'type', value: data.filter || '' })}
-                                        style={{ cursor: 'pointer' }}
-                                    >
-                                        {materialTypeData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip />
-                                    <Legend iconType="circle" />
-                                </PieChart>
-                            </ResponsiveContainer>
+                            <>
+                                <div className="chart-header-pro">
+                                    <h3><PieChartIcon size={18} /> Assuntos & Materiais</h3>
+                                    <p>Distribuição por tipo de conteúdo gerado</p>
+                                </div>
+                                <ResponsiveContainer width="100%" height={230}>
+                                    <PieChart>
+                                        <Pie
+                                            data={materialTypeData}
+                                            innerRadius={55}
+                                            outerRadius={75}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                            onClick={(data) => setActiveFilter({ type: 'type', value: data.filter || '' })}
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            {materialTypeData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip />
+                                        <Legend iconType="circle" />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </>
                         )}
 
                         {activeTabCharts === 'concluidos' && (
-                            <ResponsiveContainer width="100%" height={260}>
-                                <BarChart data={completedByMaterialData}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={11} />
-                                    <YAxis axisLine={false} tickLine={false} fontSize={11} />
-                                    <Tooltip cursor={{ fill: '#f8fafc' }} />
-                                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                                        {completedByMaterialData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
+                            <>
+                                <div className="chart-header-pro">
+                                    <h3><BarChart2 size={18} /> Publicações Concluídas</h3>
+                                    <p>Volume de entregas efetivas por material</p>
+                                </div>
+                                <ResponsiveContainer width="100%" height={230}>
+                                    <BarChart data={completedByMaterialData}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={10} stroke="#94a3b8" />
+                                        <YAxis axisLine={false} tickLine={false} fontSize={10} stroke="#94a3b8" />
+                                        <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 8px 30px rgba(0,0,0,0.1)' }} />
+                                        <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={24}>
+                                            {completedByMaterialData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </>
                         )}
 
                         {activeTabCharts === 'status' && (
-                            <ResponsiveContainer width="100%" height={260}>
-                                <BarChart data={taskStatusData}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={10} />
-                                    <YAxis axisLine={false} tickLine={false} fontSize={10} />
-                                    <Tooltip cursor={{ fill: '#f8fafc' }} />
-                                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                                        {taskStatusData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
+                            <>
+                                <div className="chart-header-pro">
+                                    <h3><Activity size={18} /> Fluxo por Etapa</h3>
+                                    <p>Quantitativo de pautas em cada estágio</p>
+                                </div>
+                                <ResponsiveContainer width="100%" height={230}>
+                                    <BarChart data={taskStatusData}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={9} stroke="#94a3b8" />
+                                        <YAxis axisLine={false} tickLine={false} fontSize={10} stroke="#94a3b8" />
+                                        <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 8px 30px rgba(0,0,0,0.1)' }} />
+                                        <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={20}>
+                                            {taskStatusData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </>
                         )}
                     </div>
                 </div>

@@ -547,24 +547,74 @@
     grid-column: span 2;
 }
 
+/* Bloco de Gráficos com Abas Premium */
+.chart-header-tabs-pro {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.tabs-pro-inner {
+    background: #f1f5f9;
+    padding: 0.35rem;
+    border-radius: 14px;
+    display: flex;
+    gap: 0.3rem;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+}
+
+.tabs-pro-inner button {
+    background: transparent;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+}
+
+.tabs-pro-inner button:hover {
+    color: #1e293b;
+    background: rgba(255,255,255,0.5);
+}
+
+.tabs-pro-inner button.active {
+    background: #ffffff;
+    color: #2563eb;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.chart-header-pro {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 1.5rem;
+}
+
 .chart-header-pro h3 {
     font-size: 1.1rem;
-    font-weight: 700;
+    font-weight: 800;
     color: #1e293b;
     margin: 0;
     display: flex;
     align-items: center;
     gap: 0.6rem;
+    letter-spacing: -0.01em;
 }
 
 .chart-header-pro p {
     font-size: 0.85rem;
     color: #64748b;
-    margin: 0.3rem 0 0 0;
+    margin: 0;
+    font-weight: 500;
 }
 
 .chart-container-pro {
-    margin-top: 1.5rem;
+    margin-top: 0;
+    width: 100%;
 }
 
 /* Ranking Pro List */
