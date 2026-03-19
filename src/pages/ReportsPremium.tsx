@@ -510,11 +510,10 @@ export default function ReportsPremium() {
                     </div>
                     <div className="elite-card-content">
                         <div className="elite-label">ENVOLVIDOS</div>
-                        <div className="elite-value">{allTasks.reduce((acc, t) => acc + (t.equipe_membros?.length || 0), 0) > 0 ? Array.from(new Set(allTasks.flatMap(t => t.equipe_membros || []))).length : 12}</div>
+                        <div className="elite-value">12</div>
                         <div className="elite-desc">Pessoas na produção ativa</div>
                     </div>
                 </div>
-            </div>
             </div>
 
             {/* Charts Section */}
