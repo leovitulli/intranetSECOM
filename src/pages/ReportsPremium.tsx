@@ -165,8 +165,10 @@ export default function ReportsPremium() {
             completed,
             completedGrowth,
             avgLeadTime: Math.abs(Math.round(avgLeadTime)),
-            inProgress: filteredTasks.filter(t => ['solicitado', 'producao', 'correcao'].includes(t.status)).length,
-            inaugurations: filteredTasks.filter(t => t.type.includes('inauguracao') || t.status === 'inauguracao').length
+            inProgress: filteredTasks.filter(t => ['producao', 'correcao'].includes(t.status)).length,
+            inaugurations: filteredTasks.filter(t => t.type.includes('inauguracao') || t.status === 'inauguracao').length,
+            approved: filteredTasks.filter(t => t.status === 'aprovado').length,
+            correcting: filteredTasks.filter(t => t.status === 'correcao').length
         };
     }, [filteredTasks, prevPeriodTasks]);
 
@@ -325,70 +327,80 @@ export default function ReportsPremium() {
                 </div>
             )}
 
-            {/* KPI Cards: Estilo Premium */}
-            <div className="stats-grid-elite">
-                <div 
-                    className={`elite-card clickable ${!activeFilter ? 'active' : ''}`}
-                    onClick={() => { setActiveFilter(null); scrollToTable(); }}
-                >
+            {/* KPI Cards: Grid de 8 Cards (2x4) */}
+            <div className="stats-grid-elite-8">
+                {/* Linha 1 */}
+                <div className={`elite-card clickable ${!activeFilter ? 'active' : ''}`} onClick={() => { setActiveFilter(null); scrollToTable(); }}>
                     <div className="elite-card-top">
                         <div className="elite-icon-box blue"><Target /></div>
-                        {stats.growth !== 0 && (
-                            <div className={`elite-trend ${stats.growth > 0 ? 'up' : 'down'}`}>
-                                {stats.growth > 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                                {Math.abs(Math.round(stats.growth))}%
-                            </div>
-                        )}
                     </div>
                     <div className="elite-value">{stats.total}</div>
-                    <div className="elite-label">Demandas Totais</div>
-                    <div className="elite-desc">Solicitações abertas no período</div>
-                    <div className="elite-progress-bg"><div className="elite-progress-bar blue" style={{ width: '100%' }}></div></div>
+                    <div className="elite-label">TOTAL DE DEMANDAS</div>
+                    <div className="elite-desc">Pautas geradas no período</div>
                 </div>
 
-                <div 
-                    className={`elite-card clickable ${activeFilter?.value === 'concluida' ? 'active' : ''}`}
-                    onClick={() => { setActiveFilter({ type: 'status', value: 'concluida' }); scrollToTable(); }}
-                >
+                <div className={`elite-card clickable ${activeFilter?.value === 'concluida' ? 'active' : ''}`} onClick={() => { setActiveFilter({ type: 'status', value: 'concluida' }); scrollToTable(); }}>
                     <div className="elite-card-top">
                         <div className="elite-icon-box green"><CheckCircle2 /></div>
-                        {stats.completedGrowth !== 0 && (
-                            <div className={`elite-trend ${stats.completedGrowth > 0 ? 'up' : 'down'}`}>
-                                {stats.completedGrowth > 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                                {Math.abs(Math.round(stats.completedGrowth))}%
-                            </div>
-                        )}
                     </div>
                     <div className="elite-value">{stats.completed}</div>
-                    <div className="elite-label">Entregas Realizadas</div>
-                    <div className="elite-desc">Pautas marcadas como publicadas</div>
-                    <div className="elite-progress-bg"><div className="elite-progress-bar green" style={{ width: `${(stats.completed/stats.total)*100}%` }}></div></div>
+                    <div className="elite-label">CONCLUÍDAS</div>
+                    <div className="elite-desc">Pautas publicadas e/ou canceladas</div>
                 </div>
 
-                <div 
-                    className={`elite-card clickable ${activeFilter?.value === 'publicado' ? 'active' : ''}`}
-                    onClick={() => { setActiveFilter({ type: 'status', value: 'publicado' }); scrollToTable(); }}
-                >
+                <div className={`elite-card clickable ${activeFilter?.value === 'producao' ? 'active' : ''}`} onClick={() => { setActiveFilter({ type: 'status', value: 'producao' }); scrollToTable(); }}>
                     <div className="elite-card-top">
-                        <div className="elite-icon-box orange"><Clock /></div>
+                        <div className="elite-icon-box lightblue"><Clock /></div>
+                    </div>
+                    <div className="elite-value">{stats.inProgress}</div>
+                    <div className="elite-label">EM ANDAMENTO</div>
+                    <div className="elite-desc">No funil de produção</div>
+                </div>
+
+                <div className={`elite-card clickable ${activeFilter?.value === 'publicado' ? 'active' : ''}`} onClick={() => { setActiveFilter({ type: 'status', value: 'publicado' }); scrollToTable(); }}>
+                    <div className="elite-card-top">
+                        <div className="elite-icon-box yellow"><TrendingUp /></div>
                     </div>
                     <div className="elite-value">{stats.avgLeadTime} dias</div>
-                    <div className="elite-label">Lead Time Médio</div>
+                    <div className="elite-label">LEAD TIME MÉDIO</div>
                     <div className="elite-desc">Tempo médio de produção</div>
-                    <div className="elite-progress-bg"><div className="elite-progress-bar orange" style={{ width: stats.avgLeadTime > 5 ? '100%' : '40%' }}></div></div>
                 </div>
 
-                <div 
-                    className={`elite-card clickable ${activeFilter?.value === 'publicado' ? 'active' : ''}`}
-                    onClick={() => { setActiveFilter({ type: 'status', value: 'publicado' }); scrollToTable(); }}
-                >
+                {/* Linha 2 */}
+                <div className={`elite-card clickable ${activeFilter?.type === 'type' && activeFilter.value === 'inauguracao' ? 'active' : ''}`} onClick={() => { setActiveFilter({ type: 'type', value: 'inauguracao' }); scrollToTable(); }}>
                     <div className="elite-card-top">
-                        <div className="elite-icon-box purple"><Zap /></div>
+                        <div className="elite-icon-box orange"><LayoutDashboard /></div>
                     </div>
-                    <div className="elite-value">{Math.round((stats.completed / stats.total) * 100) || 0}%</div>
-                    <div className="elite-label">Taxa de Conversão</div>
-                    <div className="elite-desc">Eficiência de finalização</div>
-                    <div className="elite-progress-bg"><div className="elite-progress-bar purple" style={{ width: `${(stats.completed/stats.total)*100}%` }}></div></div>
+                    <div className="elite-value">{stats.inaugurations}</div>
+                    <div className="elite-label">INAUGURAÇÕES</div>
+                    <div className="elite-desc">Eventos mapeados no período</div>
+                </div>
+
+                <div className={`elite-card clickable ${activeFilter?.value === 'aprovado' ? 'active' : ''}`} onClick={() => { setActiveFilter({ type: 'status', value: 'aprovado' }); scrollToTable(); }}>
+                    <div className="elite-card-top">
+                        <div className="elite-icon-box purple"><CheckCircle2 /></div>
+                    </div>
+                    <div className="elite-value">{stats.approved}</div>
+                    <div className="elite-label">APROVADAS</div>
+                    <div className="elite-desc">Aguardando publicação</div>
+                </div>
+
+                <div className={`elite-card clickable ${activeFilter?.value === 'correcao' ? 'active' : ''}`} onClick={() => { setActiveFilter({ type: 'status', value: 'correcao' }); scrollToTable(); }}>
+                    <div className="elite-card-top">
+                        <div className="elite-icon-box red"><Gauge /></div>
+                    </div>
+                    <div className="elite-value">{stats.correcting}</div>
+                    <div className="elite-label">EM CORREÇÃO</div>
+                    <div className="elite-desc">Ajustes pendentes na equipe</div>
+                </div>
+
+                <div className="elite-card no-click">
+                    <div className="elite-card-top">
+                        <div className="elite-icon-box indigo"><Zap /></div>
+                    </div>
+                    <div className="elite-value">{Math.round((stats.completed / (stats.total || 1)) * 100)}%</div>
+                    <div className="elite-label">TAXA DE CONVERSÃO</div>
+                    <div className="elite-desc">Eficiência de entrega final</div>
                 </div>
             </div>
 

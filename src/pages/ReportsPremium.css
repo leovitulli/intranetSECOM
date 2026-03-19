@@ -83,27 +83,26 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-/* KPI Elite Cards */
-.stats-grid-elite {
+/* KPI Elite Cards - Grid de 8 */
+.stats-grid-elite-8 {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.2rem;
     margin-bottom: 2.5rem;
 }
 
 .elite-card {
     background: #ffffff;
-    padding: 1.8rem;
+    padding: 1.5rem;
     border-radius: 20px;
     border: 1px solid #f1f5f9;
     position: relative;
     overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .elite-card.clickable {
     cursor: pointer;
-    border: 1px solid transparent;
 }
 
 .elite-card.clickable:hover {
@@ -115,7 +114,12 @@
 .elite-card.clickable.active {
     background: #fdfdfd;
     border-color: #3b82f6;
-    box-shadow: 0 8px 16px rgba(59, 130, 246, 0.08);
+    box-shadow: 0 8px 16px rgba(59, 130, 246, 0.1);
+}
+
+.elite-card.no-click {
+    cursor: default;
+    background: #f8fafc;
 }
 
 .elite-card-top {
