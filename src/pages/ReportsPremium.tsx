@@ -1,23 +1,19 @@
-import { useState, useMemo } from 'react';
 import { 
-    CalendarRange, 
+    BarChart3,
     CheckCircle2, 
     Clock, 
-    BarChart3, 
     PieChart as PieChartIcon, 
     Target, 
     Users, 
     TrendingUp, 
     Zap, 
-    ArrowUpRight, 
-    ArrowDownRight,
     Search,
-    Download,
-    Filter,
     LayoutDashboard,
-    Gauge,
-    X,
-    ChevronDown
+    ChevronDown,
+    AlertCircle,
+    Building2,
+    CalendarDays,
+    Filter
 } from 'lucide-react';
 import { 
     startOfDay, 
@@ -32,12 +28,10 @@ import {
     format
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useRef } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useData } from '../contexts/DataContext';
 import type { Task } from '../types/kanban';
 import { 
-    BarChart, 
-    Bar, 
     XAxis, 
     YAxis, 
     CartesianGrid, 
@@ -48,9 +42,7 @@ import {
     Pie, 
     Legend,
     AreaChart,
-    Area,
-    LineChart,
-    Line
+    Area
 } from 'recharts';
 import TaskModal from '../components/TaskModal';
 import './ReportsPremium.css';
@@ -64,7 +56,7 @@ export default function ReportsPremium() {
     const [customEnd, setCustomEnd] = useState('');
     const [activeFilter, setActiveFilter] = useState<{ type: 'type' | 'status' | 'secretaria' | 'responsible', value: string } | null>(null);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm] = useState('');
     const [selectedSecretarias, setSelectedSecretarias] = useState<string[]>([]);
     const [secSearchQuery, setSecSearchQuery] = useState('');
     const [isSecDropdownOpen, setIsSecDropdownOpen] = useState(false);
@@ -190,21 +182,7 @@ export default function ReportsPremium() {
         };
     }, [filteredTasks, prevPeriodTasks]);
 
-    // Chart Data: Production Funnel (Gargalo)
-    const funnelData = useMemo(() => {
-        const counts = { solicitado: 0, producao: 0, correcao: 0, aprovado: 0, publicado: 0 };
-        filteredTasks.forEach(t => {
-            if (counts[t.status as keyof typeof counts] !== undefined) counts[t.status as keyof typeof counts]++;
-        });
-
-        return [
-            { stage: 'Solicitado', value: counts.solicitado, color: '#facc15' },
-            { stage: 'Produção', value: counts.producao, color: '#3b82f6' },
-            { stage: 'Correção', value: counts.correcao, color: '#ef4444' },
-            { stage: 'Aprovado', value: counts.aprovado, color: '#10b981' },
-            { stage: 'Publicado', value: counts.publicado, color: '#6366f1' },
-        ];
-    }, [filteredTasks]);
+    // Chart Data: Outros KPIs se necessário
 
     // Chart Data: Ranking de Secretarias (Solicitantes)
     const rankingSecretarias = useMemo(() => {
@@ -309,59 +287,37 @@ export default function ReportsPremium() {
     return (
         <div className="reports-premium">
             {/* Header com Design de Vidro */}
-            <header className="premium-header glass-header">
+            {/* Header Executivo Padronizado (Linkado ao Print 2) */}
+            <header className="premium-header">
                 <div className="header-info">
-                    <div className="header-tag">ESTATÍSTICAS AVANÇADAS</div>
-                    <div className="title-row">
-                        <LayoutDashboard className="title-icon-pro" />
-                        <h1>Produtividade & BI</h1>
-                    </div>
-                    <p>Análise estratégica de demandas e fluxo de trabalho da SECOM.</p>
-                </div>
-
-                <div className="header-controls">
-                    <div className="period-pill">
-                        <button className={period === 'today' ? 'active' : ''} onClick={() => setPeriod('today')}>Hoje</button>
-                        <button className={period === 'week' ? 'active' : ''} onClick={() => setPeriod('week')}>Semana</button>
-                        <button className={period === 'month' ? 'active' : ''} onClick={() => setPeriod('month')}>Mês</button>
-                        <button className={period === 'lastMonth' ? 'active' : ''} onClick={() => setPeriod('lastMonth')}>Anterior</button>
-                        <button className={period === 'custom' ? 'active' : ''} onClick={() => setPeriod('custom')}>
-                            <CalendarRange size={14} /> Custom
-                        </button>
+                    <div className="title-group">
+                        <h1><BarChart3 size={24} /> Visão Executiva</h1>
+                        <p>Monitoramento de diretoria: Produtividade e demandas ativas.</p>
                     </div>
                 </div>
-            </header>
 
-            {/* Header de Filtros Premium */}
-            <div className="filters-row-pro glass-panel">
-                <div className="filter-group">
-                    <label>DEPARTAMENTO / SECRETARIA SOLICITANTE</label>
-                    <div className="multi-select-pro">
+                <div className="header-filters-row">
+                    {/* Filtro de Secretarias Padrão Site (Linkado ao Print 1) - AGORA NA MESMA LINHA */}
+                    <div className="multi-select-standard">
+                        <label className="filter-standard-label">SECRETARIA</label>
                         <div 
-                            className={`select-trigger ${isSecDropdownOpen ? 'open' : ''}`}
+                            className={`standard-select-trigger ${isSecDropdownOpen ? 'open' : ''}`}
                             onClick={() => setIsSecDropdownOpen(!isSecDropdownOpen)}
                         >
-                            <div className="selected-tags">
-                                {selectedSecretarias.length === 0 && <span className="placeholder">Selecione uma ou mais secretarias...</span>}
-                                {selectedSecretarias.map(sec => (
-                                    <span key={sec} className="sec-tag-premium">
-                                        {sec}
-                                        <X size={12} onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelectedSecretarias(prev => prev.filter(s => s !== sec));
-                                        }} />
-                                    </span>
-                                ))}
-                            </div>
-                            <ChevronDown size={18} className="chevron" />
+                            <span className={`trigger-text ${selectedSecretarias.length > 0 ? 'selected' : ''}`}>
+                                {selectedSecretarias.length === 0 
+                                    ? 'Selecione...' 
+                                    : `${selectedSecretarias.length} sel.`}
+                            </span>
+                            <ChevronDown size={16} color="#2563eb" />
                         </div>
-                        
+
                         {isSecDropdownOpen && (
                             <>
                                 <div className="dropdown-overlay" onClick={() => { setIsSecDropdownOpen(false); setSecSearchQuery(''); }} />
-                                <div className="select-dropdown glass-panel">
-                                    <div className="search-input-field">
-                                        <Search size={16} />
+                                <div className="standard-dropdown shadow-2xl">
+                                    <div className="search-field-wrapper">
+                                        <Search size={16} color="#94a3b8" />
                                         <input 
                                             type="text" 
                                             placeholder="Buscar secretaria..." 
@@ -370,23 +326,20 @@ export default function ReportsPremium() {
                                             autoFocus
                                         />
                                     </div>
-                                    <div className="dropdown-options">
+                                    <div className="standard-options">
                                         {['Geral / Diversos', 'Gabinete', 'SDS', 'SMS', 'SME', 'SMSO', 'SMADS', 'SMP', 'SMT', 'SVCS - Secretaria do Verde', 'SVCS - Gestão de Resíduos', 'SVCS - Bem-estar Animal', 'SRC - Receita', 'SIURB - Infraestrutura'].filter(sec => 
                                             sec.toLowerCase().includes(secSearchQuery.toLowerCase())
                                         ).map(sec => (
                                             <div 
                                                 key={sec}
-                                                className={`dropdown-item ${selectedSecretarias.includes(sec) ? 'selected' : ''}`}
+                                                className={`standard-option ${selectedSecretarias.includes(sec) ? 'selected' : ''}`}
                                                 onClick={() => {
                                                     setSelectedSecretarias(prev => 
                                                         prev.includes(sec) ? prev.filter(s => s !== sec) : [...prev, sec]
                                                     );
-                                                    setSecSearchQuery(''); // Volta ao nada após selecionar
                                                 }}
                                             >
-                                                <div className="check-box">
-                                                    {selectedSecretarias.includes(sec) && <div className="inner-check" />}
-                                                </div>
+                                                <div className="check-indicator" />
                                                 {sec}
                                             </div>
                                         ))}
@@ -395,96 +348,171 @@ export default function ReportsPremium() {
                             </>
                         )}
                     </div>
-                </div>
 
-                {period === 'custom' && (
+                    <div className="period-pill">
+                        <button 
+                            className={period === 'today' ? 'active' : ''} 
+                            onClick={() => setPeriod('today')}
+                        >Hoje</button>
+                        <button 
+                            className={period === 'week' ? 'active' : ''} 
+                            onClick={() => setPeriod('week')}
+                        >Semana</button>
+                        <button 
+                            className={period === 'month' ? 'active' : ''} 
+                            onClick={() => setPeriod('month')}
+                        >Mês</button>
+                        <button 
+                            className={period === 'custom' ? 'active' : ''} 
+                            onClick={() => {
+                                setPeriod('custom');
+                                setShowDateSelector(!showDateSelector);
+                            }}
+                        >
+                            <CalendarDays size={18} /> Custom
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            {/* Seletor Custom Data Flutuante ou Integrado */}
+            {period === 'custom' && showDateSelector && (
+                <div className="filters-row-pro glass-panel custom-date-row">
                     <div className="date-inputs-pro">
                         <div className="input-field">
                             <label>Início</label>
-                            <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)} />
+                            <input 
+                                type="date" 
+                                value={customStart}
+                                onChange={(e) => setCustomStart(e.target.value)}
+                            />
                         </div>
                         <div className="input-field">
-                            <label>Término</label>
-                            <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
+                            <label>Fim</label>
+                            <input 
+                                type="date" 
+                                value={customEnd}
+                                onChange={(e) => setCustomEnd(e.target.value)}
+                            />
                         </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
 
             {/* KPI Cards: Grid de 8 Cards (2x4) */}
             <div className="stats-grid-elite-8">
-                {/* Linha 1 */}
-                <div className={`elite-card clickable ${!activeFilter ? 'active' : ''}`} onClick={() => { setActiveFilter(null); scrollToTable(); }}>
-                    <div className="elite-card-top">
-                        <div className="elite-icon-box blue"><Target /></div>
+                {/* Total de Demandas */}
+                <div 
+                    className={`elite-card clickable blue ${!activeFilter ? 'active' : ''}`}
+                    onClick={() => { setActiveFilter(null); scrollToTable(); }}
+                >
+                    <div className="elite-icon-box blue">
+                        <Target size={32} />
                     </div>
-                    <div className="elite-value">{stats.total}</div>
-                    <div className="elite-label">TOTAL DE DEMANDAS</div>
-                    <div className="elite-desc">Pautas geradas no período</div>
+                    <div className="elite-card-content">
+                        <div className="elite-label">TOTAL DE DEMANDAS</div>
+                        <div className="elite-value">{stats.total}</div>
+                        <div className="elite-desc">Pautas geradas no período</div>
+                    </div>
                 </div>
 
-                <div className={`elite-card clickable ${activeFilter?.value === 'concluida' ? 'active' : ''}`} onClick={() => { setActiveFilter({ type: 'status', value: 'concluida' }); scrollToTable(); }}>
-                    <div className="elite-card-top">
-                        <div className="elite-icon-box green"><CheckCircle2 /></div>
+                {/* Concluídas */}
+                <div 
+                    className={`elite-card clickable green ${activeFilter?.value === 'concluida' ? 'active' : ''}`}
+                    onClick={() => { setActiveFilter({ type: 'status', value: 'concluida' }); scrollToTable(); }}
+                >
+                    <div className="elite-icon-box green">
+                        <CheckCircle2 size={32} />
                     </div>
-                    <div className="elite-value">{stats.completed}</div>
-                    <div className="elite-label">CONCLUÍDAS</div>
-                    <div className="elite-desc">Pautas publicadas e/ou canceladas</div>
+                    <div className="elite-card-content">
+                        <div className="elite-label">CONCLUÍDAS</div>
+                        <div className="elite-value">{stats.completed}</div>
+                        <div className="elite-desc">Pautas publicadas e/ou canceladas</div>
+                    </div>
                 </div>
 
-                <div className={`elite-card clickable ${activeFilter?.value === 'producao' ? 'active' : ''}`} onClick={() => { setActiveFilter({ type: 'status', value: 'producao' }); scrollToTable(); }}>
-                    <div className="elite-card-top">
-                        <div className="elite-icon-box lightblue"><Clock /></div>
+                {/* Em Andamento */}
+                <div 
+                    className={`elite-card clickable lightblue ${activeFilter?.value === 'producao' ? 'active' : ''}`}
+                    onClick={() => { setActiveFilter({ type: 'status', value: 'producao' }); scrollToTable(); }}
+                >
+                    <div className="elite-icon-box lightblue">
+                        <Clock size={32} />
                     </div>
-                    <div className="elite-value">{stats.inProgress}</div>
-                    <div className="elite-label">EM ANDAMENTO</div>
-                    <div className="elite-desc">No funil de produção</div>
+                    <div className="elite-card-content">
+                        <div className="elite-label">EM ANDAMENTO</div>
+                        <div className="elite-value">{stats.inProgress}</div>
+                        <div className="elite-desc">No funil de produção</div>
+                    </div>
                 </div>
 
-                <div className={`elite-card clickable ${activeFilter?.value === 'publicado' ? 'active' : ''}`} onClick={() => { setActiveFilter({ type: 'status', value: 'publicado' }); scrollToTable(); }}>
-                    <div className="elite-card-top">
-                        <div className="elite-icon-box yellow"><TrendingUp /></div>
+                {/* Inaugurações */}
+                <div 
+                    className={`elite-card clickable orange ${activeFilter?.type === 'type' && activeFilter.value === 'inauguracao' ? 'active' : ''}`}
+                    onClick={() => { setActiveFilter({ type: 'type', value: 'inauguracao' }); scrollToTable(); }}
+                >
+                    <div className="elite-icon-box orange">
+                        <Building2 size={32} />
                     </div>
-                    <div className="elite-value">{stats.avgLeadTime} dias</div>
-                    <div className="elite-label">LEAD TIME MÉDIO</div>
-                    <div className="elite-desc">Tempo médio de produção</div>
+                    <div className="elite-card-content">
+                        <div className="elite-label">INAUGURAÇÕES</div>
+                        <div className="elite-value">{stats.inaugurations}</div>
+                        <div className="elite-desc">Eventos mapeados no período</div>
+                    </div>
                 </div>
 
-                {/* Linha 2 */}
-                <div className={`elite-card clickable ${activeFilter?.type === 'type' && activeFilter.value === 'inauguracao' ? 'active' : ''}`} onClick={() => { setActiveFilter({ type: 'type', value: 'inauguracao' }); scrollToTable(); }}>
-                    <div className="elite-card-top">
-                        <div className="elite-icon-box orange"><LayoutDashboard /></div>
+                {/* Aprovadas */}
+                <div 
+                    className={`elite-card clickable purple ${activeFilter?.value === 'aprovada' ? 'active' : ''}`}
+                    onClick={() => { setActiveFilter({ type: 'status', value: 'aprovada' }); scrollToTable(); }}
+                >
+                    <div className="elite-icon-box purple">
+                        <Zap size={32} />
                     </div>
-                    <div className="elite-value">{stats.inaugurations}</div>
-                    <div className="elite-label">INAUGURAÇÕES</div>
-                    <div className="elite-desc">Eventos mapeados no período</div>
+                    <div className="elite-card-content">
+                        <div className="elite-label">APROVADAS</div>
+                        <div className="elite-value">{stats.approved}</div>
+                        <div className="elite-desc">Aguardando publicação</div>
+                    </div>
                 </div>
 
-                <div className={`elite-card clickable ${activeFilter?.value === 'aprovado' ? 'active' : ''}`} onClick={() => { setActiveFilter({ type: 'status', value: 'aprovado' }); scrollToTable(); }}>
-                    <div className="elite-card-top">
-                        <div className="elite-icon-box purple"><CheckCircle2 /></div>
+                {/* Reprovadas */}
+                <div 
+                    className={`elite-card clickable red ${activeFilter?.value === 'reprovada' ? 'active' : ''}`}
+                    onClick={() => { setActiveFilter({ type: 'status', value: 'reprovada' }); scrollToTable(); }}
+                >
+                    <div className="elite-icon-box red">
+                        <AlertCircle size={32} />
                     </div>
-                    <div className="elite-value">{stats.approved}</div>
-                    <div className="elite-label">APROVADAS</div>
-                    <div className="elite-desc">Aguardando publicação</div>
+                    <div className="elite-card-content">
+                        <div className="elite-label">REPROVADAS</div>
+                        <div className="elite-value">{stats.correcting}</div>
+                        <div className="elite-desc">Canceladas ou reprovadas</div>
+                    </div>
                 </div>
 
-                <div className={`elite-card clickable ${activeFilter?.value === 'correcao' ? 'active' : ''}`} onClick={() => { setActiveFilter({ type: 'status', value: 'correcao' }); scrollToTable(); }}>
-                    <div className="elite-card-top">
-                        <div className="elite-icon-box red"><Gauge /></div>
+                {/* Eficiência (Métrica BI de Entrega) */}
+                <div className="elite-card blue shadow-sm">
+                    <div className="elite-icon-box blue">
+                        <TrendingUp size={32} />
                     </div>
-                    <div className="elite-value">{stats.correcting}</div>
-                    <div className="elite-label">EM CORREÇÃO</div>
-                    <div className="elite-desc">Ajustes pendentes na equipe</div>
+                    <div className="elite-card-content">
+                        <div className="elite-label">EFICIÊNCIA</div>
+                        <div className="elite-value">+{Math.round((stats.completed / (stats.total || 1)) * 100)}%</div>
+                        <div className="elite-desc">Taxa de entrega no período</div>
+                    </div>
                 </div>
 
-                <div className="elite-card no-click">
-                    <div className="elite-card-top">
-                        <div className="elite-icon-box indigo"><Zap /></div>
+                {/* Equipe (Métrica BI de Pessoas) */}
+                <div className="elite-card purple shadow-sm">
+                    <div className="elite-icon-box purple">
+                        <Users size={32} />
                     </div>
-                    <div className="elite-value">{Math.round((stats.completed / (stats.total || 1)) * 100)}%</div>
-                    <div className="elite-label">TAXA DE CONVERSÃO</div>
-                    <div className="elite-desc">Eficiência de entrega final</div>
+                    <div className="elite-card-content">
+                        <div className="elite-label">ENVOLVIDOS</div>
+                        <div className="elite-value">12</div>
+                        <div className="elite-desc">Pessoas na produção ativa</div>
+                    </div>
                 </div>
             </div>
 

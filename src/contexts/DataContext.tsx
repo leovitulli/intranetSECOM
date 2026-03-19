@@ -10,6 +10,7 @@ import { useTeamData } from '../hooks/useTeamData';
 import { useEventsData } from '../hooks/useEventsData';
 import { useSuggestionsData } from '../hooks/useSuggestionsData';
 import { formatTaskFromDb } from '../utils/taskUtils';
+import { SECRETARIAS as STATIC_SECRETARIAS } from '../utils/secretarias';
 
 interface DataContextType {
     tasks: Task[];
@@ -19,6 +20,7 @@ interface DataContextType {
     suggestions: any[];
     jobFunctions: { id: string, title: string }[];
     onlineUsers: any[];
+    secretarias: { id: string, nome: string }[];
     loading: boolean;
     searchTerm: string;
     setSearchTerm: (term: string) => void;
@@ -37,6 +39,9 @@ interface DataContextType {
     addJobFunction: (title: string) => Promise<void>;
     updateJobFunction: (id: string, newTitle: string) => Promise<void>;
     removeJobFunction: (id: string) => Promise<void>;
+    addSecretaria: (nome: string) => Promise<void>;
+    updateSecretaria: (id: string, novoNome: string) => Promise<void>;
+    removeSecretaria: (id: string) => Promise<void>;
     deleteSuggestion: (suggestionId: string) => Promise<void>;
     addEvent: (eventData: any, teamIds?: string[]) => Promise<void>;
     updateEvent: (eventData: any) => Promise<void>;
@@ -58,8 +63,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
     const { 
         team, setTeam, jobFunctions, setJobFunctions, 
+        secretarias, setSecretarias,
         addTeamMember, updateTeamMember, deleteTeamMember, resetUserPassword,
-        addJobFunction, updateJobFunction, removeJobFunction 
+        addJobFunction, updateJobFunction, removeJobFunction,
+        addSecretaria, updateSecretaria, removeSecretaria
     } = useTeamData();
 
     const { events, setEvents, addEvent, updateEvent, deleteEvent } = useEventsData();
@@ -71,12 +78,14 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             const [
                 { data: teamData },
                 { data: jobFunctionsData },
+                { data: secretariasData },
                 { data: tasksResponse },
                 { data: eventsData },
                 { data: suggestionsData }
             ] = await Promise.all([
                 supabase.from('users').select('*').order('name'),
                 supabase.from('job_functions').select('*').order('title'),
+                supabase.from('secretarias').select('*').order('nome'),
                 supabase.from('tasks').select('*, task_assignees(users(name))').order('created_at', { ascending: false }),
                 supabase.from('events').select('*, event_attendees(user_id)'),
                 supabase.from('suggestions').select('*').order('created_at', { ascending: false })
@@ -96,6 +105,16 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             }
 
             if (jobFunctionsData) setJobFunctions(jobFunctionsData);
+            
+            // Auto-Seed Secretarias if empty
+            if (secretariasData && secretariasData.length > 0) {
+                setSecretarias(secretariasData);
+            } else if (secretariasData && secretariasData.length === 0) {
+                console.log("Seeding secretarias table from static list...");
+                const seedData = STATIC_SECRETARIAS.map(nome => ({ nome }));
+                const { data: seeded, error: seedError } = await supabase.from('secretarias').insert(seedData).select();
+                if (!seedError && seeded) setSecretarias(seeded);
+            }
             if (tasksResponse) {
                 setTasks(tasksResponse.filter((t: any) => !t.archived).map(formatTaskFromDb));
                 setArchivedTasks(tasksResponse.filter((t: any) => t.archived).map(formatTaskFromDb));
@@ -164,11 +183,12 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
     return (
         <DataContext.Provider value={{
-            tasks, archivedTasks, team, events, suggestions, jobFunctions, onlineUsers, 
+            tasks, archivedTasks, team, events, suggestions, jobFunctions, secretarias, onlineUsers, 
             loading, searchTerm, setSearchTerm,
             updateTaskStatus, updateTask: (task) => updateTask(task, team), addTask, deleteTask, 
             archiveTask, unarchiveTask, addSuggestion, deleteSuggestion,
             addJobFunction, updateJobFunction, removeJobFunction,
+            addSecretaria, updateSecretaria, removeSecretaria,
             addEvent, updateEvent, deleteEvent,
             addTeamMember, updateTeamMember, deleteTeamMember, resetUserPassword
         }}>

@@ -1,174 +1,199 @@
-/* TeamMultiSelect.css */
+/* TeamMultiSelect.css - NOVO PADRÃO AUTOCOMPLETE */
 .tms-container {
     position: relative;
     width: 100%;
 }
 
-.tms-trigger {
+.tms-trigger-new {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
-    gap: 0.5rem;
     min-height: 48px;
-    /* Standardize with premium inputs */
-    padding: 0.5rem 1rem;
-    border: 1.5px solid #e2e8f0;
-    /* Standardize with premium imports */
-    border-radius: 12px;
-    background: #ffffff;
-    cursor: pointer;
-    transition: all 0.2s;
+    padding: 0.5rem 0.875rem;
+    border: 1px solid hsl(var(--color-border));
+    border-radius: var(--radius-md);
+    background: white;
+    cursor: text;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
-.tms-trigger:hover {
+.tms-trigger-new:hover {
+    border-color: #cbd5e1;
+}
+
+.tms-trigger-new.active {
     border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.tms-content-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    flex: 1;
+    align-items: center;
 }
 
 .tms-pills {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.35rem;
-    flex: 1;
-}
-
-.tms-placeholder {
-    font-size: 0.875rem;
-    color: #64748b;
+    gap: 0.4rem;
+    align-items: center;
 }
 
 .tms-pill {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 3px 8px 3px 10px;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px 10px;
     border-radius: 99px;
-    background: rgba(59, 130, 246, 0.1);
-    color: #3b82f6;
-    border: 1px solid rgba(59, 130, 246, 0.25);
+    background: #f5f3ff;
+    color: #7c3aed;
+    border: 1px solid #ddd6fe;
+    transition: all 0.15s ease;
+}
+
+.tms-pill:hover {
+    background: #ede9fe;
+    transform: translateY(-1px);
 }
 
 .tms-pill-remove {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     background: none;
     border: none;
     cursor: pointer;
-    color: rgba(59, 130, 246, 0.7);
-    padding: 0;
-    line-height: 1;
-    border-radius: 99px;
-    transition: color 0.2s;
+    color: #7c3aed;
+    padding: 1px;
+    border-radius: 50%;
+    transition: all 0.1s;
 }
 
 .tms-pill-remove:hover {
-    color: #3b82f6;
+    background: rgba(124, 58, 237, 0.15);
+}
+
+.tms-input-field {
+    flex: 1;
+    min-width: 150px;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 0.9rem;
+    color: #1e293b;
+    padding: 0.25rem 0;
+    font-family: inherit;
+}
+
+.tms-input-field::placeholder {
+    color: #94a3b8;
+    font-size: 0.875rem;
 }
 
 .tms-chevron {
     flex-shrink: 0;
-    color: #64748b;
-    transition: transform 0.2s;
-    opacity: 0.5;
+    color: #94a3b8;
+    margin-top: 6px;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .tms-chevron.open {
     transform: rotate(180deg);
 }
 
-.tms-dropdown {
+.tms-dropdown-new {
     position: absolute;
-    top: calc(100% + 8px);
+    top: calc(100% + 6px);
     left: 0;
     right: 0;
-    background: #ffffff;
+    background: white;
     border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-    z-index: 100;
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 10px -3px rgba(0, 0, 0, 0.05);
+    z-index: 1000;
     overflow: hidden;
+    animation: slideUp 0.15s ease-out;
 }
 
-.tms-search {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid #f1f5f9;
-    background-color: #f8fafc;
-}
-
-.tms-search input {
-    border: none;
-    outline: none;
-    background: transparent;
-    font-size: 0.875rem;
-    width: 100%;
-    color: #1e293b;
-    font-weight: 500;
-}
-
-.tms-search svg {
-    color: #64748b;
-    flex-shrink: 0;
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .tms-list {
     list-style: none;
     margin: 0;
-    padding: 0.25rem 0;
-    max-height: 240px;
+    padding: 0.5rem 0;
+    max-height: 280px;
     overflow-y: auto;
 }
 
-.tms-option {
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
-    cursor: pointer;
-    transition: background 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    border-bottom: 1px solid #f1f5f9;
+.tms-list::-webkit-scrollbar {
+    width: 6px;
 }
 
-.tms-option:last-child {
-    border-bottom: none;
+.tms-list::-webkit-scrollbar-thumb {
+    background-color: #e2e8f0;
+    border-radius: 99px;
+}
+
+.tms-option {
+    padding: 0.65rem 1rem;
+    font-size: 0.875rem;
+    color: #334155;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.15s ease;
 }
 
 .tms-option:hover {
     background: #f8fafc;
+    padding-left: 1.25rem;
+    color: #3b82f6;
 }
 
-.tms-option-check {
-    width: 18px;
-    height: 18px;
-    border: 2px solid #e2e8f0;
-    border-radius: 4px;
+.tms-option-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
-}
-
-.tms-option.selected .tms-option-check {
-    background-color: #3b82f6;
-    border-color: #3b82f6;
+    flex-shrink: 0;
+    border: 1.5px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .tms-option-info {
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .tms-option-name {
-    font-weight: 700;
-    color: #1e293b;
-    font-size: 0.875rem;
+    font-weight: 600;
+    font-size: 0.88rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .tms-option-role {
     font-size: 0.72rem;
     color: #64748b;
+}
+
+.tms-no-results {
+    padding: 2rem 1rem;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    text-align: center;
+    font-style: italic;
 }

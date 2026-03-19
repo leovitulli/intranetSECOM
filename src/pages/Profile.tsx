@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { supabase } from '../lib/supabaseClient';
-import { Camera, Save, Loader2, User, Users, Shield } from 'lucide-react';
+import { Camera, Save, Loader2, User, Users, Shield, Building2 } from 'lucide-react';
 import ProfileTeamTab from './ProfileTeamTab';
 import ProfileRolesTab from './ProfileRolesTab';
+import ProfileSecretariesTab from './ProfileSecretariesTab';
 import './Profile.css';
 
 export default function Profile() {
@@ -12,7 +13,7 @@ export default function Profile() {
     const { jobFunctions } = useData();
 
     // Tabs state
-    const [activeTab, setActiveTab] = useState<'perfil' | 'equipe' | 'cargos'>(() => {
+    const [activeTab, setActiveTab] = useState<'perfil' | 'equipe' | 'cargos' | 'secretarias'>(() => {
         return (localStorage.getItem('profileActiveTab') as any) || 'perfil';
     });
 
@@ -238,6 +239,12 @@ export default function Profile() {
                     >
                         <Shield size={18} /> Cargos do Sistema
                     </button>
+                    <button
+                        className={`tab-btn ${activeTab === 'secretarias' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('secretarias')}
+                    >
+                        <Building2 size={18} /> Secretarias
+                    </button>
                 </div>
             )}
 
@@ -393,6 +400,7 @@ export default function Profile() {
 
                 {activeTab === 'equipe' && <ProfileTeamTab />}
                 {activeTab === 'cargos' && <ProfileRolesTab />}
+                {activeTab === 'secretarias' && <ProfileSecretariesTab />}
             </div>
         </div>
     );

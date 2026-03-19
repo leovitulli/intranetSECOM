@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useData } from '../contexts/DataContext';
-import { Trash2, Plus, Pencil, Check, X, Loader2, AlertCircle, AlertTriangle, Shield, Search } from 'lucide-react';
+import { Trash2, Plus, Pencil, Check, X, Loader2, AlertCircle, AlertTriangle, Building2, Search } from 'lucide-react';
 import './Profile.css';
 
 // ── Feedback inline (substitui window.alert) ──────────────────────────────────
@@ -51,55 +51,55 @@ function ConfirmInline({
     );
 }
 
-export default function ProfileRolesTab() {
-    const { jobFunctions, addJobFunction, updateJobFunction, removeJobFunction } = useData();
+export default function ProfileSecretariesTab() {
+    const { secretarias, addSecretaria, updateSecretaria, removeSecretaria } = useData();
 
-    const [newTitle, setNewTitle] = useState('');
+    const [newName, setNewName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
 
     const [editingId, setEditingId] = useState<string | null>(null);
-    const [editingTitle, setEditingTitle] = useState('');
+    const [editingName, setEditingName] = useState('');
     const [editError, setEditError] = useState('');
 
-    // ID do cargo aguardando confirmação de exclusão
+    // ID da secretaria aguardando confirmação de exclusão
     const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
 
     const handleAdd = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newTitle.trim()) return;
+        if (!newName.trim()) return;
         setIsSaving(true);
         setErrorMsg('');
         try {
-            await addJobFunction(newTitle.trim());
-            setNewTitle('');
+            await addSecretaria(newName.trim());
+            setNewName('');
         } catch (error) {
             console.error(error);
-            setErrorMsg('Erro ao adicionar cargo. Tente novamente.');
+            setErrorMsg('Erro ao adicionar secretaria. Tente novamente.');
         } finally {
             setIsSaving(false);
         }
     };
 
-    const handleStartEdit = (id: string, currentTitle: string) => {
+    const handleStartEdit = (id: string, currentName: string) => {
         setEditingId(id);
-        setEditingTitle(currentTitle);
+        setEditingName(currentName);
         setEditError('');
         setConfirmRemoveId(null);
     };
 
     const handleCancelEdit = () => {
         setEditingId(null);
-        setEditingTitle('');
+        setEditingName('');
         setEditError('');
     };
 
     const handleSaveEdit = async (id: string) => {
-        if (!editingTitle.trim()) return;
+        if (!editingName.trim()) return;
         setIsSaving(true);
         setEditError('');
         try {
-            await updateJobFunction(id, editingTitle.trim());
+            await updateSecretaria(id, editingName.trim());
             setEditingId(null);
         } catch (error) {
             console.error(error);
@@ -112,24 +112,24 @@ export default function ProfileRolesTab() {
     const handleRemoveConfirmed = async (id: string) => {
         setConfirmRemoveId(null);
         try {
-            await removeJobFunction(id);
+            await removeSecretaria(id);
         } catch (error: any) {
             console.error(error);
-            setErrorMsg(error.message || 'Erro ao remover cargo.');
+            setErrorMsg(error.message || 'Erro ao remover secretaria.');
         }
     };
 
     // Ordenação Alfabética e Filtragem em Tempo Real
-    const sortedJobFunctions = [...jobFunctions].sort((a, b) => a.title.localeCompare(b.title));
-    const filteredJobFunctions = sortedJobFunctions.filter(jf => 
-        jf.title.toLowerCase().includes(newTitle.toLowerCase())
+    const sortedSecretarias = [...secretarias].sort((a, b) => a.nome.localeCompare(b.nome));
+    const filteredSecretarias = sortedSecretarias.filter(s => 
+        s.nome.toLowerCase().includes(newName.toLowerCase())
     );
 
     return (
         <div className="profile-roles-tab">
             <div className="tab-header">
-                <h2>Cargos do Sistema</h2>
-                <p>Gerencie os nomes das funções que podem ser atribuídas à equipe.</p>
+                <h2>Gerenciar Secretarias</h2>
+                <p>Gerencie os nomes dos departamentos e secretarias disponíveis no sistema.</p>
             </div>
 
             {/* Formulário de adição com Busca/Autocomplete Integrada */}
@@ -138,18 +138,18 @@ export default function ProfileRolesTab() {
                     <Search size={18} style={{ position: 'absolute', left: 12, color: '#94a3b8', pointerEvents: 'none' }} />
                     <input
                         type="text"
-                        value={newTitle}
-                        onChange={e => { setNewTitle(e.target.value); setErrorMsg(''); }}
-                        placeholder="Digite para buscar ou adicionar um novo cargo..."
+                        value={newName}
+                        onChange={e => { setNewName(e.target.value); setErrorMsg(''); }}
+                        placeholder="Digite para buscar ou adicionar uma nova secretaria..."
                         required
                         disabled={isSaving}
                         style={{ width: '100%', paddingLeft: 40 }}
                     />
 
                     {/* Aviso de duplicidade visual */}
-                    {jobFunctions.some(jf => jf.title.toLowerCase() === newTitle.trim().toLowerCase()) && (
+                    {secretarias.some(s => s.nome.toLowerCase() === newName.trim().toLowerCase()) && (
                         <div style={{ position: 'absolute', bottom: -18, left: 40, fontSize: '0.65rem', color: '#f59e0b', fontWeight: 700 }}>
-                            ⚠️ Este cargo já está cadastrado
+                            ⚠️ Esta secretaria já está cadastrada
                         </div>
                     )}
                 </div>
@@ -157,43 +157,43 @@ export default function ProfileRolesTab() {
                 <button 
                     type="submit" 
                     className="btn-primary" 
-                    disabled={isSaving || !newTitle.trim() || jobFunctions.some(jf => jf.title.toLowerCase() === newTitle.trim().toLowerCase())}
+                    disabled={isSaving || !newName.trim() || secretarias.some(s => s.nome.toLowerCase() === newName.trim().toLowerCase())}
                     style={{ minWidth: 200 }}
                 >
                     {isSaving ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Plus size={16} />}
-                    <span>Adicionar Cargo</span>
+                    <span>Adicionar Secretaria</span>
                 </button>
             </form>
 
             {/* Erro global inline */}
             <InlineError message={errorMsg} />
 
-            {/* Lista de cargos filtrada e ordenada */}
+            {/* Lista de secretarias filtrada e ordenada */}
             <div className="roles-list" style={{ marginTop: errorMsg ? 8 : 0 }}>
-                {filteredJobFunctions.length === 0 && (
+                {filteredSecretarias.length === 0 && (
                     <div className="empty-state">
-                        {newTitle ? 'Nenhum resultado para sua busca. Clique no botão ao lado para adicionar este novo cargo.' : 'Nenhum cargo cadastrado.'}
+                        {newName ? 'Nenhum resultado para sua busca. Clique no botão ao lado para adicionar esta nova secretaria.' : 'Nenhuma secretaria cadastrada.'}
                     </div>
                 )}
 
-                {filteredJobFunctions.map(jf => (
-                    <div key={jf.id}>
+                {filteredSecretarias.map(sec => (
+                    <div key={sec.id}>
                         <div className="role-item">
-                            {editingId === jf.id ? (
+                            {editingId === sec.id ? (
                                 <>
                                     <input
                                         type="text"
-                                        value={editingTitle}
-                                        onChange={e => { setEditingTitle(e.target.value); setEditError(''); }}
+                                        value={editingName}
+                                        onChange={e => { setEditingName(e.target.value); setEditError(''); }}
                                         className="edit-role-input"
                                         autoFocus
                                         onKeyDown={e => {
-                                            if (e.key === 'Enter') handleSaveEdit(jf.id);
+                                            if (e.key === 'Enter') handleSaveEdit(sec.id);
                                             if (e.key === 'Escape') handleCancelEdit();
                                         }}
                                     />
                                     <div className="role-actions">
-                                        <button className="icon-btn-small" onClick={() => handleSaveEdit(jf.id)} disabled={isSaving} title="Salvar">
+                                        <button className="icon-btn-small" onClick={() => handleSaveEdit(sec.id)} disabled={isSaving} title="Salvar">
                                             <Check size={16} />
                                         </button>
                                         <button className="icon-btn-small" onClick={handleCancelEdit} disabled={isSaving} title="Cancelar">
@@ -204,16 +204,16 @@ export default function ProfileRolesTab() {
                             ) : (
                                 <>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <Shield size={16} style={{ color: '#94a3b8' }} />
-                                        <span>{jf.title}</span>
+                                        <Building2 size={16} style={{ color: '#94a3b8' }} />
+                                        <span>{sec.nome}</span>
                                     </div>
                                     <div className="role-actions">
-                                        <button className="icon-btn-small" onClick={() => handleStartEdit(jf.id, jf.title)} title="Editar">
+                                        <button className="icon-btn-small" onClick={() => handleStartEdit(sec.id, sec.nome)} title="Editar">
                                             <Pencil size={14} />
                                         </button>
                                         <button
                                             className="icon-btn-small danger"
-                                            onClick={() => setConfirmRemoveId(confirmRemoveId === jf.id ? null : jf.id)}
+                                            onClick={() => setConfirmRemoveId(confirmRemoveId === sec.id ? null : sec.id)}
                                             title="Remover"
                                         >
                                             <Trash2 size={16} />
@@ -224,15 +224,15 @@ export default function ProfileRolesTab() {
                         </div>
 
                         {/* Erro de edição inline */}
-                        {editingId === jf.id && editError && (
+                        {editingId === sec.id && editError && (
                             <InlineError message={editError} />
                         )}
 
                         {/* Confirmação de exclusão inline */}
-                        {confirmRemoveId === jf.id && (
+                        {confirmRemoveId === sec.id && (
                             <ConfirmInline
-                                message="Remover este cargo? Perfis que já o possuem não serão afetados."
-                                onConfirm={() => handleRemoveConfirmed(jf.id)}
+                                message="Remover esta secretaria? Isso pode afetar filtros existentes."
+                                onConfirm={() => handleRemoveConfirmed(sec.id)}
                                 onCancel={() => setConfirmRemoveId(null)}
                             />
                         )}
