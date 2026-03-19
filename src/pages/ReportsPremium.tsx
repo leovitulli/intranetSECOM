@@ -664,7 +664,17 @@ export default function ReportsPremium() {
                                     <p>Volume de entregas efetivas por material</p>
                                 </div>
                                 <ResponsiveContainer width="100%" height={230}>
-                                    <BarChart data={completedByMaterialData}>
+                                    <BarChart 
+                                        data={completedByMaterialData}
+                                        onClick={(data: any) => {
+                                            if (data && data.activePayload && data.activePayload[0]) {
+                                                const item = data.activePayload[0].payload;
+                                                setActiveFilter({ type: 'type', value: item.filter || item.name.toLowerCase() });
+                                                scrollToTable();
+                                            }
+                                        }}
+                                        style={{ cursor: 'pointer' }}
+                                    >
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                         <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={10} stroke="#94a3b8" />
                                         <YAxis axisLine={false} tickLine={false} fontSize={10} stroke="#94a3b8" />
@@ -686,7 +696,26 @@ export default function ReportsPremium() {
                                     <p>Quantitativo de pautas em cada estágio</p>
                                 </div>
                                 <ResponsiveContainer width="100%" height={230}>
-                                    <BarChart data={taskStatusData}>
+                                    <BarChart 
+                                        data={taskStatusData}
+                                        onClick={(data: any) => {
+                                            if (data && data.activePayload && data.activePayload[0]) {
+                                                const status = data.activePayload[0].payload.name.toLowerCase();
+                                                const statusMap: Record<string, string> = {
+                                                    'solicitado': 'solicitado',
+                                                    'em produção': 'producao',
+                                                    'correção': 'correcao',
+                                                    'aprovado': 'aprovado',
+                                                    'publicado': 'publicado',
+                                                    'cancelado': 'cancelado',
+                                                    'inauguração': 'inauguracao'
+                                                };
+                                                setActiveFilter({ type: 'status', value: statusMap[status] || status });
+                                                scrollToTable();
+                                            }
+                                        }}
+                                        style={{ cursor: 'pointer' }}
+                                    >
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                         <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={9} stroke="#94a3b8" />
                                         <YAxis axisLine={false} tickLine={false} fontSize={10} stroke="#94a3b8" />
