@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase, getSupabaseAdmin } from '../lib/supabaseClient';
+import { supabase } from '../lib/supabaseClient';
 import type { TeamMember } from '../types/team';
 
 export function useTeamData() {

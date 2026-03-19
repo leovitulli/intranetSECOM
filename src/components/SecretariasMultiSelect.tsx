@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, ChevronDown, Search } from 'lucide-react';
+import { X, ChevronDown } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import './SecretariasMultiSelect.css';
 

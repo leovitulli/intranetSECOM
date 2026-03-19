@@ -8,12 +8,10 @@ import {
     TrendingUp, 
     Zap, 
     Search,
-    LayoutDashboard,
     ChevronDown,
     AlertCircle,
     Building2,
-    CalendarDays,
-    Filter
+    CalendarDays
 } from 'lucide-react';
 import { 
     startOfDay, 
