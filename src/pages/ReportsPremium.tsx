@@ -15,7 +15,9 @@ import {
     Download,
     Filter,
     LayoutDashboard,
-    Gauge
+    Gauge,
+    X,
+    ChevronDown
 } from 'lucide-react';
 import { 
     startOfDay, 
@@ -64,6 +66,7 @@ export default function ReportsPremium() {
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedSecretarias, setSelectedSecretarias] = useState<string[]>([]);
+    const [isSecDropdownOpen, setIsSecDropdownOpen] = useState(false);
     const [showDateSelector, setShowDateSelector] = useState(false);
     const tableRef = useRef<HTMLDivElement>(null);
 
@@ -331,21 +334,50 @@ export default function ReportsPremium() {
             {/* Header de Filtros Premium */}
             <div className="filters-row-pro glass-panel">
                 <div className="filter-group">
-                    <label><Users size={14} /> Secretarias (Multi-seleção)</label>
-                    <div className="sec-multi-pills">
-                        {['Geral / Diversos', 'Gabinete', 'SDS', 'SMS', 'SME', 'SMSO', 'SMADS', 'SMP', 'SMT'].map(sec => (
-                            <button 
-                                key={sec}
-                                className={`sec-pill ${selectedSecretarias.includes(sec) ? 'active' : ''}`}
-                                onClick={() => {
-                                    setSelectedSecretarias(prev => 
-                                        prev.includes(sec) ? prev.filter(s => s !== sec) : [...prev, sec]
-                                    );
-                                }}
-                            >
-                                {sec}
-                            </button>
-                        ))}
+                    <label>DEPARTAMENTO / SECRETARIA SOLICITANTE</label>
+                    <div className="multi-select-pro">
+                        <div 
+                            className={`select-trigger ${isSecDropdownOpen ? 'open' : ''}`}
+                            onClick={() => setIsSecDropdownOpen(!isSecDropdownOpen)}
+                        >
+                            <div className="selected-tags">
+                                {selectedSecretarias.length === 0 && <span className="placeholder">Selecione uma ou mais secretarias...</span>}
+                                {selectedSecretarias.map(sec => (
+                                    <span key={sec} className="sec-tag-premium">
+                                        {sec}
+                                        <X size={12} onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedSecretarias(prev => prev.filter(s => s !== sec));
+                                        }} />
+                                    </span>
+                                ))}
+                            </div>
+                            <ChevronDown size={18} className="chevron" />
+                        </div>
+                        
+                        {isSecDropdownOpen && (
+                            <>
+                                <div className="dropdown-overlay" onClick={() => setIsSecDropdownOpen(false)} />
+                                <div className="select-dropdown glass-panel">
+                                    {['Geral / Diversos', 'Gabinete', 'SDS', 'SMS', 'SME', 'SMSO', 'SMADS', 'SMP', 'SMT'].map(sec => (
+                                        <div 
+                                            key={sec}
+                                            className={`dropdown-item ${selectedSecretarias.includes(sec) ? 'selected' : ''}`}
+                                            onClick={() => {
+                                                setSelectedSecretarias(prev => 
+                                                    prev.includes(sec) ? prev.filter(s => s !== sec) : [...prev, sec]
+                                                );
+                                            }}
+                                        >
+                                            <div className="check-box">
+                                                {selectedSecretarias.includes(sec) && <div className="inner-check" />}
+                                            </div>
+                                            {sec}
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
 
