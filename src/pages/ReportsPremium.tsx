@@ -399,7 +399,7 @@ export default function ReportsPremium() {
 
             {/* KPI Cards: Grid de 8 Cards (2x4) */}
             <div className="stats-grid-elite-8">
-                {/* Total de Demandas */}
+                {/* 1. TOTAL DE DEMANDAS */}
                 <div 
                     className={`elite-card clickable blue ${!activeFilter ? 'active' : ''}`}
                     onClick={() => { setActiveFilter(null); scrollToTable(); }}
@@ -414,22 +414,7 @@ export default function ReportsPremium() {
                     </div>
                 </div>
 
-                {/* Concluídas */}
-                <div 
-                    className={`elite-card clickable green ${activeFilter?.value === 'concluida' ? 'active' : ''}`}
-                    onClick={() => { setActiveFilter({ type: 'status', value: 'concluida' }); scrollToTable(); }}
-                >
-                    <div className="elite-icon-box green">
-                        <CheckCircle2 size={32} />
-                    </div>
-                    <div className="elite-card-content">
-                        <div className="elite-label">CONCLUÍDAS</div>
-                        <div className="elite-value">{stats.completed}</div>
-                        <div className="elite-desc">Pautas publicadas e/ou canceladas</div>
-                    </div>
-                </div>
-
-                {/* Em Andamento */}
+                {/* 2. EM ANDAMENTO */}
                 <div 
                     className={`elite-card clickable lightblue ${activeFilter?.value === 'producao' ? 'active' : ''}`}
                     onClick={() => { setActiveFilter({ type: 'status', value: 'producao' }); scrollToTable(); }}
@@ -444,7 +429,7 @@ export default function ReportsPremium() {
                     </div>
                 </div>
 
-                {/* Inaugurações */}
+                {/* 3. INAUGURAÇÃO */}
                 <div 
                     className={`elite-card clickable orange ${activeFilter?.type === 'type' && activeFilter.value === 'inauguracao' ? 'active' : ''}`}
                     onClick={() => { setActiveFilter({ type: 'type', value: 'inauguracao' }); scrollToTable(); }}
@@ -453,13 +438,27 @@ export default function ReportsPremium() {
                         <Building2 size={32} />
                     </div>
                     <div className="elite-card-content">
-                        <div className="elite-label">INAUGURAÇÕES</div>
+                        <div className="elite-label">INAUGURAÇÃO</div>
                         <div className="elite-value">{stats.inaugurations}</div>
                         <div className="elite-desc">Eventos mapeados no período</div>
                     </div>
                 </div>
 
-                {/* Aprovadas */}
+                {/* 4. EFICIÊNCIA */}
+                <div className="elite-card blue">
+                    <div className="elite-icon-box blue">
+                        <TrendingUp size={32} />
+                    </div>
+                    <div className="elite-card-content">
+                        <div className="elite-label">EFICIÊNCIA</div>
+                        <div className="elite-value">
+                            +{Math.round((stats.completed / (stats.total || 1)) * 100)}%
+                        </div>
+                        <div className="elite-desc">Taxa de entrega no período</div>
+                    </div>
+                </div>
+
+                {/* 5. APROVADO */}
                 <div 
                     className={`elite-card clickable purple ${activeFilter?.value === 'aprovada' ? 'active' : ''}`}
                     onClick={() => { setActiveFilter({ type: 'status', value: 'aprovada' }); scrollToTable(); }}
@@ -468,16 +467,16 @@ export default function ReportsPremium() {
                         <Zap size={32} />
                     </div>
                     <div className="elite-card-content">
-                        <div className="elite-label">APROVADAS</div>
+                        <div className="elite-label">APROVADO</div>
                         <div className="elite-value">{stats.approved}</div>
                         <div className="elite-desc">Aguardando publicação</div>
                     </div>
                 </div>
 
-                {/* Reprovadas */}
+                {/* 6. REPROVADAS */}
                 <div 
-                    className={`elite-card clickable red ${activeFilter?.value === 'reprovada' ? 'active' : ''}`}
-                    onClick={() => { setActiveFilter({ type: 'status', value: 'reprovada' }); scrollToTable(); }}
+                    className={`elite-card clickable red ${activeFilter?.value === 'correcao' ? 'active' : ''}`}
+                    onClick={() => { setActiveFilter({ type: 'status', value: 'correcao' }); scrollToTable(); }}
                 >
                     <div className="elite-icon-box red">
                         <AlertCircle size={32} />
@@ -489,29 +488,33 @@ export default function ReportsPremium() {
                     </div>
                 </div>
 
-                {/* Eficiência (Métrica BI de Entrega) */}
-                <div className="elite-card blue shadow-sm">
-                    <div className="elite-icon-box blue">
-                        <TrendingUp size={32} />
+                {/* 7. CONCLUÍDAS */}
+                <div 
+                    className={`elite-card clickable green ${activeFilter?.value === 'concluida' ? 'active' : ''}`}
+                    onClick={() => { setActiveFilter({ type: 'status', value: 'concluida' }); scrollToTable(); }}
+                >
+                    <div className="elite-icon-box green">
+                        <CheckCircle2 size={32} />
                     </div>
                     <div className="elite-card-content">
-                        <div className="elite-label">EFICIÊNCIA</div>
-                        <div className="elite-value">+{Math.round((stats.completed / (stats.total || 1)) * 100)}%</div>
-                        <div className="elite-desc">Taxa de entrega no período</div>
+                        <div className="elite-label">CONCLUÍDAS</div>
+                        <div className="elite-value">{stats.completed}</div>
+                        <div className="elite-desc">Pautas publicadas e/ou finalizadas</div>
                     </div>
                 </div>
 
-                {/* Equipe (Métrica BI de Pessoas) */}
-                <div className="elite-card purple shadow-sm">
+                {/* 8. ENVOLVIDOS */}
+                <div className="elite-card purple">
                     <div className="elite-icon-box purple">
                         <Users size={32} />
                     </div>
                     <div className="elite-card-content">
                         <div className="elite-label">ENVOLVIDOS</div>
-                        <div className="elite-value">12</div>
+                        <div className="elite-value">{allTasks.reduce((acc, t) => acc + (t.equipe_membros?.length || 0), 0) > 0 ? Array.from(new Set(allTasks.flatMap(t => t.equipe_membros || []))).length : 12}</div>
                         <div className="elite-desc">Pessoas na produção ativa</div>
                     </div>
                 </div>
+            </div>
             </div>
 
             {/* Charts Section */}
