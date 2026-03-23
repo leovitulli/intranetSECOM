@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Clock, Image as ImageIcon, Video, FileText, Building2, AlignEndHorizontal, ExternalLink } from 'lucide-react';
-import { format, addDays, startOfWeek } from 'date-fns';
+import { Clock, Image as ImageIcon, Video, FileText, Building2, AlignEndHorizontal, ExternalLink, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { format, addDays, startOfWeek, isSameWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useData } from '../contexts/DataContext';
 import TaskModal from '../components/TaskModal';
@@ -13,13 +13,19 @@ type FilterType = 'todos' | 'foto' | 'video' | 'release' | 'post' | 'inauguracao
 
 export default function Cronograma() {
     const { tasks, team, loading, updateTask } = useData();
-    const [currentDate] = useState(new Date());
+    const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [viewingFile, setViewingFile] = useState<Attachment | null>(null);
     const [activeFilter, setActiveFilter] = useState<FilterType>('todos');
 
     const startOfCurrentWeek = startOfWeek(currentDate, { weekStartsOn: 1 }); // Segunda-feira
     const days = [0, 1, 2, 3, 4, 5, 6].map(i => addDays(startOfCurrentWeek, i)); // Seg a Dom
+    
+    // Legendas dinâmicas
+    const isCurrentWeek = isSameWeek(new Date(), currentDate, { weekStartsOn: 1 });
+    const weekStartFormat = format(days[0], 'dd/MMM', { locale: ptBR });
+    const weekEndFormat = format(days[4], 'dd/MMM', { locale: ptBR }); // Até Sexta
+    const legendText = isCurrentWeek ? 'SEMANA ATUAL' : `${weekStartFormat} a ${weekEndFormat}`.toUpperCase();
 
     // Filtros visuais
     const filters: { id: FilterType; label: string; icon: any; color: string }[] = [
@@ -35,11 +41,12 @@ export default function Cronograma() {
     return (
         <div className="page-container agenda-page cronograma-page">
             <div className="page-header">
-                <div>
-                    <h1>Cronograma Semanal</h1>
-                    <p className="subtitle">Visão geral de todas as pautas planejadas para a semana atual.</p>
-                    
-                    {/* Filtros Rápidos */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div>
+                        <h1>Cronograma Semanal</h1>
+                        <p className="subtitle">Visão geral das pautas agendadas.</p>
+                        
+                        {/* Filtros Rápidos */}
                     <div className="cronograma-filters" style={{ display: 'flex', gap: '8px', marginTop: '1rem', flexWrap: 'wrap' }}>
                         {filters.map(f => {
                             const isActive = activeFilter === f.id;
@@ -87,6 +94,37 @@ export default function Cronograma() {
                             );
                         })}
                     </div>
+                    </div>
+
+                    {/* Controles de Navegação */}
+                    <div className="week-navigation-premium" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', padding: '0.5rem', borderRadius: '12px', border: '1px solid var(--color-border)', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                        <button 
+                            className="btn-icon-premium" 
+                            onClick={() => setCurrentDate(prev => addDays(prev, -7))}
+                            style={{ padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-text-secondary)' }}
+                            title="Semana Anterior"
+                        >
+                            <ChevronLeft size={20} />
+                        </button>
+                        
+                        <button 
+                            className="btn-today-premium"
+                            onClick={() => setCurrentDate(new Date())}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: '8px', border: 'none', background: isCurrentWeek ? 'hsl(var(--color-primary))' : 'hsl(var(--color-bg-secondary))', color: isCurrentWeek ? '#ffffff' : 'hsl(var(--color-text))', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                        >
+                            <Calendar size={16} />
+                            {legendText}
+                        </button>
+
+                        <button 
+                            className="btn-icon-premium" 
+                            onClick={() => setCurrentDate(prev => addDays(prev, 7))}
+                            style={{ padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-text-secondary)' }}
+                            title="Próxima Semana"
+                        >
+                            <ChevronRight size={20} />
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -97,7 +135,12 @@ export default function Cronograma() {
                     // Filtrar as tasks pelo dia E pelo filtro selecionado
                     const dayTasks = tasks.filter(t => {
                         if (t.archived) return false;
-                        if (t.pauta_data !== dayString) return false;
+                        
+                        // Lógica premium: O Cronograma Semanal AGORA é exclusivo de MÍDIAS.
+                        // Só exibe se houver a DATA DE POSTAGEM preenchida na aba POST.
+                        const targetDate = t.post_data_postagem;
+                        if (!targetDate) return false; // Filtro Estrito: Apenas com data preenchida
+                        if (targetDate !== dayString) return false;
                         
                         if (activeFilter !== 'todos') {
                             if (!t.type || !t.type.includes(activeFilter as any)) {
@@ -105,7 +148,11 @@ export default function Cronograma() {
                             }
                         }
                         return true;
-                    }).sort((a, b) => (a.pauta_horario || '').localeCompare(b.pauta_horario || ''));
+                    }).sort((a, b) => {
+                        const timeA = a.post_horario_postagem || a.pauta_horario || '';
+                        const timeB = b.post_horario_postagem || b.pauta_horario || '';
+                        return timeA.localeCompare(timeB);
+                    });
 
                     return (
                         <div key={day.toISOString()} className={`agenda-day`}>
@@ -175,7 +222,7 @@ export default function Cronograma() {
 
                                             <div className="card-footer" style={{ borderTop: 'none', paddingTop: 0, marginTop: '8px' }}>
                                                 <div className="event-time" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', color: 'var(--color-text-muted)', background: 'var(--color-bg-tertiary)', padding: '4px 8px', borderRadius: '12px' }}>
-                                                    <Clock size={12} /> {task.pauta_horario || 'Horário a definir'}
+                                                    <Clock size={12} /> {task.post_horario_postagem || 'Horário a definir'}
                                                 </div>
                                             </div>
 

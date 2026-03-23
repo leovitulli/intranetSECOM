@@ -64,6 +64,8 @@ export const formatTaskFromDb = (t: any): Task => {
         post_criacao_corrigido: t.post_criacao_corrigido || false,
         post_aprovado: t.post_aprovado || false,
         post_alterado_texto: t.post_alterado_texto,
+        post_data_postagem: t.post_data_postagem,
+        post_horario_postagem: t.post_horario_postagem,
         post_reprovado: t.post_reprovado || false,
         post_reprovado_comentario: t.post_reprovado_comentario,
         post_material_solicitado: t.post_material_solicitado || []

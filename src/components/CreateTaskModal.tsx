@@ -98,9 +98,11 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
     const [postCriacaoTexto, setPostCriacaoTexto] = useState('');
     const [postCriacaoCorrigido, setPostCriacaoCorrigido] = useState(false);
     const [postAprovado, setPostAprovado] = useState(false);
-    const [postAlteradoTexto, setPostAlteradoTexto] = useState('');
+    const [postAlternadoTexto, setPostAlteradoTexto] = useState('');
     const [postReprovado, setPostReprovado] = useState(false);
     const [postReprovadoComentario, setPostReprovadoComentario] = useState('');
+    const [postDataPostagem, setPostDataPostagem] = useState('');
+    const [postHorarioPostagem, setPostHorarioPostagem] = useState('');
 
     const getDayOfWeek = (dateStr: string) => {
         if (!dateStr) return '';
@@ -168,7 +170,9 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                 post_criacao_texto: postCriacaoTexto || undefined,
                 post_criacao_corrigido: postCriacaoCorrigido,
                 post_aprovado: postAprovado,
-                post_alterado_texto: postAlteradoTexto || undefined,
+                post_alterado_texto: postAlternadoTexto || undefined,
+                post_data_postagem: postDataPostagem || undefined,
+                post_horario_postagem: postHorarioPostagem || undefined,
                 post_reprovado: postReprovado,
                 post_reprovado_comentario: postReprovadoComentario || undefined,
                 post_material_solicitado: types.map(t => {
@@ -436,10 +440,22 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                                         </div>
                                     </div>
 
+                                    <div className="fields-grid-2-premium" style={{ marginTop: '0.5rem' }}>
+                                        <div className="nova-pauta-field-premium">
+                                            <label className="field-label-premium">DATA DA POSTAGEM</label>
+                                            <input type="date" className="input-premium" value={postDataPostagem} onChange={e => setPostDataPostagem(e.target.value)} />
+                                        </div>
+                                        <div className="nova-pauta-field-premium">
+                                            <label className="field-label-premium">HORÁRIO DA POSTAGEM</label>
+                                            <input type="time" className="input-premium time-input-premium" value={postHorarioPostagem} onChange={e => setPostHorarioPostagem(e.target.value)} />
+                                        </div>
+                                    </div>
+
                                     <div style={{ background: 'white', padding: '1.25rem', borderRadius: 12, border: '1.5px solid #e2e8f0' }}>
+
                                         <div className="nova-pauta-field-premium">
                                             <label className="field-label-premium">FOI ALTERADO / CORRIGIDO?</label>
-                                            <textarea className="input-premium-textarea" rows={2} placeholder="Descreva o que foi alterado..." value={postAlteradoTexto} onChange={e => setPostAlteradoTexto(e.target.value)} style={{ fontSize: '0.85rem' }} />
+                                            <textarea className="input-premium-textarea" rows={2} placeholder="Descreva o que foi alterado..." value={postAlternadoTexto} onChange={e => setPostAlteradoTexto(e.target.value)} style={{ fontSize: '0.85rem' }} />
                                         </div>
                                     </div>
 

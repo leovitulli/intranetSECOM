@@ -77,6 +77,8 @@ export function useTasksData() {
                 p_post_criacao_corrigido: taskData.post_criacao_corrigido || false,
                 p_post_aprovado: taskData.post_aprovado || false,
                 p_post_alterado_texto: taskData.post_alterado_texto || null,
+                p_post_data_postagem: taskData.post_data_postagem || null,
+                p_post_horario_postagem: taskData.post_horario_postagem || null,
                 p_post_reprovado: taskData.post_reprovado || false,
                 p_post_reprovado_comentario: taskData.post_reprovado_comentario || null,
                 p_post_material_solicitado: taskData.post_material_solicitado || []
@@ -155,6 +157,8 @@ export function useTasksData() {
                 post_criacao_corrigido: updatedTask.post_criacao_corrigido || false,
                 post_aprovado: updatedTask.post_aprovado || false,
                 post_alterado_texto: updatedTask.post_alterado_texto || null,
+                post_data_postagem: updatedTask.post_data_postagem || null,
+                post_horario_postagem: updatedTask.post_horario_postagem || null,
                 post_reprovado: updatedTask.post_reprovado || false,
                 post_reprovado_comentario: updatedTask.post_reprovado_comentario || null,
                 post_material_solicitado: updatedTask.post_material_solicitado || [],

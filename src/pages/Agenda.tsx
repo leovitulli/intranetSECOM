@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { MapPin, Clock, ExternalLink, Building2, Copy, Check, X } from 'lucide-react';
-import { format, addDays, startOfWeek } from 'date-fns';
+import { MapPin, Clock, ExternalLink, Building2, Copy, Check, X, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { format, addDays, startOfWeek, isSameWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useData } from '../contexts/DataContext';
 import TaskModal from '../components/TaskModal';
@@ -192,19 +192,57 @@ function CopyModal({ day, tasks, team, onClose }: CopyModalProps) {
 // ── Componente principal ──────────────────────────────────────────────────────
 export default function Agenda() {
     const { tasks, team, loading, updateTask } = useData();
-    const [currentDate] = useState(new Date());
+    const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [copyDay, setCopyDay] = useState<Date | null>(null);
 
     const startOfCurrentWeek = startOfWeek(currentDate, { weekStartsOn: 1 });
     const days = [0, 1, 2, 3, 4, 5, 6].map(i => addDays(startOfCurrentWeek, i));
 
+    // Legendas dinâmicas
+    const isCurrentWeek = isSameWeek(new Date(), currentDate, { weekStartsOn: 1 });
+    const weekStartFormat = format(days[0], 'dd/MMM', { locale: ptBR });
+    const weekEndFormat = format(days[4], 'dd/MMM', { locale: ptBR }); // Até Sexta
+    const legendText = isCurrentWeek ? 'SEMANA ATUAL' : `${weekStartFormat} a ${weekEndFormat}`.toUpperCase();
+
     return (
         <div className="page-container agenda-page">
             <div className="page-header">
-                <div>
-                    <h1>Agenda da Equipe Externa</h1>
-                    <p className="subtitle">Visão geral de organização das equipes durante a semana.</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div>
+                        <h1>Agenda da Equipe Externa</h1>
+                        <p className="subtitle">Visão geral de organização das equipes durante a semana.</p>
+                    </div>
+
+                    {/* Controles de Navegação */}
+                    <div className="week-navigation-premium" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', padding: '0.5rem', borderRadius: '12px', border: '1px solid var(--color-border)', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                        <button 
+                            className="btn-icon-premium" 
+                            onClick={() => setCurrentDate(prev => addDays(prev, -7))}
+                            style={{ padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-text-secondary)' }}
+                            title="Semana Anterior"
+                        >
+                            <ChevronLeft size={20} />
+                        </button>
+                        
+                        <button 
+                            className="btn-today-premium"
+                            onClick={() => setCurrentDate(new Date())}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: '8px', border: 'none', background: isCurrentWeek ? 'hsl(var(--color-primary))' : 'hsl(var(--color-bg-secondary))', color: isCurrentWeek ? '#ffffff' : 'hsl(var(--color-text))', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                        >
+                            <Calendar size={16} />
+                            {legendText}
+                        </button>
+
+                        <button 
+                            className="btn-icon-premium" 
+                            onClick={() => setCurrentDate(prev => addDays(prev, 7))}
+                            style={{ padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-text-secondary)' }}
+                            title="Próxima Semana"
+                        >
+                            <ChevronRight size={20} />
+                        </button>
+                    </div>
                 </div>
             </div>
 

@@ -688,6 +688,27 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                             </div>
                                         </div>
 
+                                        <div className="fields-grid-2-premium" style={{ marginTop: '0.5rem' }}>
+                                            <div className="nova-pauta-field-premium">
+                                                <label className="field-label-premium">DATA DA POSTAGEM</label>
+                                                <input 
+                                                    type="date" 
+                                                    className="input-premium" 
+                                                    value={editedTask.post_data_postagem || ''} 
+                                                    onChange={e => handleFieldChange('post_data_postagem', e.target.value)} 
+                                                />
+                                            </div>
+                                            <div className="nova-pauta-field-premium">
+                                                <label className="field-label-premium">HORÁRIO DA POSTAGEM</label>
+                                                <input 
+                                                    type="time" 
+                                                    className="input-premium time-input-premium" 
+                                                    value={editedTask.post_horario_postagem || ''} 
+                                                    onChange={e => handleFieldChange('post_horario_postagem', e.target.value)} 
+                                                />
+                                            </div>
+                                        </div>
+
                                         <div style={{ background: 'white', padding: '1.25rem', borderRadius: 12, border: '1.5px solid #e2e8f0' }}>
                                             <div className="nova-pauta-field-premium">
                                                 <label className="field-label-premium">FOI ALTERADO / CORRIGIDO?</label>

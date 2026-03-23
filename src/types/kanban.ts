@@ -77,6 +77,9 @@ export interface Task {
     post_criacao_corrigido?: boolean;
     post_aprovado?: boolean;
     post_alterado_texto?: string;
+    post_data_postagem?: string;
+    post_horario_postagem?: string;
+
     post_reprovado?: boolean;
     post_reprovado_comentario?: string;
     post_material_solicitado?: string[];
