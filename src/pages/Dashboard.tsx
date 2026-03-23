@@ -124,10 +124,14 @@ export default function Dashboard() {
         if (selectedTask?.id === updatedTask.id) setSelectedTask(updatedTask);
     };
 
-    const handleCreateTask = async (newTask: Task): Promise<boolean> => {
-        const success = await addTask(newTask);
-        if (success) setIsCreateModalOpen(false);
-        return success;
+    const handleCreateTask = async (newTask: Task): Promise<{ success: boolean; error?: any }> => {
+        const result = await addTask(newTask);
+        if (result.success) {
+            setIsCreateModalOpen(false);
+        } else {
+            console.error("❌ Falha na criação capturada pelo Dashboard:", result.error);
+        }
+        return result;
     };
 
     // ── Card de inauguração (espelho na coluna Inauguração) ───────────────────

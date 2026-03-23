@@ -11,7 +11,7 @@ import { ptBR } from 'date-fns/locale';
 
 interface CreateTaskModalProps {
     onClose: () => void;
-    onCreate: (task: Task) => Promise<boolean>;
+    onCreate: (task: any) => Promise<{ success: boolean; error?: any }>;
 }
 
 // Erro inline — substitui window.alert
@@ -182,9 +182,13 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                 }),
             };
 
-            const success = await onCreate(newTask);
-            if (success) onClose();
-            else setErrorMsg('Não foi possível criar a pauta. Tente novamente.');
+            const { success, error: apiError } = await onCreate(newTask);
+            if (success) {
+                onClose();
+            } else {
+                console.error('Erro retornado pela API:', apiError);
+                setErrorMsg(apiError?.message || apiError?.details || 'Não foi possível criar a pauta. Tente novamente.');
+            }
         } catch (error) {
             console.error('Erro ao criar pauta:', error);
             setErrorMsg('Erro ao criar pauta. Verifique sua conexão.');

@@ -45,6 +45,8 @@ export const formatTaskFromDb = (t: any): Task => {
         pauta_endereco: t.pauta_endereco,
         pauta_saida: t.pauta_saida,
         is_pauta_externa: t.is_pauta_externa || false,
+        presenca_prefeito: t.presenca_prefeito || false,
+        secretarias: Array.isArray(t.secretarias) ? t.secretarias : [],
 
         // Vídeo
         video_captacao_equipe: t.video_captacao_equipe || [],
