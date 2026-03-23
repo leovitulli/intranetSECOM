@@ -399,7 +399,7 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
 
                     {/* ════════ ABA: RELEASE ════════ */}
                     {activeTab === 'release' && (
-                        <div className="modal-section-group-premium" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
+                        <div className="modal-section-group-premium" style={{ textAlign: 'center', padding: '3rem 2.5rem' }}>
                             <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📝</div>
                             <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1e293b', marginBottom: '0.5rem' }}>Ficha de Release</h3>
                             <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>Os campos de release estarão disponíveis dentro do card após a criação da pauta.</p>
@@ -408,9 +408,9 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
 
                     {/* ════════ ABA: POST ════════ */}
                     {activeTab === 'post' && (
-                        <div className="modal-section-group-premium">
+                         <div className="modal-section-group-premium">
                             <div className="section-header-premium">
-                                <span className="section-number-premium">📱</span>
+                                <div className="section-number-premium">📱</div>
                                 <h3>Estratégia de Post</h3>
                             </div>
 
@@ -423,9 +423,9 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                                 </label>
                             </div>
 
-                            <div className="modal-section-group-premium alternate-bg-premium" style={{ margin: '0 -2rem', padding: '1.5rem 2rem' }}>
+                            <div className="modal-section-group-premium alternate-bg-premium">
                                 <div className="section-header-premium">
-                                    <span className="section-number-premium" style={{ background: '#f0f9ff', color: '#0ea5e9' }}>✓</span>
+                                    <div className="section-number-premium">✓</div>
                                     <h3>Controle de Aprovação</h3>
                                 </div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>

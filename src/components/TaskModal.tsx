@@ -272,7 +272,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                     {/* 01 – Informações */}
                                     <div className="modal-section-group-premium">
                                         <div className="section-header-premium">
-                                            <span className="section-number-premium">01</span>
+                                            <div className="section-number-premium">01</div>
                                             <h3>Informações da Pauta</h3>
                                             {!isEditingDesc && !isViewer && (
                                                 <button className="btn-edit-premium" onClick={() => setIsEditingDesc(true)}>Editar</button>
@@ -304,7 +304,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                     {/* 02 – Agendamento */}
                                     <div className="modal-section-group-premium alternate-bg-premium">
                                         <div className="section-header-premium">
-                                            <span className="section-number-premium">02</span>
+                                            <div className="section-number-premium">02</div>
                                             <h3>Agendamento e Local</h3>
                                             {!isEditingAgendamento && !isViewer && (
                                                 <button className="btn-edit-premium" onClick={() => setIsEditingAgendamento(true)}>Editar</button>
@@ -416,8 +416,8 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                     {/* 03 – Equipe */}
                                     <div className="modal-section-group-premium">
                                         <div className="section-header-premium">
-                                            <span className="section-number-premium">03</span>
-                                            <h3>Equipe e Responsáveis</h3>
+                                             <div className="section-number-premium">03</div>
+                                             <h3>Equipe e Responsáveis</h3>
                                             {!isEditingEquipe && !isViewer && (
                                                 <button className="btn-edit-premium" onClick={() => setIsEditingEquipe(true)}>Editar</button>
                                             )}
@@ -495,8 +495,8 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                     {/* 04 – Extras */}
                                     <div className="modal-section-group-premium alternate-bg-premium">
                                         <div className="section-header-premium">
-                                            <span className="section-number-premium">04</span>
-                                            <h3>Configurações Extras</h3>
+                                             <div className="section-number-premium">04</div>
+                                             <h3>Configurações Extras</h3>
                                             {!isEditingExtras && !isViewer && (
                                                 <button className="btn-edit-premium" onClick={() => setIsEditingExtras(true)}>Editar</button>
                                             )}
@@ -564,8 +564,8 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                     {/* 05 – Anexos */}
                                     <div className="modal-section-group-premium">
                                         <div className="section-header-premium">
-                                            <span className="section-number-premium">05</span>
-                                            <h3>Anexos ({(editedTask.attachments || []).length})</h3>
+                                             <div className="section-number-premium">05</div>
+                                             <h3>Anexos ({(editedTask.attachments || []).length})</h3>
                                             {!isViewer && (
                                                 <>
                                                     <button className="btn-edit-premium" style={{ gap: 6 }} onClick={() => fileInputRef.current?.click()} disabled={uploadingAttachments}>
@@ -627,7 +627,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                             <>
                                 <div className="modal-section-group-premium">
                                     <div className="section-header-premium">
-                                        <span className="section-number-premium">📝</span>
+                                        <div className="section-number-premium">📝</div>
                                         <h3>Produção de Release</h3>
                                     </div>
                                     <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Os campos dedicados para produção de Release serão construídos aqui em breve.</p>
@@ -643,7 +643,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                             <>
                                 <div className="modal-section-group-premium">
                                     <div className="section-header-premium">
-                                        <span className="section-number-premium">📱</span>
+                                        <div className="section-number-premium">📱</div>
                                         <h3>Estratégia de Social Media</h3>
                                     </div>
 
@@ -668,9 +668,9 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                     </div>
                                 </div>
 
-                                <div className="modal-section-group-premium alternate-bg-premium" style={{ margin: '0 -2rem', padding: '1.5rem 2rem' }}>
+                                <div className="modal-section-group-premium alternate-bg-premium">
                                     <div className="section-header-premium">
-                                        <span className="section-number-premium" style={{ background: '#f0f9ff', color: '#0ea5e9' }}>✓</span>
+                                        <div className="section-number-premium">✓</div>
                                         <h3>Controle de Aprovação</h3>
                                     </div>
 
@@ -756,7 +756,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
 
                                 <div className="modal-section-group-premium" style={{ marginTop: '1.5rem' }}>
                                     <div className="section-header-premium">
-                                        <span className="section-number-premium">📦</span>
+                                        <div className="section-number-premium">📦</div>
                                         <h3>Material Solicitado</h3>
                                     </div>
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
@@ -809,7 +809,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                             <>
                                 <div className="modal-section-group-premium">
                                     <div className="section-header-premium">
-                                        <span className="section-number-premium">🎬</span>
+                                        <div className="section-number-premium">🎬</div>
                                         <h3>Planejamento de Vídeo</h3>
                                     </div>
                                     <div className="nova-pauta-field-premium">
@@ -820,7 +820,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
 
                                 <div className="modal-section-group-premium alternate-bg-premium">
                                     <div className="section-header-premium">
-                                        <span className="section-number-premium">02</span>
+                                        <div className="section-number-premium">02</div>
                                         <h3>Equipe e Prazos (Vídeo)</h3>
                                     </div>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
@@ -845,7 +845,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
 
                                 <div className="modal-section-group-premium">
                                     <div className="section-header-premium">
-                                        <span className="section-number-premium">03</span>
+                                        <div className="section-number-premium">03</div>
                                         <h3>O que precisa ser feito?</h3>
                                     </div>
                                     <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', background: 'white', padding: '1rem', borderRadius: 12, border: '1.5px solid #e2e8f0' }}>
@@ -877,7 +877,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
 
                                 <div className="modal-section-group-premium alternate-bg-premium">
                                     <div className="section-header-premium">
-                                        <span className="section-number-premium">🎬</span>
+                                        <div className="section-number-premium">🎬</div>
                                         <h3>Controle de Entrega</h3>
                                     </div>
                                     <div style={{ maxWidth: 300 }}>
@@ -902,7 +902,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                             <>
                                 <div className="modal-section-group-premium">
                                     <div className="section-header-premium">
-                                        <span className="section-number-premium">📸</span>
+                                        <div className="section-number-premium">📸</div>
                                         <h3>Produção de Fotografia</h3>
                                     </div>
                                     <div className="nova-pauta-field-premium">
@@ -924,7 +924,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                             <>
                                 <div className="modal-section-group-premium">
                                     <div className="section-header-premium">
-                                        <span className="section-number-premium">🎨</span>
+                                        <div className="section-number-premium">🎨</div>
                                         <h3>Solicitação de Peças Gráficas</h3>
                                     </div>
                                     <div className="nova-pauta-field-premium">
@@ -935,7 +935,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
 
                                 <div className="modal-section-group-premium alternate-bg-premium">
                                     <div className="section-header-premium">
-                                        <span className="section-number-premium">📏</span>
+                                        <div className="section-number-premium">📏</div>
                                         <h3>Formatos e Especificações</h3>
                                     </div>
                                     <div className="nova-pauta-field-premium">
@@ -958,7 +958,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                             <>
                                 <div className="modal-section-group-premium">
                                     <div className="section-header-premium">
-                                        <span className="section-number-premium">🏛️</span>
+                                        <div className="section-number-premium">🏛️</div>
                                         <h3>Gestão de Inauguração</h3>
                                     </div>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>

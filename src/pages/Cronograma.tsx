@@ -40,60 +40,11 @@ export default function Cronograma() {
 
     return (
         <div className="page-container agenda-page cronograma-page">
-            <div className="page-header">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+            <div className="page-header" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
                     <div>
                         <h1>Cronograma Semanal</h1>
                         <p className="subtitle">Visão geral das pautas agendadas.</p>
-                        
-                        {/* Filtros Rápidos */}
-                    <div className="cronograma-filters" style={{ display: 'flex', gap: '8px', marginTop: '1rem', flexWrap: 'wrap' }}>
-                        {filters.map(f => {
-                            const isActive = activeFilter === f.id;
-                            let badgeClass = '';
-                            let filterLabel = f.label;
-                            if (f.id === 'todos') {
-                                badgeClass = 'badge-tag badge-todos';
-                            } else {
-                                const typeMap: Record<string, string> = {
-                                    'foto': 'foto',
-                                    'video': 'video',
-                                    'release': 'release',
-                                    'post': 'post',
-                                    'inauguracao': 'inauguracao',
-                                    'arte': 'arte'
-                                };
-                                badgeClass = `badge-tag badge-${typeMap[f.id]}`;
-                                if (f.id === 'release') filterLabel = '📝 Release';
-                                if (f.id === 'post') filterLabel = '📱 Post';
-                                if (f.id === 'arte') filterLabel = '🎨 Arte Gráfica';
-                                if (f.id === 'video') filterLabel = '🎬 Vídeo';
-                                if (f.id === 'foto') filterLabel = '📸 Fotos';
-                                if (f.id === 'inauguracao') filterLabel = 'Inauguração';
-                            }
-
-                            return (
-                                <button
-                                    key={f.id}
-                                    className={`${badgeClass}`}
-                                    style={{ 
-                                        opacity: isActive ? 1 : 0.4,
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        padding: '0.4rem 1rem',
-                                        fontSize: '0.85rem',
-                                        transition: 'all 0.2s',
-                                        boxShadow: isActive ? '0 0 10px rgba(255,255,255,0.1)' : 'none'
-                                    }}
-                                    onClick={() => setActiveFilter(f.id)}
-                                >
-                                    {f.id === 'todos' && <AlignEndHorizontal size={14} style={{ marginRight: '4px' }} />}
-                                    {f.id === 'inauguracao' && <Building2 size={12} style={{ marginRight: '4px' }} />}
-                                    {filterLabel}
-                                </button>
-                            );
-                        })}
-                    </div>
                     </div>
 
                     {/* Controles de Navegação */}
@@ -125,6 +76,55 @@ export default function Cronograma() {
                             <ChevronRight size={20} />
                         </button>
                     </div>
+                </div>
+
+                {/* Filtros Rápidos */}
+                <div className="cronograma-filters" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {filters.map(f => {
+                        const isActive = activeFilter === f.id;
+                        let badgeClass = '';
+                        let filterLabel = f.label;
+                        if (f.id === 'todos') {
+                            badgeClass = 'badge-tag badge-todos';
+                        } else {
+                            const typeMap: Record<string, string> = {
+                                'foto': 'foto',
+                                'video': 'video',
+                                'release': 'release',
+                                'post': 'post',
+                                'inauguracao': 'inauguracao',
+                                'arte': 'arte'
+                            };
+                            badgeClass = `badge-tag badge-${typeMap[f.id]}`;
+                            if (f.id === 'release') filterLabel = '📝 Release';
+                            if (f.id === 'post') filterLabel = '📱 Post';
+                            if (f.id === 'arte') filterLabel = '🎨 Arte Gráfica';
+                            if (f.id === 'video') filterLabel = '🎬 Vídeo';
+                            if (f.id === 'foto') filterLabel = '📸 Fotos';
+                            if (f.id === 'inauguracao') filterLabel = 'Inauguração';
+                        }
+
+                        return (
+                            <button
+                                key={f.id}
+                                className={`${badgeClass}`}
+                                style={{ 
+                                    opacity: isActive ? 1 : 0.4,
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    padding: '0.4rem 1rem',
+                                    fontSize: '0.85rem',
+                                    transition: 'all 0.2s',
+                                    boxShadow: isActive ? '0 0 10px rgba(255,255,255,0.1)' : 'none'
+                                }}
+                                onClick={() => setActiveFilter(f.id)}
+                            >
+                                {f.id === 'todos' && <AlignEndHorizontal size={14} style={{ marginRight: '4px' }} />}
+                                {f.id === 'inauguracao' && <Building2 size={12} style={{ marginRight: '4px' }} />}
+                                {filterLabel}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 

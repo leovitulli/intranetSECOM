@@ -207,8 +207,8 @@ export default function Agenda() {
 
     return (
         <div className="page-container agenda-page">
-            <div className="page-header">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
+            <div className="page-header" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
                     <div>
                         <h1>Agenda da Equipe Externa</h1>
                         <p className="subtitle">Visão geral de organização das equipes durante a semana.</p>
