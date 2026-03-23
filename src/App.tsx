@@ -18,6 +18,7 @@ const ReportsPremium = lazy(() => import('./pages/ReportsPremium'));
 const Profile = lazy(() => import('./pages/Profile'));
 const SendNotification = lazy(() => import('./pages/SendNotification'));
 const Cronograma = lazy(() => import('./pages/Cronograma'));
+const Radar = lazy(() => import('./pages/Radar'));
 
 
 
@@ -45,6 +46,7 @@ function AppRoutes() {
               <Route path="perfil" element={<Profile />} />
               <Route path="notificacoes" element={<SendNotification />} />
               <Route path="cronograma" element={<Cronograma />} />
+              <Route path="radar-secom" element={<Radar />} />
             </Route>
           </Routes>
         </Suspense>

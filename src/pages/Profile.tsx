@@ -12,14 +12,24 @@ export default function Profile() {
     const { user, fetchProfile } = useAuth();
     const { jobFunctions } = useData();
 
-    // Tabs state
+    // Tabs state - Force 'perfil' if user is not admin
     const [activeTab, setActiveTab] = useState<'perfil' | 'equipe' | 'cargos' | 'secretarias'>(() => {
-        return (localStorage.getItem('profileActiveTab') as any) || 'perfil';
+        const stored = localStorage.getItem('profileActiveTab');
+        // Initial safety check: we only allow stored tab if user will be admin
+        // Since we don't have user yet during state initialization, we'll sync it in useEffect
+        return (stored as any) || 'perfil';
     });
 
+    // Determines if user has Admin/Dev access
+    const isAdmin = user?.role === 'admin' || user?.role === 'desenvolvedor';
+
     useEffect(() => {
+        // Critical Security: If user is not admin, force 'perfil' tab
+        if (user && !isAdmin && activeTab !== 'perfil') {
+            setActiveTab('perfil');
+        }
         localStorage.setItem('profileActiveTab', activeTab);
-    }, [activeTab]);
+    }, [activeTab, isAdmin, user]);
 
     // Form state for My Profile
     const [name, setName] = useState('');
@@ -36,8 +46,6 @@ export default function Profile() {
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Determines if user has Admin/Dev access
-    const isAdmin = user?.role === 'admin' || user?.role === 'desenvolvedor';
 
     useEffect(() => {
         if (user) {
@@ -295,23 +303,13 @@ export default function Profile() {
                                 />
                             </div>
 
-                            <div className="form-group">
+                            <div className="form-group full-width">
                                 <label>E-mail Corporativo</label>
                                 <input
                                     type="email"
                                     value={email}
                                     disabled
                                     title="O e-mail de acesso não pode ser alterado por aqui"
-                                />
-                            </div>
-
-                            <div className="form-group" style={{ pointerEvents: 'none', opacity: 0.7 }}>
-                                <label>Nível de Acesso no Sistema</label>
-                                <input
-                                    type="text"
-                                    value={role.toUpperCase()}
-                                    disabled
-                                    title="O nível de acesso (Admin/Desenvolvedor/Usuário) é definido pelo Gestor da Equipe."
                                 />
                             </div>
 
@@ -398,9 +396,13 @@ export default function Profile() {
                     </div>
                 )}
 
-                {activeTab === 'equipe' && <ProfileTeamTab />}
-                {activeTab === 'cargos' && <ProfileRolesTab />}
-                {activeTab === 'secretarias' && <ProfileSecretariesTab />}
+                {isAdmin && (
+                    <>
+                        {activeTab === 'equipe' && <ProfileTeamTab />}
+                        {activeTab === 'cargos' && <ProfileRolesTab />}
+                        {activeTab === 'secretarias' && <ProfileSecretariesTab />}
+                    </>
+                )}
             </div>
         </div>
     );
