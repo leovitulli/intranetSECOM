@@ -10,7 +10,7 @@ import './TeamMemberModal.css';
 interface TeamMemberModalProps {
     member?: TeamMember | null;
     onClose: () => void;
-    onSave: (member: TeamMember, password?: string) => void;
+    onSave: (member: TeamMember, password?: string) => Promise<string | null>;
 }
 
 // ─── Modal de confirmação/alerta interno (sem window.alert) ───────
@@ -95,8 +95,12 @@ export default function TeamMemberModal({ member, onClose, onSave }: TeamMemberM
             hasLogin,
         } as TeamMember;
 
-        onSave(memberData, password || undefined);
-        setTimeout(() => setIsSubmitting(false), 5000);
+        // Repassa a promessa para o onSave e lida com o estado lá
+        Promise.resolve(onSave(memberData, password || undefined))
+            .then(error => {
+                if (error) setAlertMsg(error);
+            })
+            .finally(() => setIsSubmitting(false));
     };
 
     return (

@@ -7,24 +7,31 @@ export function useTeamData() {
     const [jobFunctions, setJobFunctions] = useState<{ id: string, title: string }[]>([]);
     const [secretarias, setSecretarias] = useState<{ id: string, nome: string }[]>([]);
 
-    const addTeamMember = async (member: TeamMember, password?: string): Promise<boolean> => {
+    const addTeamMember = async (member: TeamMember, password?: string): Promise<{ success: boolean; error?: string }> => {
         try {
             if (password) {
                 // Chama a função SQL RPC segura que criamos para gerenciar Auth + Public Users
                 const { data: userId, error: rpcError } = await supabase.rpc('create_new_user_with_auth', {
-                    email:              member.email,
-                    password:           password,
-                    full_name:          member.name,
-                    role_name:          member.role,
-                    job_titles_list:    member.job_titles || [],
-                    avatar_url_val:     member.avatar_url || '',
-                    has_login_val:      member.hasLogin || false
+                    p_email:              member.email,
+                    p_password:           password,
+                    p_full_name:          member.name,
+                    p_role_name:          member.role,
+                    p_job_titles_list:    member.job_titles || [],
+                    p_avatar_url_val:     member.avatar_url || '',
+                    p_has_login_val:      member.hasLogin || false
                 });
 
-                if (rpcError) throw rpcError;
+                if (rpcError) {
+                    console.error('RPC Error:', rpcError);
+                    return { success: false, error: rpcError.message };
+                }
                 
-                setTeam(prev => [...prev, { ...member, id: userId }]);
-                return true;
+                // Atualiza o estado local com o ID real retornado pelo banco
+                if (userId) {
+                    setTeam(prev => [...prev, { ...member, id: userId as string }]);
+                }
+                
+                return { success: true };
             } else {
                 // Apenas insere na tabela pública caso não tenha login/senha
                 const { data, error } = await supabase.from('users').insert([{
@@ -38,11 +45,14 @@ export function useTeamData() {
 
                 if (error) throw error;
                 setTeam(prev => [...prev, { ...member, id: data.id }]);
-                return true;
+                return { success: true };
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error adding team member:', error);
-            return false;
+            return { 
+                success: false, 
+                error: error.message || error.details || 'Falha desconhecida no banco de dados' 
+            };
         }
     };
 

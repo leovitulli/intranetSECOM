@@ -76,31 +76,33 @@ export default function ProfileTeamTab() {
         setBusyIds(prev => { const s = new Set(prev); busy ? s.add(id) : s.delete(id); return s; });
 
     // ── CRUD HANDLERS ────────────────────────────────────────────────────────
-    const handleCreateMember = async (member: TeamMember, password?: string) => {
+    const handleCreateMember = async (member: TeamMember, password?: string): Promise<string | null> => {
         const tempId = 'new-' + Date.now();
         setBusy(tempId, true);
         try {
-            const success = await addTeamMember(member, password);
-            if (success) {
+            const result = await addTeamMember(member, password);
+            if (result.success) {
                 setIsModalOpen(false);
                 setEditingMember(null);
                 showToast(`${member.name} foi adicionado à equipe.`, 'success');
+                return null;
             } else {
-                showToast('Não foi possível criar o usuário. Tente novamente.', 'error');
+                // Se o erro indicar duplicidade, trata amigavelmente
+                const msg = result.error || 'Erro desconhecido';
+                if (msg.includes('already registered') || msg.includes('identity_already_exists') || msg.includes('duplicate key')) {
+                    return `O e-mail "${member.email}" já está em uso em algum lugar do Supabase.`;
+                } else {
+                    return `Não foi possível criar o usuário: ${msg}`;
+                }
             }
         } catch (err: any) {
-            const msg = err.message || '';
-            if (msg.includes('already registered') || msg.includes('identity_already_exists')) {
-                showToast(`O e-mail "${member.email}" já está em uso. Se não aparece na lista, remova-o no Supabase primeiro.`, 'error');
-            } else {
-                showToast(`Falha no cadastro: ${msg}`, 'error');
-            }
+            return `Falha crítica no cadastro: ${err.message || 'Erro de conexão'}`;
         } finally {
             setBusy(tempId, false);
         }
     };
 
-    const handleEditMember = async (member: TeamMember) => {
+    const handleEditMember = async (member: TeamMember): Promise<string | null> => {
         setBusy(member.id, true);
         try {
             const oldMember = team.find(m => m.id === member.id);
@@ -124,16 +126,17 @@ export default function ProfileTeamTab() {
             } else {
                 showToast(`Perfil de ${member.name} atualizado.`, 'success');
             }
+            return null;
         } catch (err: any) {
-            showToast(`Erro ao salvar: ${err.message || 'Erro desconhecido'}`, 'error');
+            return `Erro ao salvar: ${err.message || 'Erro desconhecido'}`;
         } finally {
             setBusy(member.id, false);
         }
     };
 
-    const handleSaveMember = (member: TeamMember, password?: string) => {
-        if (editingMember) handleEditMember(member);
-        else handleCreateMember(member, password);
+    const handleSaveMember = (member: TeamMember, password?: string): Promise<string | null> => {
+        if (editingMember) return handleEditMember(member);
+        else return handleCreateMember(member, password);
     };
 
     const handleDeleteConfirmed = async (member: TeamMember) => {

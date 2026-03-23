@@ -28,7 +28,7 @@ interface DataContextType {
     updateTaskStatus: (taskId: string, newStatus: Task['status']) => Promise<void>;
     updateTask: (updatedTask: Task) => Promise<void>;
     addTask: (task: Omit<Task, 'id' | 'comments' | 'attachments'>) => Promise<boolean>;
-    addTeamMember: (member: TeamMember, password?: string) => Promise<boolean>;
+    addTeamMember: (member: TeamMember, password?: string) => Promise<{ success: boolean; error?: string }>;
     deleteTask: (taskId: string) => Promise<void>;
     updateTeamMember: (member: TeamMember) => Promise<void>;
     deleteTeamMember: (id: string) => Promise<void>;
