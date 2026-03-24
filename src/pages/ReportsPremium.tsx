@@ -23,6 +23,7 @@ import {
     isWithinInterval, 
     differenceInDays,
     subMonths,
+    subDays,
     format
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -51,7 +52,7 @@ import './ReportsPremium.css';
 type FilterPeriod = 'today' | 'week' | 'month' | 'lastMonth' | 'custom';
 
 export default function ReportsPremium() {
-    const { tasks, loading } = useData();
+    const { tasks, archivedTasks, loading } = useData();
     const [period, setPeriod] = useState<FilterPeriod>('month');
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState('');
@@ -67,10 +68,10 @@ export default function ReportsPremium() {
         tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
-    // Pre-processing tasks for analytics
+    // Pre-processing tasks for analytics: Inclouding archived tasks to have real productivity history
     const allTasks = useMemo(() => {
-        return tasks.filter(t => !t.archived && !(t as any).deleted);
-    }, [tasks]);
+        return [...tasks, ...archivedTasks].filter(t => !(t as any).deleted);
+    }, [tasks, archivedTasks]);
 
     const filteredTasks = useMemo(() => {
         const now = new Date();
@@ -83,14 +84,17 @@ export default function ReportsPremium() {
                 end = endOfDay(now);
                 break;
             case 'week':
-                start = startOfWeek(now, { weekStartsOn: 1 });
-                end = endOfWeek(now, { weekStartsOn: 1 });
+                // Rolling Window: Last 7 days from now (inclusive)
+                start = startOfDay(subDays(now, 6));
+                end = endOfDay(now);
                 break;
             case 'month':
-                start = startOfMonth(now);
-                end = endOfMonth(now);
+                // Rolling Window: Last 30 days from now (inclusive)
+                start = startOfDay(subDays(now, 29));
+                end = endOfDay(now);
                 break;
             case 'lastMonth':
+                // Keeping calendar lastMonth as it's typically used for comparison
                 start = startOfMonth(subMonths(now, 1));
                 end = endOfMonth(subMonths(now, 1));
                 break;
@@ -105,15 +109,20 @@ export default function ReportsPremium() {
 
         return allTasks.filter(task => {
             if (!task.createdAt) return false;
+            // Ensure we handle Date objects or ISO strings safely
             const date = typeof task.createdAt === 'string' ? new Date(task.createdAt) : task.createdAt;
             
+            // Standard check for interval
             const isInPeriod = isWithinInterval(date, { start, end });
             if (!isInPeriod) return false;
 
-            // Filtro Multi-Secretarias
+            // Filtro Multi-Secretarias Unificado
             if (selectedSecretarias.length > 0) {
-                const taskSecs = task.inauguracao_secretarias || [];
-                // Se tarefa não tem secretaria e filtramos por algo, ou se não bate com as selecionadas
+                const taskSecs = [
+                    ...(task.secretarias || []),
+                    ...(task.inauguracao_secretarias || [])
+                ];
+
                 if (taskSecs.length === 0) return selectedSecretarias.includes('Geral / Diversos');
                 return taskSecs.some(sec => selectedSecretarias.includes(sec));
             }
@@ -604,7 +613,7 @@ export default function ReportsPremium() {
                                             outerRadius={75}
                                             paddingAngle={5}
                                             dataKey="value"
-                                            onClick={(data) => setActiveFilter({ type: 'type', value: data.filter || '' })}
+                                            onClick={(data) => { setActiveFilter({ type: 'type', value: data.filter || '' }); scrollToTable(); }}
                                             style={{ cursor: 'pointer' }}
                                         >
                                             {materialTypeData.map((entry, index) => (
@@ -706,7 +715,7 @@ export default function ReportsPremium() {
                                     <div 
                                         key={item.name} 
                                         className="ranking-pro-item" 
-                                        onClick={() => setActiveFilter({ type: 'secretaria', value: item.name })}
+                                        onClick={() => { setActiveFilter({ type: 'secretaria', value: item.name }); scrollToTable(); }}
                                         style={{ cursor: 'pointer' }}
                                     >
                                         <div className="ranking-pro-info">

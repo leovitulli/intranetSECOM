@@ -1,6 +1,6 @@
 import type { Task } from '../types/kanban';
 
-export const formatTaskFromDb = (t: any): Task => {
+export const formatTaskFromDb = (t: Record<string, any>): Task => {
     let secretarias: string[] = [];
     if (t.inauguracao_secretarias) {
         if (typeof t.inauguracao_secretarias === 'string') {
@@ -24,7 +24,7 @@ export const formatTaskFromDb = (t: any): Task => {
         creator: t.creator || 'Desconhecido',
         priority: t.priority as Task['priority'] || 'baixa',
         dueDate: t.due_date ? new Date(t.due_date) : null,
-        assignees: t.task_assignees?.map((a: any) => a.users?.name).filter(Boolean) || [],
+        assignees: t.task_assignees?.map((a: { users?: { name: string } }) => a.users?.name).filter(Boolean) || [],
         comments: t.comments || [],
         attachments: t.attachments || [],
         archived: t.archived || false,
@@ -57,8 +57,13 @@ export const formatTaskFromDb = (t: any): Task => {
         video_necessidades: t.video_necessidades || [],
         video_entrega_data: t.video_entrega_data ? new Date(t.video_entrega_data + 'T12:00:00') : null,
 
+        // Foto
+        foto_briefing: t.foto_briefing,
+
         // Arte
         arte_tipo_pecas: t.arte_tipo_pecas,
+        arte_pecas: t.arte_pecas,
+        arte_informacoes: t.arte_informacoes,
         arte_entrega_data: t.arte_entrega_data ? new Date(t.arte_entrega_data + 'T12:00:00') : null,
 
         // Post

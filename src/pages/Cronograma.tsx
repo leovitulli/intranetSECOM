@@ -40,93 +40,97 @@ export default function Cronograma() {
 
     return (
         <div className="page-container agenda-page cronograma-page">
-            <div className="page-header" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
-                    <div>
-                        <h1>Cronograma Semanal</h1>
-                        <p className="subtitle">Visão geral das pautas agendadas.</p>
-                    </div>
-
-                    {/* Controles de Navegação */}
-                    <div className="week-navigation-premium" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', padding: '0.5rem', borderRadius: '12px', border: '1px solid var(--color-border)', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                        <button 
-                            className="btn-icon-premium" 
-                            onClick={() => setCurrentDate(prev => addDays(prev, -7))}
-                            style={{ padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-text-secondary)' }}
-                            title="Semana Anterior"
-                        >
-                            <ChevronLeft size={20} />
-                        </button>
-                        
-                        <button 
-                            className="btn-today-premium"
-                            onClick={() => setCurrentDate(new Date())}
-                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: '8px', border: 'none', background: isCurrentWeek ? 'hsl(var(--color-primary))' : 'hsl(var(--color-bg-secondary))', color: isCurrentWeek ? '#ffffff' : 'hsl(var(--color-text))', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', transition: 'all 0.2s' }}
-                        >
-                            <Calendar size={16} />
-                            {legendText}
-                        </button>
-
-                        <button 
-                            className="btn-icon-premium" 
-                            onClick={() => setCurrentDate(prev => addDays(prev, 7))}
-                            style={{ padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-text-secondary)' }}
-                            title="Próxima Semana"
-                        >
-                            <ChevronRight size={20} />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Filtros Rápidos */}
-                <div className="cronograma-filters" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    {filters.map(f => {
-                        const isActive = activeFilter === f.id;
-                        let badgeClass = '';
-                        let filterLabel = f.label;
-                        if (f.id === 'todos') {
-                            badgeClass = 'badge-tag badge-todos';
-                        } else {
-                            const typeMap: Record<string, string> = {
-                                'foto': 'foto',
-                                'video': 'video',
-                                'release': 'release',
-                                'post': 'post',
-                                'inauguracao': 'inauguracao',
-                                'arte': 'arte'
-                            };
-                            badgeClass = `badge-tag badge-${typeMap[f.id]}`;
-                            if (f.id === 'release') filterLabel = '📝 Release';
-                            if (f.id === 'post') filterLabel = '📱 Post';
-                            if (f.id === 'arte') filterLabel = '🎨 Arte Gráfica';
-                            if (f.id === 'video') filterLabel = '🎬 Vídeo';
-                            if (f.id === 'foto') filterLabel = '📸 Fotos';
-                            if (f.id === 'inauguracao') filterLabel = 'Inauguração';
-                        }
-
-                        return (
-                            <button
-                                key={f.id}
-                                className={`${badgeClass}`}
-                                style={{ 
-                                    opacity: isActive ? 1 : 0.4,
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    padding: '0.4rem 1rem',
-                                    fontSize: '0.85rem',
-                                    transition: 'all 0.2s',
-                                    boxShadow: isActive ? '0 0 10px rgba(255,255,255,0.1)' : 'none'
-                                }}
-                                onClick={() => setActiveFilter(f.id)}
-                            >
-                                {f.id === 'todos' && <AlignEndHorizontal size={14} style={{ marginRight: '4px' }} />}
-                                {f.id === 'inauguracao' && <Building2 size={12} style={{ marginRight: '4px' }} />}
-                                {filterLabel}
-                            </button>
-                        );
-                    })}
-                </div>
+        <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '1.5rem', marginBottom: '2.5rem' }}>
+            <div style={{ flexShrink: 0 }}>
+                <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800 }}>Cronograma Semanal</h1>
+                <p className="subtitle" style={{ margin: 0, opacity: 0.7 }}>Visão geral das pautas agendadas na semana.</p>
             </div>
+
+            {/* Filtros Rápidos - Agora no centro */}
+            <div className="cronograma-filters" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center', flex: 1 }}>
+                {filters.map((f) => {
+                    const isActive = activeFilter === f.id;
+                    const emojiMap: Record<string, string> = {
+                        'todos': '🗒️ Todos',
+                        'inauguracao': '🏛️ Inauguração',
+                        'video': '🎬 Vídeo',
+                        'foto': '📸 Fotos',
+                        'release': '📝 Release',
+                        'post': '📱 Post',
+                        'arte': '🎨 Arte Gráfica'
+                    };
+
+                    const typeMap: Record<string, string> = {
+                        'foto': 'foto',
+                        'video': 'video',
+                        'release': 'release',
+                        'post': 'post',
+                        'inauguracao': 'inauguracao',
+                        'arte': 'arte',
+                        'todos': 'todos'
+                    };
+
+                    const badgeClass = `badge-tag badge-${typeMap[f.id] || 'todos'}`;
+
+                    return (
+                        <button
+                            key={f.id}
+                            className={`${badgeClass} ${isActive ? 'active' : ''}`}
+                            onClick={() => setActiveFilter(f.id)}
+                            style={{ 
+                                cursor: 'pointer', 
+                                border: 'none',
+                                outline: 'none',
+                                opacity: isActive ? 1 : 0.45,
+                                transform: isActive ? 'scale(1.06)' : 'scale(1)',
+                                transition: 'all 0.2s ease',
+                                fontWeight: isActive ? 800 : 500,
+                                boxShadow: isActive ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
+                                padding: '8px 16px',
+                                fontSize: '0.78rem',
+                                borderRadius: '10px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                background: 'white'
+                            }}
+                        >
+                            {emojiMap[f.id] || f.label}
+                        </button>
+                    );
+                })}
+            </div>
+
+            {/* Controles de Navegação - Layout Sincronizado com Agenda Externa */}
+            <div className="week-navigation-premium" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', padding: '0.5rem', borderRadius: '12px', border: '1px solid var(--color-border)', boxShadow: '0 2px 4px rgba(0,0,0,0.02)', flexShrink: 0 }}>
+                <button 
+                    className="btn-icon-premium" 
+                    onClick={() => setCurrentDate(prev => addDays(prev, -7))}
+                    style={{ padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    title="Semana Anterior"
+                >
+                    <ChevronLeft size={20} />
+                </button>
+                
+                <button 
+                    className="btn-today-premium"
+                    onClick={() => setCurrentDate(new Date())}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: '8px', border: 'none', background: isCurrentWeek ? 'hsl(var(--color-primary))' : 'hsl(var(--color-bg-secondary))', color: isCurrentWeek ? '#ffffff' : 'hsl(var(--color-text))', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', transition: 'all 0.2s' }}
+                >
+                    <Calendar size={16} />
+                    {legendText}
+                </button>
+
+                <button 
+                    className="btn-icon-premium" 
+                    onClick={() => setCurrentDate(prev => addDays(prev, 7))}
+                    style={{ padding: '0.5rem', borderRadius: '8px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    title="Próxima Semana"
+                >
+                    <ChevronRight size={20} />
+                </button>
+            </div>
+        </div>
 
             <div className="agenda-grid">
                 {days.map(day => {

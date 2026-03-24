@@ -54,7 +54,6 @@ function CopyModal({ day, tasks, team, onClose }: CopyModalProps) {
 
     const getMotorista = (task: Task): string | null => {
         const all = [
-            ...(task.creator ? task.creator.split(',').map(s => s.trim()).filter(Boolean) : []),
             ...(task.assignees || []),
         ];
         return all.find(name => team.find(t => t.name === name)?.role === 'motorista') || null;
@@ -62,7 +61,6 @@ function CopyModal({ day, tasks, team, onClose }: CopyModalProps) {
 
     const getEquipe = (task: Task): string[] => {
         const all = [
-            ...(task.creator ? task.creator.split(',').map(s => s.trim()).filter(Boolean) : []),
             ...(task.assignees || []),
         ];
         return all.filter(name => team.find(t => t.name === name)?.role !== 'motorista');
@@ -71,7 +69,7 @@ function CopyModal({ day, tasks, team, onClose }: CopyModalProps) {
     const buildText = (): string => {
         const dayName = format(day, 'EEEE', { locale: ptBR }).toUpperCase();
         const dayDate = format(day, 'dd/MM/yyyy');
-        let text = `Olá, equipe! 👋 Seguem as pautas de hoje.\n\n📅 ${dayName} – ${dayDate}\n`;
+        let text = `Olá, equipe! 👋 Seguem as pautas previstas\n\n*${dayName} – ${dayDate}*\n`;
 
         (['manha', 'tarde', 'noite'] as const).forEach(periodo => {
             const pt = tasks.filter(t => getPeriodo(t.pauta_horario || '') === periodo);
@@ -80,25 +78,40 @@ function CopyModal({ day, tasks, team, onClose }: CopyModalProps) {
             text += `\n${PERIODO_LABEL[periodo]}\n`;
 
             pt.forEach(task => {
-                const horario = formatHorario(task.pauta_horario || 'Horário a definir');
-                const equipe = getEquipe(task).map(getMemberLabel);
+                const startTime = formatHorario(task.pauta_horario || 'Horário a definir');
+                const endTime = task.pauta_horario_end ? formatHorario(task.pauta_horario_end) : null;
+                const departureTime = task.pauta_saida ? formatHorario(task.pauta_saida) : null;
+                const horarioCobertura = endTime ? `${startTime} às ${endTime}` : startTime;
+                const lineDeparture = departureTime ? `*${departureTime}* (Saída do Paço)` : '';
+                const lineCoverage = `*${horarioCobertura}* (Cobertura)`;
+                
+                const linhaHorario = departureTime 
+                    ? `⏱ ${lineDeparture} | ${lineCoverage}`
+                    : `⏱ ${lineCoverage}`;
+
+                const equipe = getEquipe(task).map(getMemberLabel).join(' | ');
                 const motorista = getMotorista(task);
                 const obs = observacoes[task.id]?.trim();
                 const mapsLink = task.pauta_endereco
                     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(task.pauta_endereco)}`
                     : null;
 
-                text += `\n⏱ ${horario}\n${task.title}\n`;
+                // Título e Horários
+                text += `\n${linhaHorario}\n*${task.title}*\n`;
+
                 if (task.pauta_endereco) {
-                    text += `Local: ${task.pauta_endereco}\n`;
-                    if (mapsLink) text += `📍 Maps: ${mapsLink}\n`;
+                    text += `📍 *Local:* ${task.pauta_endereco}`;
+                    if (mapsLink) text += ` (${mapsLink})`;
+                    text += `\n`;
                 }
-                if (equipe.length) text += `Equipe: ${equipe.join(' | ')}\n`;
-                if (motorista) {
-                    const saida = task.pauta_saida ? ` (Previsão de saída: ${formatHorario(task.pauta_saida)})` : '';
-                    text += `Motorista: ${getMemberLabel(motorista)}${saida}\n`;
-                }
-                if (obs) text += `📌 Observações: ${obs}\n`;
+
+                if (equipe.length) text += `*Equipe:* ${equipe}\n`;
+
+                const motoristaLabel = motorista ? getMemberLabel(motorista) : 'Motorista não selecionado';
+                const motoristaSaida = task.pauta_saida ? ` (Previsão de saída: ${formatHorario(task.pauta_saida)})` : '';
+                text += `\n*Motorista:* ${motoristaLabel}${motoristaSaida}\n`;
+
+                if (obs) text += `📌 *Observações:* ${obs}\n`;
             });
         });
 

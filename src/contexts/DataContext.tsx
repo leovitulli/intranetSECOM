@@ -185,8 +185,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         <DataContext.Provider value={{
             tasks, archivedTasks, team, events, suggestions, jobFunctions, secretarias, onlineUsers, 
             loading, searchTerm, setSearchTerm,
-            updateTaskStatus, updateTask: (task) => updateTask(task, team), addTask, deleteTask, 
-            archiveTask, unarchiveTask, addSuggestion, deleteSuggestion,
+            updateTaskStatus, updateTask, addTask, deleteTask, 
+                archiveTask, unarchiveTask, addSuggestion, deleteSuggestion,
             addJobFunction, updateJobFunction, removeJobFunction,
             addSecretaria, updateSecretaria, removeSecretaria,
             addEvent, updateEvent, deleteEvent,

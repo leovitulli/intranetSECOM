@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Building2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import TaskModal from '../components/TaskModal';
 import EventModal from '../components/EventModal';
@@ -40,7 +40,7 @@ export default function CalendarPage() {
     const [calendarError, setCalendarError] = useState('');
 
     // Filter State
-    const [selectedFilters, setSelectedFilters] = useState<string[]>(['release', 'arte', 'video', 'foto', 'inauguracao', 'sistema']);
+    const [activeFilter, setActiveFilter] = useState<string>('all');
 
     const [comemorativas, setComemorativas] = useState<CalendarEvent[]>([
         { id: '1', title: 'Confraternização Universal (Feriado)', type: 'feriado', date: parseISO('2026-01-01') },
@@ -49,7 +49,7 @@ export default function CalendarPage() {
     ]);
 
     const events = useMemo(() => {
-        const isNoFilterSelected = selectedFilters.length === 0;
+        const isAll = activeFilter === 'all';
 
         const mappedTasks: CalendarEvent[] = tasks
             .filter(t => {
@@ -57,15 +57,11 @@ export default function CalendarPage() {
                 return t.pauta_data || t.inauguracao_data || t.video_captacao_data || t.arte_entrega_data || t.dueDate;
             })
             .filter(t => {
-                if (isNoFilterSelected) return true;
-                if (selectedFilters.includes('inauguracao') && (t.status === 'inauguracao' || t.type.includes('inauguracao'))) return true;
-                return (t.type || []).some(type => selectedFilters.includes(type));
+                if (isAll) return true;
+                if (activeFilter === 'inauguracao' && (t.status === 'inauguracao' || t.type.includes('inauguracao'))) return true;
+                return (t.type || []).some(type => activeFilter === type);
             })
             .map(t => {
-                // Prioridade de exibição no calendário:
-                // 1. Pauta Geral ou Inauguração (O evento em si)
-                // 2. Captação de Vídeo ou Entrega de Arte (A produção)
-                // 3. Due Date (O prazo genérico)
                 let eventDate: Date;
                 
                 if (t.pauta_data) {
@@ -92,7 +88,7 @@ export default function CalendarPage() {
             });
 
         const mappedAgenda: CalendarEvent[] = agendaEvents
-            .filter(() => isNoFilterSelected || selectedFilters.includes('release') || selectedFilters.includes('video') || selectedFilters.includes('foto'))
+            .filter(() => isAll || activeFilter === 'release' || activeFilter === 'video' || activeFilter === 'foto')
             .map(e => ({
                 id: `agenda-${e.id}`,
                 title: `Externa: ${e.title}`,
@@ -100,10 +96,10 @@ export default function CalendarPage() {
                 date: e.date
             }));
 
-        const mappedSystem = comemorativas.filter(() => isNoFilterSelected || selectedFilters.includes('sistema'));
+        const mappedSystem = comemorativas.filter(() => isAll || activeFilter === 'sistema');
 
         return [...mappedTasks, ...mappedAgenda, ...mappedSystem];
-    }, [tasks, agendaEvents, comemorativas, selectedFilters]);
+    }, [tasks, agendaEvents, comemorativas, activeFilter]);
 
     // New Event Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -145,18 +141,23 @@ export default function CalendarPage() {
     // Generate Calendar Grid
     const renderHeader = () => {
         return (
-            <div className="calendar-navigation-header">
-                <div className="calendar-nav-controls">
-                    <button className="icon-btn-nav" onClick={prevMonth}><ChevronLeft size={20} /></button>
-                    <h2 className="current-month-title">{format(currentMonth, 'MMMM yyyy', { locale: ptBR })}</h2>
-                    <button className="icon-btn-nav" onClick={nextMonth}><ChevronRight size={20} /></button>
-                </div>
-                
-                <div className="calendar-legend">
-                    <span className="legend-item"><div className="legend-marker marker-pauta"></div> Pauta Oficial</span>
-                    <span className="legend-item"><div className="legend-marker marker-feriado"></div> Feriado Nacional/Local</span>
-                    <span className="legend-item"><div className="legend-marker marker-comemorativa"></div> Data Comemorativa</span>
-                    <span className="legend-item"><div className="legend-marker marker-inauguracao"></div> Inaugurações</span>
+            <div className="calendar-navigation-header" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#f8fafc', padding: '0.5rem 1rem', borderRadius: '12px' }}>
+                    <button 
+                        onClick={prevMonth} 
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', display: 'flex', alignItems: 'center' }}
+                    >
+                        <ChevronLeft size={20} />
+                    </button>
+                    <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-primary)', minWidth: '150px', textAlign: 'center', textTransform: 'capitalize' }}>
+                        {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
+                    </h2>
+                    <button 
+                        onClick={nextMonth} 
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', display: 'flex', alignItems: 'center' }}
+                    >
+                        <ChevronRight size={20} />
+                    </button>
                 </div>
             </div>
         );
@@ -232,77 +233,73 @@ export default function CalendarPage() {
 
     return (
         <div className="page-container calendar-page">
-            <div className="page-header">
-                <div>
-                    <h1>Calendário</h1>
-                    <p className="subtitle">Planejamento mensal de pautas, feriados e datas comemorativas.</p>
+            <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                <div style={{ flexShrink: 0 }}>
+                    <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800 }}>Calendário</h1>
+                    <p className="subtitle" style={{ margin: 0, opacity: 0.7 }}>Planejamento mensal de pautas e pautas extras.</p>
                 </div>
-                <div className="header-actions-group">
-                    <div className="calendar-filter-chips" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        {[
-                            { id: 'all', label: 'Todos' },
-                            { id: 'inauguracao', label: 'Inauguração' },
-                            { id: 'video', label: '🎬 Vídeos' },
-                            { id: 'foto', label: '📸 Fotos' },
-                            { id: 'release', label: '📝 Release' },
-                            { id: 'post', label: '📱 Post' },
-                            { id: 'arte', label: '🎨 Arte Gráfica' },
-                            { id: 'sistema', label: '⚙️ Sistema' },
-                        ].map(f => {
-                            const isAllSelected = selectedFilters.length === 6;
-                            const isActive = f.id === 'all' ? isAllSelected : selectedFilters.includes(f.id);
-                            
-                            let badgeClass = '';
-                            if (f.id === 'all') {
-                                badgeClass = 'badge-tag badge-todos';
-                            } else if (f.id === 'sistema') {
-                                badgeClass = 'badge-tag badge-sistema';
-                            } else {
-                                const typeMap: Record<string, string> = {
-                                    'foto': 'foto', 'video': 'video', 'release': 'release', 'inauguracao': 'inauguracao', 'arte': 'arte', 'post': 'post'
-                                };
-                                badgeClass = `badge-tag badge-${typeMap[f.id]}`;
-                            }
 
-                            return (
-                                <button
-                                    key={f.id}
-                                    className={`${badgeClass}`}
-                                    style={{
-                                        opacity: isActive ? 1 : 0.4,
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        padding: '0.4rem 1rem',
-                                        fontSize: '0.85rem',
-                                        transition: 'all 0.2s',
-                                        boxShadow: isActive ? '0 0 10px rgba(255,255,255,0.1)' : 'none'
-                                    }}
-                                    onClick={() => {
-                                        if (f.id === 'all') {
-                                            if (selectedFilters.length === 6) setSelectedFilters([]);
-                                            else setSelectedFilters(['video', 'foto', 'inauguracao', 'release', 'arte', 'sistema']);
-                                            return;
-                                        }
-                                        setSelectedFilters(prev =>
-                                            prev.includes(f.id)
-                                                ? prev.filter(x => x !== f.id)
-                                                : [...prev, f.id]
-                                        );
-                                    }}
-                                >
-                                    {f.id === 'all' && <Plus size={14} style={{ marginRight: '4px' }} />}
-                                    {f.id === 'inauguracao' && <Building2 size={12} style={{ marginRight: '4px' }} />}
-                                    {f.label}
-                                </button>
-                            );
-                        })}
-                    </div>
-                    <button className="btn-add-event" onClick={() => setIsModalOpen(true)}>
+                {/* Filtros Rápidos - Iguais ao Cronograma */}
+                <div className="calendar-filters" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center', flex: 1 }}>
+                    {[
+                        { id: 'all', label: '🗒️ Todos' },
+                        { id: 'inauguracao', label: '🏛️ Inauguração' },
+                        { id: 'video', label: '🎬 Vídeo' },
+                        { id: 'foto', label: '📸 Fotos' },
+                        { id: 'release', label: '📝 Release' },
+                        { id: 'post', label: '📱 Post' },
+                        { id: 'arte', label: '🎨 Arte Gráfica' },
+                        { id: 'sistema', label: '⚙️ Feriados' },
+                    ].map(f => {
+                        const isActive = activeFilter === f.id;
+                        
+                        const typeMap: Record<string, string> = {
+                            'foto': 'foto', 'video': 'video', 'release': 'release', 'inauguracao': 'inauguracao', 'arte': 'arte', 'post': 'post', 'sistema': 'sistema', 'all': 'todos'
+                        };
+                        const badgeClass = `badge-tag badge-${typeMap[f.id] || 'todos'}`;
+
+                        return (
+                            <button
+                                key={f.id}
+                                className={`${badgeClass} ${isActive ? 'active' : ''}`}
+                                onClick={() => setActiveFilter(f.id)}
+                                style={{ 
+                                    cursor: 'pointer', 
+                                    border: 'none',
+                                    outline: 'none',
+                                    opacity: isActive ? 1 : 0.45,
+                                    transform: isActive ? 'scale(1.06)' : 'scale(1)',
+                                    transition: 'all 0.2s ease',
+                                    fontWeight: isActive ? 800 : 500,
+                                    boxShadow: isActive ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
+                                    padding: '8px 16px',
+                                    fontSize: '0.78rem',
+                                    borderRadius: '10px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    background: 'white',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                {f.label}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Botão de Adicionar - Premium (Como a nav do Cronograma) */}
+                <div className="week-navigation-premium" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', padding: '0.4rem', borderRadius: '14px', border: '1px solid var(--color-border)', boxShadow: '0 4px 15px rgba(0,0,0,0.04)', flexShrink: 0 }}>
+                    <button 
+                        className="btn-today-premium"
+                        onClick={() => setIsModalOpen(true)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.1rem', borderRadius: '10px', border: 'none', background: 'hsl(var(--color-primary))', color: '#ffffff', fontWeight: 750, fontSize: '0.8rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 12px hsla(var(--color-primary), 0.3)' }}
+                    >
                         <Plus size={18} />
-                        Adicionar Data/Evento
+                        ADICIONAR DATA
                     </button>
+                </div>
             </div>
-        </div>
 
         <div className="calendar-full-wrapper glass">
                 {renderHeader()}
@@ -367,7 +364,6 @@ export default function CalendarPage() {
                                         >
                                             <option value="comemorativa">Data Comemorativa</option>
                                             <option value="feriado">Feriado</option>
-                                            <option value="pauta">Pauta Agendada</option>
                                         </select>
                                     </div>
                                 </div>

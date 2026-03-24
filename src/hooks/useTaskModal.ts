@@ -39,6 +39,14 @@ export function useTaskModal(task: Task, onUpdateTask: (t: Task) => void, onClos
     const [isEditingEquipe, setIsEditingEquipe] = useState(false);
     const [isEditingExtras, setIsEditingExtras] = useState(false);
 
+    // ── Estado de edição para outras abas ─────────────────────────────────────
+    const [isEditingRelease, setIsEditingRelease] = useState(false);
+    const [isEditingVideo, setIsEditingVideo] = useState(false);
+    const [isEditingFoto, setIsEditingFoto] = useState(false);
+    const [isEditingArte, setIsEditingArte] = useState(false);
+    const [isEditingPost, setIsEditingPost] = useState(false);
+    const [isEditingInauguracao, setIsEditingInauguracao] = useState(false);
+
     // ── Abas ───────────────────────────────────────────────────────────────────
     const [activeTab, setActiveTab] = useState<ActiveTab>('geral');
 
@@ -346,6 +354,12 @@ export function useTaskModal(task: Task, onUpdateTask: (t: Task) => void, onClos
         isEditingAgendamento, setIsEditingAgendamento,
         isEditingEquipe, setIsEditingEquipe,
         isEditingExtras, setIsEditingExtras,
+        isEditingRelease, setIsEditingRelease,
+        isEditingVideo, setIsEditingVideo,
+        isEditingFoto, setIsEditingFoto,
+        isEditingArte, setIsEditingArte,
+        isEditingPost, setIsEditingPost,
+        isEditingInauguracao, setIsEditingInauguracao,
         // actions
         setActiveTab,
         setNewComment,

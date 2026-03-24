@@ -29,6 +29,20 @@ export function useTasksData() {
         }
     };
 
+    const formatDateForDb = (date: any) => {
+        if (!date) return null;
+        if (date instanceof Date) return date.toISOString();
+        if (typeof date === 'string') return date;
+        return null;
+    };
+
+    const formatDateOnlyForDb = (date: any) => {
+        if (!date) return null;
+        if (date instanceof Date) return date.toISOString().split('T')[0];
+        if (typeof date === 'string') return date.split('T')[0];
+        return null;
+    };
+
     const addTask = async (taskData: Omit<Task, 'id' | 'comments' | 'attachments'>): Promise<{ success: boolean; error?: any }> => {
         try {
             console.log("🚀 Iniciando criação Atômica de Pauta via Hook...");
@@ -46,12 +60,6 @@ export function useTasksData() {
 
             let finalStatus = taskData.status || 'solicitado';
 
-            console.log("🛠️ Chamando RPC create_task_atomic com:", {
-                p_title: taskData.title,
-                p_status: finalStatus,
-                p_assignee_count: assigneeIds.length
-            });
-
             const { data, error: rpcError } = await supabase.rpc('create_task_atomic', {
                 p_title: taskData.title,
                 p_description: taskData.description || '',
@@ -59,14 +67,14 @@ export function useTasksData() {
                 p_priority: taskData.priority || 'baixa',
                 p_type: taskData.type || [],
                 p_creator: taskData.creator || 'Sistema',
-                p_due_date: taskData.dueDate instanceof Date ? taskData.dueDate.toISOString() : null,
+                p_due_date: formatDateForDb(taskData.dueDate),
                 p_assignee_ids: assigneeIds || [],
                 p_inauguracao_nome: taskData.inauguracao_nome || null,
                 p_inauguracao_endereco: taskData.inauguracao_endereco || null,
                 p_inauguracao_secretarias: taskData.inauguracao_secretarias || [],
                 p_inauguracao_tipo: taskData.inauguracao_tipo || null,
                 p_inauguracao_checklist: taskData.inauguracao_checklist || null,
-                p_inauguracao_data: taskData.inauguracao_data instanceof Date ? taskData.inauguracao_data.toISOString().split('T')[0] : null,
+                p_inauguracao_data: formatDateOnlyForDb(taskData.inauguracao_data),
                 p_pauta_data: taskData.pauta_data || null,
                 p_pauta_horario: taskData.pauta_horario || null,
                 p_pauta_endereco: taskData.pauta_endereco || null,
@@ -75,14 +83,14 @@ export function useTasksData() {
                 p_presenca_prefeito: taskData.presenca_prefeito || false,
                 p_secretarias: taskData.secretarias || [],
                 p_video_captacao_equipe: taskData.video_captacao_equipe || [],
-                p_video_captacao_data: taskData.video_captacao_data instanceof Date ? taskData.video_captacao_data.toISOString().split('T')[0] : null,
+                p_video_captacao_data: formatDateOnlyForDb(taskData.video_captacao_data),
                 p_video_edicao_equipe: taskData.video_edicao_equipe || [],
-                p_video_edicao_data: taskData.video_edicao_data instanceof Date ? taskData.video_edicao_data.toISOString().split('T')[0] : null,
+                p_video_edicao_data: formatDateOnlyForDb(taskData.video_edicao_data),
                 p_video_briefing: taskData.video_briefing || null,
                 p_video_necessidades: taskData.video_necessidades || [],
-                p_video_entrega_data: taskData.video_entrega_data instanceof Date ? taskData.video_entrega_data.toISOString().split('T')[0] : null,
+                p_video_entrega_data: formatDateOnlyForDb(taskData.video_entrega_data),
                 p_arte_tipo_pecas: taskData.arte_tipo_pecas || null,
-                p_arte_entrega_data: taskData.arte_entrega_data instanceof Date ? taskData.arte_entrega_data.toISOString().split('T')[0] : null,
+                p_arte_entrega_data: formatDateOnlyForDb(taskData.arte_entrega_data),
                 p_post_criacao_texto: taskData.post_criacao_texto || null,
                 p_post_criacao_corrigido: taskData.post_criacao_corrigido || false,
                 p_post_aprovado: taskData.post_aprovado || false,
@@ -91,10 +99,11 @@ export function useTasksData() {
                 p_post_horario_postagem: taskData.post_horario_postagem || null,
                 p_post_reprovado: taskData.post_reprovado || false,
                 p_post_reprovado_comentario: taskData.post_reprovado_comentario || null,
-                p_post_material_solicitado: taskData.post_material_solicitado || []
+                p_post_material_solicitado: taskData.post_material_solicitado || [],
+                p_foto_briefing: taskData.foto_briefing || null,
+                p_arte_pecas: taskData.arte_pecas || null,
+                p_arte_informacoes: taskData.arte_informacoes || null
             });
-
-            console.log("📝 Resposta RPC:", { data: !!data, error: rpcError });
 
             if (rpcError) {
                 console.error("❌ Erro RPC (Hook):", rpcError);
@@ -103,9 +112,7 @@ export function useTasksData() {
 
             if (data) {
                 const newTask = formatTaskFromDb(data);
-                // Injetar os nomes dos responsáveis para o card local (RPC retorna apenas a linha 'tasks')
                 newTask.assignees = taskData.assignees || [];
-                
                 setTasks(prev => [newTask, ...prev]);
                 return { success: true };
             }
@@ -134,13 +141,20 @@ export function useTasksData() {
         }
     };
 
-    const updateTask = async (updatedTask: Task, team: any[]) => {
+    const updateTask = async (updatedTask: Task) => {
         try {
             console.log("🛠️ Iniciando atualização Atômica de Pauta via Hook...");
             
+            // Buscar equipe atualizada para mapeamento de IDs (Segurança contra undefined)
+            const { data: teamData, error: teamError } = await supabase.from('users').select('id, name');
+            if (teamError) {
+                console.error("❌ Erro ao buscar equipe para atualização:", teamError);
+                return;
+            }
+
             // Mapear responsáveis para IDs
             const assigneeIds = (updatedTask.assignees || [])
-                .map(name => team.find(m => m.name === name)?.id)
+                .map(name => teamData?.find((m: any) => m.name === name)?.id)
                 .filter(Boolean) as string[];
 
             const { data, error } = await supabase.rpc('update_task_atomic', {
@@ -150,14 +164,15 @@ export function useTasksData() {
                 p_status: updatedTask.status,
                 p_priority: updatedTask.priority,
                 p_type: updatedTask.type || [],
-                p_due_date: updatedTask.dueDate instanceof Date ? updatedTask.dueDate.toISOString() : null,
+                p_creator: updatedTask.creator || 'Sistema',
+                p_due_date: formatDateForDb(updatedTask.dueDate),
                 p_assignee_ids: assigneeIds || [],
                 p_inauguracao_nome: updatedTask.inauguracao_nome || null,
                 p_inauguracao_endereco: updatedTask.inauguracao_endereco || null,
                 p_inauguracao_secretarias: updatedTask.inauguracao_secretarias || [],
                 p_inauguracao_tipo: updatedTask.inauguracao_tipo || null,
                 p_inauguracao_checklist: updatedTask.inauguracao_checklist || null,
-                p_inauguracao_data: updatedTask.inauguracao_data instanceof Date ? updatedTask.inauguracao_data.toISOString().split('T')[0] : null,
+                p_inauguracao_data: formatDateOnlyForDb(updatedTask.inauguracao_data),
                 p_pauta_data: updatedTask.pauta_data || null,
                 p_pauta_horario: updatedTask.pauta_horario || null,
                 p_pauta_endereco: updatedTask.pauta_endereco || null,
@@ -166,14 +181,14 @@ export function useTasksData() {
                 p_presenca_prefeito: updatedTask.presenca_prefeito || false,
                 p_secretarias: updatedTask.secretarias || [],
                 p_video_captacao_equipe: updatedTask.video_captacao_equipe || [],
-                p_video_captacao_data: updatedTask.video_captacao_data instanceof Date ? updatedTask.video_captacao_data.toISOString().split('T')[0] : null,
+                p_video_captacao_data: formatDateOnlyForDb(updatedTask.video_captacao_data),
                 p_video_edicao_equipe: updatedTask.video_edicao_equipe || [],
-                p_video_edicao_data: updatedTask.video_edicao_data instanceof Date ? updatedTask.video_edicao_data.toISOString().split('T')[0] : null,
+                p_video_edicao_data: formatDateOnlyForDb(updatedTask.video_edicao_data),
                 p_video_briefing: updatedTask.video_briefing || null,
                 p_video_necessidades: updatedTask.video_necessidades || [],
-                p_video_entrega_data: updatedTask.video_entrega_data instanceof Date ? updatedTask.video_entrega_data.toISOString().split('T')[0] : null,
+                p_video_entrega_data: formatDateOnlyForDb(updatedTask.video_entrega_data),
                 p_arte_tipo_pecas: updatedTask.arte_tipo_pecas || null,
-                p_arte_entrega_data: updatedTask.arte_entrega_data instanceof Date ? updatedTask.arte_entrega_data.toISOString().split('T')[0] : null,
+                p_arte_entrega_data: formatDateOnlyForDb(updatedTask.arte_entrega_data),
                 p_post_criacao_texto: updatedTask.post_criacao_texto || null,
                 p_post_criacao_corrigido: updatedTask.post_criacao_corrigido || false,
                 p_post_aprovado: updatedTask.post_aprovado || false,
@@ -182,7 +197,10 @@ export function useTasksData() {
                 p_post_horario_postagem: updatedTask.post_horario_postagem || null,
                 p_post_reprovado: updatedTask.post_reprovado || false,
                 p_post_reprovado_comentario: updatedTask.post_reprovado_comentario || null,
-                p_post_material_solicitado: updatedTask.post_material_solicitado || []
+                p_post_material_solicitado: updatedTask.post_material_solicitado || [],
+                p_foto_briefing: updatedTask.foto_briefing || null,
+                p_arte_pecas: updatedTask.arte_pecas || null,
+                p_arte_informacoes: updatedTask.arte_informacoes || null
             });
 
             if (error) {
