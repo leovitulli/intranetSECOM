@@ -61,7 +61,7 @@ export const TaskModalSidebar: React.FC<TaskModalSidebarProps> = ({
                                 <RotateCcw size={16} /> Reativar Pauta
                             </button>
                         ) : (
-                            <button className="btn-side-action-premium" onClick={() => onArchive((id) => { /* callback from useTaskModal handleArchive */ })}>
+                            <button className="btn-side-action-premium" onClick={() => onArchive(() => { /* callback from useTaskModal handleArchive */ })}>
                                 <Archive size={16} /> Arquivar Pauta
                             </button>
                         )

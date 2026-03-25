@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import type { Task, Attachment } from '../types/kanban';
 import { useAuth } from '../contexts/AuthContext';
