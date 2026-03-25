@@ -178,11 +178,14 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                 post_material_solicitado: types.map(t => {
                     if (t === 'video') return 'Vídeo';
                     if (t === 'foto') return 'Foto';
+                    if (t === 'inauguracao') return 'Inauguração';
                     return t.charAt(0).toUpperCase() + t.slice(1);
                 }),
             };
 
+            console.log("🚀 Enviando nova pauta para onCreate...");
             const { success, error: apiError } = await onCreate(newTask);
+            console.log("🏁 Resultado onCreate:", { success, apiError });
             if (success) {
                 onClose();
             } else {
@@ -270,6 +273,49 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                                     value={description}
                                     onChange={e => setDescription(e.target.value)}
                                 />
+                            </div>
+
+                            <div style={{ borderTop: '1px dashed #e2e8f0', paddingTop: '1.25rem', marginTop: '0.5rem' }}>
+                                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '0.75rem', letterSpacing: '0.05em' }}>
+                                    Entregáveis Solicitados
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.6rem' }}>
+                                    {([
+                                        { id: 'release', label: 'Release' },
+                                        { id: 'post', label: 'Post' },
+                                        { id: 'video', label: 'Vídeo' },
+                                        { id: 'foto', label: 'Foto' },
+                                        { id: 'arte', label: 'Arte' },
+                                        { id: 'inauguracao', label: 'Inauguração' },
+                                    ] as { id: TaskType; label: string }[]).map(mat => {
+                                        const isActive = types.includes(mat.id);
+                                        return (
+                                            <button
+                                                key={mat.id}
+                                                type="button"
+                                                onClick={() => setTypes(prev => prev.includes(mat.id) ? prev.filter(m => m !== mat.id) : [...prev, mat.id])}
+                                                className={`prio-pill-premium ${isActive ? 'active' : ''}`}
+                                                style={{ 
+                                                    padding: '0.6rem', 
+                                                    fontSize: '0.8rem', 
+                                                    fontWeight: 700, 
+                                                    display: 'flex', 
+                                                    justifyContent: 'center', 
+                                                    alignItems: 'center', 
+                                                    background: isActive ? '#1e293b' : 'white', 
+                                                    color: isActive ? 'white' : '#475569', 
+                                                    border: '1.5px solid', 
+                                                    borderColor: isActive ? '#1e293b' : '#e2e8f0', 
+                                                    cursor: 'pointer', 
+                                                    borderRadius: 10,
+                                                    transition: 'all 0.2s'
+                                                }}
+                                            >
+                                                {mat.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
 
@@ -485,32 +531,6 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                                 </div>
                             </div>
 
-                            <div className="modal-section-group-premium" style={{ marginTop: '1.5rem' }}>
-                                <div className="section-header-premium">
-                                    <span className="section-number-premium">📦</span>
-                                    <h3>Material Solicitado</h3>
-                                </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
-                                    {([
-                                        { id: 'release', label: 'Release' },
-                                        { id: 'post', label: 'Post' },
-                                        { id: 'video', label: 'Vídeo' },
-                                        { id: 'foto', label: 'Foto' },
-                                        { id: 'arte', label: 'Arte' },
-                                    ] as { id: TaskType; label: string }[]).map(mat => {
-                                        const isActive = types.includes(mat.id);
-                                        return (
-                                            <button key={mat.id} type="button"
-                                                onClick={() => setTypes(prev => prev.includes(mat.id) ? prev.filter(m => m !== mat.id) : [...prev, mat.id])}
-                                                className={`prio-pill-premium ${isActive ? 'active' : ''}`}
-                                                style={{ padding: '1rem', fontSize: '1rem', fontWeight: 700, display: 'flex', justifyContent: 'center', alignItems: 'center', background: isActive ? '#1e293b' : 'white', color: isActive ? 'white' : '#475569', border: '1.5px solid', borderColor: isActive ? '#1e293b' : '#e2e8f0', transition: 'all 0.2s', cursor: 'pointer' }}
-                                            >
-                                                {mat.label}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
                         </div>
                     )}
 
@@ -680,7 +700,7 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                     <div className="nova-pauta-footer-premium">
                         <button type="button" className="btn-cancel-premium" onClick={onClose} disabled={isSubmitting}>Cancelar</button>
                         <button type="submit" className="btn-save-premium" disabled={!title || isSubmitting}>
-                            <span>{isSubmitting ? 'Criando Pauta...' : 'Criar Pauta'}</span>
+                            <span>{isSubmitting ? 'Processando...' : 'Criar Pauta'}</span>
                         </button>
                     </div>
                 </form>

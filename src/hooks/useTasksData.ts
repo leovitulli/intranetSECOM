@@ -43,20 +43,21 @@ export function useTasksData() {
         return null;
     };
 
-    const addTask = async (taskData: Omit<Task, 'id' | 'comments' | 'attachments'>): Promise<{ success: boolean; error?: any }> => {
+    const addTask = async (taskData: Omit<Task, 'id' | 'comments' | 'attachments'>, teamIds?: string[]): Promise<{ success: boolean; error?: any }> => {
         try {
             console.log("🚀 Iniciando criação Atômica de Pauta via Hook...");
             
-            // Mapear responsáveis para IDs (Necessário para a RPC)
-            const { data: teamData, error: teamError } = await supabase.from('users').select('id, name');
-            if (teamError) {
-                console.error("❌ Erro ao buscar equipe:", teamError);
-                return { success: false, error: teamError };
+            let assigneeIds = teamIds || [];
+            
+            // Se não recebeu os IDs prontos, tenta mapear pelos nomes (compatibilidade legada)
+            if (!teamIds || teamIds.length === 0) {
+                const { data: teamData, error: teamError } = await supabase.from('users').select('id, name');
+                if (!teamError && teamData) {
+                    assigneeIds = (taskData.assignees || [])
+                        .map(name => teamData.find((m: any) => m.name === name)?.id)
+                        .filter(Boolean) as string[];
+                }
             }
-
-            const assigneeIds = (taskData.assignees || [])
-                .map(name => teamData?.find((m: any) => m.name === name)?.id)
-                .filter(Boolean) as string[];
 
             let finalStatus = taskData.status || 'solicitado';
 
@@ -110,6 +111,7 @@ export function useTasksData() {
                 return { success: false, error: rpcError };
             }
 
+
             if (data) {
                 const newTask = formatTaskFromDb(data);
                 newTask.assignees = taskData.assignees || [];
@@ -141,21 +143,19 @@ export function useTasksData() {
         }
     };
 
-    const updateTask = async (updatedTask: Task) => {
+    const updateTask = async (updatedTask: Task, teamIds?: string[]) => {
         try {
-            console.log("🛠️ Iniciando atualização Atômica de Pauta via Hook...");
-            
-            // Buscar equipe atualizada para mapeamento de IDs (Segurança contra undefined)
-            const { data: teamData, error: teamError } = await supabase.from('users').select('id, name');
-            if (teamError) {
-                console.error("❌ Erro ao buscar equipe para atualização:", teamError);
-                return;
-            }
+            let assigneeIds = teamIds || [];
 
-            // Mapear responsáveis para IDs
-            const assigneeIds = (updatedTask.assignees || [])
-                .map(name => teamData?.find((m: any) => m.name === name)?.id)
-                .filter(Boolean) as string[];
+            // Mapear responsáveis para IDs se necessário
+            if (!teamIds || teamIds.length === 0) {
+                const { data: teamData, error: teamError } = await supabase.from('users').select('id, name');
+                if (!teamError && teamData) {
+                    assigneeIds = (updatedTask.assignees || [])
+                        .map(name => teamData.find((m: any) => m.name === name)?.id)
+                        .filter(Boolean) as string[];
+                }
+            }
 
             const { data, error } = await supabase.rpc('update_task_atomic', {
                 p_task_id: updatedTask.id,
@@ -205,8 +205,9 @@ export function useTasksData() {
 
             if (error) {
                 console.error('❌ Erro RPC update_task_atomic:', error);
-                return;
+                throw error; // Re-throw to allow caller to handle failure (e.g. stop loading)
             }
+
 
             // Atualiza localmente
             if (data) {

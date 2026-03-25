@@ -29,6 +29,7 @@ export function useTaskModal(task: Task, onUpdateTask: (t: Task) => void, onClos
     // ── Estado da tarefa (buffer local) ────────────────────────────────────────
     const [editedTask, setEditedTask] = useState<Task>(() => hydrateTask(task));
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     // ── Estado de edição inline por seção ──────────────────────────────────────
     const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -121,21 +122,31 @@ export function useTaskModal(task: Task, onUpdateTask: (t: Task) => void, onClos
 
     /** Salva o buffer no banco via onUpdateTask — NÃO fecha o modal por padrão */
     const handleSave = async (closeAfter = false) => {
-        const combinedHorario =
-            editedTask.pauta_horario_start && editedTask.pauta_horario_end
-                ? `${editedTask.pauta_horario_start} às ${editedTask.pauta_horario_end}`
-                : editedTask.pauta_horario_start || editedTask.pauta_horario_end || editedTask.pauta_horario || '';
+        if (isSaving) return; // Evita duplo clique
+        
+        setIsSaving(true);
+        try {
+            const combinedHorario =
+                editedTask.pauta_horario_start && editedTask.pauta_horario_end
+                    ? `${editedTask.pauta_horario_start} às ${editedTask.pauta_horario_end}`
+                    : editedTask.pauta_horario_start || editedTask.pauta_horario_end || editedTask.pauta_horario || '';
 
-        const taskToSave: Task = {
-            ...editedTask,
-            pauta_horario: combinedHorario,
-            // secretarias é a fonte de verdade; mantemos o campo legado em sincronia
-            inauguracao_secretarias: editedTask.secretarias,
-        };
+            const taskToSave: Task = {
+                ...editedTask,
+                pauta_horario: combinedHorario,
+                // secretarias é a fonte de verdade; mantemos o campo legado em sincronia
+                inauguracao_secretarias: editedTask.secretarias,
+            };
 
-        await onUpdateTask(taskToSave);
-        setHasUnsavedChanges(false);
-        if (closeAfter) onClose();
+            await onUpdateTask(taskToSave);
+            setHasUnsavedChanges(false);
+            if (closeAfter) onClose();
+        } catch (error) {
+            console.error("❌ Falha crítica ao salvar pauta:", error);
+            // O erro já deve ter sido logado pelo useTasksData
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     /** Salva inline de uma seção específica sem fechar o modal */
@@ -376,6 +387,7 @@ export function useTaskModal(task: Task, onUpdateTask: (t: Task) => void, onClos
         closeConfirm,
         getDayOfWeek,
         unarchiveTask,
+        isSaving,
     };
 }
 
