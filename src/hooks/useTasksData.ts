@@ -127,19 +127,31 @@ export function useTasksData() {
 
     const updateTaskStatus = async (taskId: string, newStatus: Task['status']) => {
         const prevTask = tasks.find(t => t.id === taskId) || archivedTasks.find(t => t.id === taskId);
-        const prevStatus = prevTask ? prevTask.status : 'desconhecido';
+        const prevStatus = prevTask ? prevTask.status : 'solicitado';
 
+        if (prevStatus === newStatus) return;
+
+        // 1. Atualização Otimista
         setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
 
-        const { error } = await supabase
-            .from('tasks')
-            .update({ status: newStatus })
-            .eq('id', taskId);
+        try {
+            // 2. Chamada via RPC Atômica (Garante log e permissão)
+            const { error } = await supabase.rpc('update_task_status_atomic', {
+                p_task_id: taskId,
+                p_new_status: newStatus
+            });
 
-        if (error) {
-            console.error('Failed to update status:', error);
-        } else if (prevStatus !== newStatus) {
-            await logActivity(taskId, 'status_change', `Moveu de ${prevStatus.toUpperCase()} para ${newStatus.toUpperCase()}`);
+            if (error) {
+                console.error('❌ Falha ao mover card (DB):', error);
+                throw error;
+            }
+        } catch (error: any) {
+            // 3. Rollback em caso de erro
+            console.error('💥 Rollback ativado para o card:', taskId);
+            setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: prevStatus } : t));
+            
+            // Opcional: Mostrar alerta amigável
+            alert(`Não foi possível mover o card: ${error.message || 'Erro de permissão'}`);
         }
     };
 
