@@ -47,85 +47,76 @@ interface TopicGroup {
     keywords: string[];
 }
 
-// ─── DADOS MOCKADOS (substituir pela API do Instagram) ────────────────────────
+// ─── DADOS MOCKADOS (Baseado no perfil real @prefeituraguarulhosoficial) ──────
 
 const MOCKED_COMMENTS: Comment[] = [
     {
         id: '1', post_id: 'p1',
-        post_preview: 'Nova pavimentação no Bairro São João',
-        post_image: 'https://images.unsplash.com/photo-1541675154750-0444c7d51e8e?w=400&h=400&fit=crop',
-        author: 'Maria S.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Maria',
-        text: 'Finalmente! Essa rua estava um absurdo há anos. Parabéns à prefeitura 👏',
-        timestamp: '2026-03-25T14:22:00', likes: 48, sentiment: 'positive', topic: 'Obras e Pavimentação', replied: true,
-        reply_text: 'Obrigado pelo carinho! Continuamos trabalhando por uma Guarulhos cada vez melhor. 🏛️'
+        post_preview: 'Obras do Novo Viaduto Cecap/Dutra',
+        post_image: 'https://images.unsplash.com/photo-1590483734159-4670221375a0?w=400&h=400&fit=crop',
+        author: 'Guilherme R.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Guilherme',
+        text: 'Esse viaduto no Cecap vai ajudar demais quem mora aqui. Parabéns pela obra! 👏',
+        timestamp: '2026-03-25T14:22:00', likes: 156, sentiment: 'positive', topic: 'Obras Cecap', replied: true,
+        reply_text: 'Obrigado, Guilherme! Essa é uma obra estratégica para destravar o trânsito na região. 🏛️'
     },
     {
         id: '2', post_id: 'p1',
-        post_preview: 'Nova pavimentação no Bairro São João',
-        post_image: 'https://images.unsplash.com/photo-1541675154750-0444c7d51e8e?w=400&h=400&fit=crop',
-        author: 'Carlos M.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Carlos',
-        text: 'E os buracos da Av. São Paulo? Tá cheio de cratera lá e ninguém faz nada... 😤',
-        timestamp: '2026-03-25T15:01:00', likes: 112, sentiment: 'negative', topic: 'Obras e Pavimentação', replied: false,
+        post_preview: 'Obras do Novo Viaduto Cecap/Dutra',
+        post_image: 'https://images.unsplash.com/photo-1590483734159-4670221375a0?w=400&h=400&fit=crop',
+        author: 'Juliana P.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Juliana',
+        text: 'E a poeira aqui no Cecap? Ninguém aguenta mais. Quando termina essa obra? 😤',
+        timestamp: '2026-03-25T15:01:00', likes: 89, sentiment: 'negative', topic: 'Obras Cecap', replied: false,
     },
     {
         id: '3', post_id: 'p2',
-        post_preview: 'Inauguração do novo UBS Centro',
-        post_image: 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=400&h=400&fit=crop',
-        author: 'Ana V.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ana',
-        text: 'Minha mãe precisou de atendimento ontem e foi super bem recebida. Que diferença!',
-        timestamp: '2026-03-24T09:45:00', likes: 77, sentiment: 'positive', topic: 'Saúde e UBS', replied: true,
-        reply_text: 'Fico muito feliz em saber disso! Nosso compromisso é garantir saúde de qualidade para todos. 💙'
+        post_preview: 'Chegada da Linha 2-Verde do Metrô',
+        post_image: 'https://images.unsplash.com/photo-1510252199042-88846c430e84?w=400&h=400&fit=crop',
+        author: 'Ricardo S.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ricardo',
+        text: 'Metrô em Guarulhos é um sonho de gerações. Finalmente saindo do papel! 🚇✨',
+        timestamp: '2026-03-24T09:45:00', likes: 342, sentiment: 'positive', topic: 'Expansão Metrô', replied: true,
+        reply_text: 'É um marco histórico para nossa cidade! Seguimos acompanhando cada passo dessa conquista. 💙'
     },
     {
         id: '4', post_id: 'p2',
-        post_preview: 'Inauguração do novo UBS Centro',
-        post_image: 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=400&h=400&fit=crop',
-        author: 'Pedro R.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pedro',
-        text: 'Fui ontem e esperei 3 horas numa fila enorme. Não faz sentido inaugurar e não ter médicos suficientes.',
-        timestamp: '2026-03-24T11:10:00', likes: 203, sentiment: 'negative', topic: 'Saúde e UBS', replied: false,
+        post_preview: 'Chegada da Linha 2-Verde do Metrô',
+        post_image: 'https://images.unsplash.com/photo-1510252199042-88846c430e84?w=400&h=400&fit=crop',
+        author: 'Marcos T.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marcos',
+        text: 'Até parece... Essa obra vai demorar 20 anos. Quero ver se termina nesse mandato.',
+        timestamp: '2026-03-24T11:10:00', likes: 45, sentiment: 'negative', topic: 'Expansão Metrô', replied: false,
     },
     {
         id: '5', post_id: 'p3',
-        post_preview: 'Festival Cultural de Guarulhos',
-        post_image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&h=400&fit=crop',
-        author: 'Juliana L.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Juliana',
-        text: 'Evento incrível! Toda a família foi e adorou. Mais eventos assim por favor! 🎉',
-        timestamp: '2026-03-23T20:30:00', likes: 89, sentiment: 'positive', topic: 'Cultura e Eventos', replied: true,
-        reply_text: 'Que alegria ter toda a família no festival! Haverá muito mais eventos em breve. 🎭'
+        post_preview: 'Nova Iluminação LED no Bonsucesso',
+        post_image: 'https://images.unsplash.com/photo-1565814329452-e1efa11c5b89?w=400&h=400&fit=crop',
+        author: 'Camila F.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Camila',
+        text: 'O Bonsucesso estava precisando! Ficou muito mais seguro caminhar à noite. 💡',
+        timestamp: '2026-03-23T20:30:00', likes: 120, sentiment: 'positive', topic: 'Zeladoria e LED', replied: true,
+        reply_text: 'Segurança e modernidade! O programa Ilumina Guarulhos vai chegar a todos os bairros. 🎭'
     },
     {
         id: '6', post_id: 'p4',
-        post_preview: 'Ampliação da rede de ciclovias',
-        post_image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop',
-        author: 'Roberto A.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Roberto',
-        text: 'Ainda precisamos de ciclovia integrando com o metrô. Vai ter previsão?',
-        timestamp: '2026-03-22T08:15:00', likes: 156, sentiment: 'neutral', topic: 'Mobilidade Urbana', replied: false,
+        post_preview: 'Mutirão de Saúde: Exames de Imagem',
+        post_image: 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=400&h=400&fit=crop',
+        author: 'Alessandra M.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alessandra',
+        text: 'Preciso de um exame de vista. Onde faço a inscrição pro mutirão?',
+        timestamp: '2026-03-22T08:15:00', likes: 210, sentiment: 'neutral', topic: 'Saúde Guarulhos', replied: false,
     },
     {
-        id: '7', post_id: 'p4',
-        post_preview: 'Ampliação da rede de ciclovias',
-        post_image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop',
-        author: 'Fernanda K.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Fernanda',
-        text: 'Meu bairro, Jardim Tranquilidade, não tem ciclovia. Quando chega?',
-        timestamp: '2026-03-22T09:50:00', likes: 34, sentiment: 'neutral', topic: 'Mobilidade Urbana', replied: false,
-    },
-    {
-        id: '8', post_id: 'p5',
-        post_preview: 'Recolhimento seletivo de lixo',
+        id: '7', post_id: 'p5',
+        post_preview: 'Recuperação de área verde no Pimentas',
         post_image: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=400&h=400&fit=crop',
-        author: 'Paulo T.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Paulo',
-        text: 'O caminhão de lixo reciclável parou de vir no meu bairro há 2 semanas.',
-        timestamp: '2026-03-21T16:00:00', likes: 67, sentiment: 'negative', topic: 'Zeladoria e Limpeza', replied: true,
-        reply_text: 'Lamentamos o inconveniente. Identificamos o problema na rota e a coleta está normalizada. Obrigado por avisar!'
+        author: 'Fábio H.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Fabio',
+        text: 'E o lixo acumulado aqui na rua de trás? Adianta nada plantar árvore se não limpam. 😡',
+        timestamp: '2026-03-21T16:00:00', likes: 56, sentiment: 'negative', topic: 'Zeladoria e LED', replied: true,
+        reply_text: 'Fábio, nossa equipe de zeladoria já foi acionada para o local. Em breve estará tudo limpo! 🏛️'
     },
 ];
 
 const TOPIC_GROUPS: TopicGroup[] = [
-    { label: 'Obras e Pavimentação', count: 2, sentiment_avg: 'neutral', keywords: ['buraco', 'pavimentação', 'asfalto', 'rua'] },
-    { label: 'Saúde e UBS', count: 2, sentiment_avg: 'neutral', keywords: ['UBS', 'médico', 'fila', 'atendimento'] },
-    { label: 'Cultura e Eventos', count: 1, sentiment_avg: 'positive', keywords: ['festival', 'evento', 'cultura', 'família'] },
-    { label: 'Mobilidade Urbana', count: 2, sentiment_avg: 'neutral', keywords: ['ciclovia', 'metrô', 'ônibus', 'transporte'] },
-    { label: 'Zeladoria e Limpeza', count: 1, sentiment_avg: 'negative', keywords: ['lixo', 'coleta', 'reciclagem', 'entulho'] },
+    { label: 'Obras Cecap', count: 2, sentiment_avg: 'neutral', keywords: ['viaduto', 'poeira', 'transito', 'obra'] },
+    { label: 'Expansão Metrô', count: 2, sentiment_avg: 'positive', keywords: ['metrô', 'sonho', 'transporte', 'conquista'] },
+    { label: 'Saúde Guarulhos', count: 1, sentiment_avg: 'neutral', keywords: ['exame', 'mutirão', 'atendimento', 'UBS'] },
+    { label: 'Zeladoria e LED', count: 2, sentiment_avg: 'neutral', keywords: ['iluminação', 'lixo', 'segurança', 'limpeza'] },
 ];
 
 const REPORT_PERIODS = [
