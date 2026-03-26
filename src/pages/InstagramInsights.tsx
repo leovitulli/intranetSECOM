@@ -22,7 +22,7 @@ import {
 import './InstagramInsights.css';
 
 type Sentiment = 'positive' | 'negative' | 'neutral';
-type Period = 'semanal' | 'mensal' | 'semestral' | 'anual';
+type Period = '7' | '30' | '180' | 'all';
 
 interface Comment {
     id: string;
@@ -50,13 +50,15 @@ interface TopicGroup {
 // ─── DADOS MOCKADOS (Baseado no perfil real @prefeituraguarulhosoficial) ──────
 
 const MOCKED_COMMENTS: Comment[] = [
+    // --- ÚLTIMOS 7 DIAS ---
     {
         id: '1', post_id: 'p1',
         post_preview: 'Obras do Novo Viaduto Cecap/Dutra',
         post_image: 'https://images.unsplash.com/photo-1590483734159-4670221375a0?w=400&h=400&fit=crop',
         author: 'Guilherme R.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Guilherme',
         text: 'Esse viaduto no Cecap vai ajudar demais quem mora aqui. Parabéns pela obra! 👏',
-        timestamp: '2026-03-25T14:22:00', likes: 156, sentiment: 'positive', topic: 'Obras Cecap', replied: true,
+        timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), 
+        likes: 156, sentiment: 'positive', topic: 'Obras Cecap', replied: true,
         reply_text: 'Obrigado, Guilherme! Essa é uma obra estratégica para destravar o trânsito na região. 🏛️'
     },
     {
@@ -65,7 +67,8 @@ const MOCKED_COMMENTS: Comment[] = [
         post_image: 'https://images.unsplash.com/photo-1590483734159-4670221375a0?w=400&h=400&fit=crop',
         author: 'Juliana P.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Juliana',
         text: 'E a poeira aqui no Cecap? Ninguém aguenta mais. Quando termina essa obra? 😤',
-        timestamp: '2026-03-25T15:01:00', likes: 89, sentiment: 'negative', topic: 'Obras Cecap', replied: false,
+        timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+        likes: 89, sentiment: 'negative', topic: 'Obras Cecap', replied: false,
     },
     {
         id: '3', post_id: 'p2',
@@ -73,24 +76,19 @@ const MOCKED_COMMENTS: Comment[] = [
         post_image: 'https://images.unsplash.com/photo-1510252199042-88846c430e84?w=400&h=400&fit=crop',
         author: 'Ricardo S.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ricardo',
         text: 'Metrô em Guarulhos é um sonho de gerações. Finalmente saindo do papel! 🚇✨',
-        timestamp: '2026-03-24T09:45:00', likes: 342, sentiment: 'positive', topic: 'Expansão Metrô', replied: true,
+        timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+        likes: 342, sentiment: 'positive', topic: 'Expansão Metrô', replied: true,
         reply_text: 'É um marco histórico para nossa cidade! Seguimos acompanhando cada passo dessa conquista. 💙'
     },
-    {
-        id: '4', post_id: 'p2',
-        post_preview: 'Chegada da Linha 2-Verde do Metrô',
-        post_image: 'https://images.unsplash.com/photo-1510252199042-88846c430e84?w=400&h=400&fit=crop',
-        author: 'Marcos T.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marcos',
-        text: 'Até parece... Essa obra vai demorar 20 anos. Quero ver se termina nesse mandato.',
-        timestamp: '2026-03-24T11:10:00', likes: 45, sentiment: 'negative', topic: 'Expansão Metrô', replied: false,
-    },
+    // --- ÚLTIMOS 30 DIAS ---
     {
         id: '5', post_id: 'p3',
         post_preview: 'Nova Iluminação LED no Bonsucesso',
         post_image: 'https://images.unsplash.com/photo-1565814329452-e1efa11c5b89?w=400&h=400&fit=crop',
         author: 'Camila F.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Camila',
         text: 'O Bonsucesso estava precisando! Ficou muito mais seguro caminhar à noite. 💡',
-        timestamp: '2026-03-23T20:30:00', likes: 120, sentiment: 'positive', topic: 'Zeladoria e LED', replied: true,
+        timestamp: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+        likes: 120, sentiment: 'positive', topic: 'Zeladoria e LED', replied: true,
         reply_text: 'Segurança e modernidade! O programa Ilumina Guarulhos vai chegar a todos os bairros. 🎭'
     },
     {
@@ -99,16 +97,38 @@ const MOCKED_COMMENTS: Comment[] = [
         post_image: 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=400&h=400&fit=crop',
         author: 'Alessandra M.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alessandra',
         text: 'Preciso de um exame de vista. Onde faço a inscrição pro mutirão?',
-        timestamp: '2026-03-22T08:15:00', likes: 210, sentiment: 'neutral', topic: 'Saúde Guarulhos', replied: false,
+        timestamp: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+        likes: 210, sentiment: 'neutral', topic: 'Saúde Guarulhos', replied: false,
     },
+    // --- ÚLTIMOS 180 DIAS ---
     {
         id: '7', post_id: 'p5',
         post_preview: 'Recuperação de área verde no Pimentas',
         post_image: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=400&h=400&fit=crop',
         author: 'Fábio H.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Fabio',
         text: 'E o lixo acumulado aqui na rua de trás? Adianta nada plantar árvore se não limpam. 😡',
-        timestamp: '2026-03-21T16:00:00', likes: 56, sentiment: 'negative', topic: 'Zeladoria e LED', replied: true,
+        timestamp: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+        likes: 56, sentiment: 'negative', topic: 'Zeladoria e LED', replied: true,
         reply_text: 'Fábio, nossa equipe de zeladoria já foi acionada para o local. Em breve estará tudo limpo! 🏛️'
+    },
+    {
+        id: '9', post_id: 'p6',
+        post_preview: 'Entrega de Novos Ônibus na Vila Galvão',
+        post_image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400&h=400&fit=crop',
+        author: 'Tânia J.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tania',
+        text: 'Os ônibus novos são ótimos, mas a linha 262 continua atrasando muito. 🚌',
+        timestamp: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
+        likes: 88, sentiment: 'neutral', topic: 'Transporte Público', replied: false,
+    },
+    {
+        id: '10', post_id: 'p7',
+        post_preview: 'Aniversário de Guarulhos: Shows no Bosque',
+        post_image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&h=400&fit=crop',
+        author: 'Lucas B.', author_avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Lucas',
+        text: 'Melhor aniversário de todos! Organização nota 10. Parabéns prefeitura! 🎉',
+        timestamp: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString(),
+        likes: 567, sentiment: 'positive', topic: 'Eventos Cidade', replied: true,
+        reply_text: 'Ficamos muito felizes que você gostou! Guarulhos merece celebrar em grande estilo. 🍿'
     },
 ];
 
@@ -117,13 +137,15 @@ const TOPIC_GROUPS: TopicGroup[] = [
     { label: 'Expansão Metrô', count: 2, sentiment_avg: 'positive', keywords: ['metrô', 'sonho', 'transporte', 'conquista'] },
     { label: 'Saúde Guarulhos', count: 1, sentiment_avg: 'neutral', keywords: ['exame', 'mutirão', 'atendimento', 'UBS'] },
     { label: 'Zeladoria e LED', count: 2, sentiment_avg: 'neutral', keywords: ['iluminação', 'lixo', 'segurança', 'limpeza'] },
+    { label: 'Transporte Público', count: 1, sentiment_avg: 'neutral', keywords: ['ônibus', 'atraso', 'frota', 'linha'] },
+    { label: 'Eventos Cidade', count: 1, sentiment_avg: 'positive', keywords: ['aniversário', 'shows', 'bosque', 'festa'] },
 ];
 
 const REPORT_PERIODS = [
-    { id: 'semanal', label: 'Semanal', icon: '📅' },
-    { id: 'mensal', label: 'Mensal', icon: '🗓️' },
-    { id: 'semestral', label: 'Semestral', icon: '📊' },
-    { id: 'anual', label: 'Anual', icon: '🏛️' },
+    { id: '7', label: '7 Dias', icon: '🗓️' },
+    { id: '30', label: '30 Dias', icon: '📅' },
+    { id: '180', label: '180 Dias', icon: '📊' },
+    { id: 'all', label: 'Histórico', icon: '🏛️' },
 ] as const;
 
 // ─── COMPONENTES MENORES ──────────────────────────────────────────────────────
@@ -144,7 +166,7 @@ const SentimentLabel = ({ sentiment }: { sentiment: Sentiment }) => (
 // ─── COMPONENTE PRINCIPAL ────────────────────────────────────────────────────
 
 export default function InstagramInsights() {
-    const [selectedPeriod, setSelectedPeriod] = useState<Period>('semanal');
+    const [selectedPeriod, setSelectedPeriod] = useState<Period>('7');
     const [sentimentFilter, setSentimentFilter] = useState<'all' | Sentiment>('all');
     const [replyFilter, setReplyFilter] = useState<'all' | 'replied' | 'pending'>('all');
     const [searchTerm, setSearchTerm] = useState('');
@@ -162,13 +184,20 @@ export default function InstagramInsights() {
 
     const filteredComments = useMemo(() => {
         return MOCKED_COMMENTS.filter(c => {
+            // Filtro de Período
+            if (selectedPeriod !== 'all') {
+                const days = parseInt(selectedPeriod);
+                const limitDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+                if (new Date(c.timestamp) < limitDate) return false;
+            }
+            
             if (sentimentFilter !== 'all' && c.sentiment !== sentimentFilter) return false;
             if (replyFilter === 'replied' && !c.replied) return false;
             if (replyFilter === 'pending' && c.replied) return false;
             if (searchTerm && !c.text.toLowerCase().includes(searchTerm.toLowerCase()) && !c.author.toLowerCase().includes(searchTerm.toLowerCase())) return false;
             return true;
         });
-    }, [sentimentFilter, replyFilter, searchTerm]);
+    }, [selectedPeriod, sentimentFilter, replyFilter, searchTerm]);
 
     const sentimentPercent = (sentiment: Sentiment) => Math.round((stats[sentiment] / stats.total) * 100);
 
