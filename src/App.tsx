@@ -19,6 +19,7 @@ const Profile = lazy(() => import('./pages/Profile'));
 const SendNotification = lazy(() => import('./pages/SendNotification'));
 const Cronograma = lazy(() => import('./pages/Cronograma'));
 const Radar = lazy(() => import('./pages/Radar'));
+const RadarNoticias = lazy(() => import('./pages/RadarNoticias'));
 const InstagramInsights = lazy(() => import('./pages/InstagramInsights'));
 
 
@@ -48,6 +49,7 @@ function AppRoutes() {
               <Route path="notificacoes" element={<SendNotification />} />
               <Route path="cronograma" element={<Cronograma />} />
               <Route path="radar-secom" element={<Radar />} />
+              <Route path="radar-noticias" element={user && (user.role === 'admin' || user.role === 'desenvolvedor') ? <RadarNoticias /> : <Navigate to="/" />} />
               {/* Página oculta (apenas para admin/desenvolvedor) */}
               <Route path="instagram-insights" element={user && (user.role === 'admin' || user.role === 'desenvolvedor') ? <InstagramInsights /> : <Navigate to="/" />} />
             </Route>

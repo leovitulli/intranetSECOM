@@ -1,0 +1,131 @@
+import fs from 'fs';
+import { createClient } from '@supabase/supabase-js';
+
+const envFile = fs.readFileSync('.env.local', 'utf8');
+const env = {};
+envFile.split('\n').filter(line => line.includes('=')).forEach(line => {
+    const [key, value] = line.split('=');
+    env[key.trim()] = value.trim().replace(/^"(.*)"$/, '$1');
+});
+
+const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
+const BASE_URL = 'https://www.guarulhos.sp.gov.br/todas-noticias';
+
+const ENTREGA_KEYWORDS = [
+    { type: 'reforma', keywords: [/reforma/i, /reformada/i, /reformado/i] },
+    { type: 'revitalizacao', keywords: [/revitaliza/i, /revitalização/i, /revitalizada/i] },
+    { type: 'recapeamento', keywords: [/recapeamento/i, /asfalto/i, /pavimentação/i] },
+    { type: 'inauguracao', keywords: [/inaugura/i, /entrega/i, /nova sede/i, /novo equipamento/i] },
+    { type: 'insumos', keywords: [/insumo/i, /remédio/i, /medicamento/i, /distribuição/i] },
+];
+
+function normalizeCategory(raw) {
+    if (!raw) return 'Outros';
+    const split = raw.split(' - ');
+    return split.length > 1 ? split[1].trim() : raw.trim();
+}
+
+function checkEntrega(title) {
+    const text = title.toLowerCase();
+    for (const entry of ENTREGA_KEYWORDS) {
+        if (entry.keywords.some(regex => regex.test(text))) {
+            return { isEntrega: true, type: entry.type };
+        }
+    }
+    return { isEntrega: false, type: null };
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function fetchPage(pageNum) {
+    const url = `${BASE_URL}?title=&page=${pageNum}`;
+    const res = await fetch(url, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+    });
+    if (!res.ok) return [];
+
+    const html = await res.text();
+    const rowRegex = /<tr>([\s\S]*?)<\/tr>/g;
+    const titleRegex = /class="views-field views-field-title"><a href="(\/artigo\/.*?)".*?>(.*?)<\/a>/;
+    const categoryRegex = /class="views-field views-field-field-category"><a[^>]*>(.*?)<\/a>/;
+    const dateRegex = /class="views-field views-field-field-data">\s*(.*?)\s*<\/td>/;
+
+    const news = [];
+    let rowMatch;
+    while ((rowMatch = rowRegex.exec(html)) !== null) {
+        const rowHTML = rowMatch[1];
+        const titleMatch = rowHTML.match(titleRegex);
+        if (!titleMatch) continue;
+
+        const urlPath = titleMatch[1];
+        const title = titleMatch[2].trim();
+        const catMatch = rowHTML.match(categoryRegex);
+        const rawCategory = catMatch ? catMatch[1].trim() : '';
+        const dateMatch = rowHTML.match(dateRegex);
+        const rawDate = dateMatch ? dateMatch[1].trim() || '' : '';
+
+        let publishedAt = null;
+        if (rawDate) {
+            const [datePart] = rawDate.split(' - ');
+            const [day, month, year] = datePart.split('/');
+            publishedAt = new Date(`${year}-${month}-${day}T12:00:00Z`).toISOString();
+        }
+
+        const { isEntrega, type } = checkEntrega(title);
+        news.push({
+            external_id: urlPath.split('/').pop(),
+            title,
+            url: `https://www.guarulhos.sp.gov.br${urlPath}`,
+            category: normalizeCategory(rawCategory),
+            published_at: publishedAt,
+            is_entrega: isEntrega,
+            entrega_type: type
+        });
+    }
+    return news;
+}
+
+async function main() {
+    console.log('🚀 Radar Notícias — Full Sync\n');
+
+    const res = await fetch(BASE_URL, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const html = await res.text();
+    const pageLinks = html.match(/page=(\d+)/g) || [];
+    const totalPages = Math.max(...pageLinks.map(p => parseInt(p.split('=')[1])), 0) + 1 || 353;
+
+    console.log(`📊 Total pages: ${totalPages} (~${totalPages * 50} notícias)\n`);
+
+    let grandTotal = 0;
+    let totalErrors = 0;
+
+    for (let p = 0; p < totalPages; p++) {
+        try {
+            const news = await fetchPage(p);
+            grandTotal += news.length;
+
+            if (news.length > 0) {
+                const { error } = await supabase
+                    .from('radar_noticias')
+                    .upsert(news, { onConflict: 'external_id' });
+                if (error) {
+                    console.error(`  [ERR] Page ${p}: ${error.message}`);
+                    totalErrors++;
+                }
+            }
+
+            if ((p + 1) % 10 === 0 || p === totalPages - 1) {
+                const pct = Math.round(((p + 1) / totalPages) * 100);
+                console.log(`  [${p + 1}/${totalPages}] ${pct}% — ${grandTotal} itens`);
+            }
+            await delay(200);
+        } catch (err) {
+            console.error(`  [CRASH] Page ${p}: ${err.message}`);
+            totalErrors++;
+        }
+    }
+
+    const { count } = await supabase.from('radar_noticias').select('*', { count: 'exact', head: true });
+    console.log(`\n✅ Sync Complete! ${grandTotal} parseados, ${count} no banco, ${totalErrors} erros`);
+}
+
+main().catch(err => { console.error('Fatal:', err); process.exit(1); });

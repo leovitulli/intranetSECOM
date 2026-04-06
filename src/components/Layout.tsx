@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, Newspaper, LogOut, Bell, BellPlus, Search, CalendarDays, CalendarClock, MessageSquarePlus, BarChart3, Check, X, Menu, AlignEndHorizontal } from 'lucide-react';
+import { LayoutDashboard, Newspaper, LogOut, Bell, BellPlus, Search, CalendarDays, CalendarClock, MessageSquarePlus, BarChart3, Check, X, Menu, AlignEndHorizontal, Zap } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useData } from '../contexts/DataContext';
@@ -108,8 +108,18 @@ export default function Layout() {
                         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                     >
                         <Newspaper size={20} />
-                        <span>Notícias</span>
+                        <span>MURAL</span>
                     </NavLink>
+
+                    {isAdmin && (
+                        <NavLink
+                            to="/radar-noticias"
+                            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                        >
+                            <Zap size={20} />
+                            <span>Notícias SECOM</span>
+                        </NavLink>
+                    )}
                 </nav>
 
                 <div className="sidebar-footer">
