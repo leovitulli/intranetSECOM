@@ -12,6 +12,7 @@ export interface UserProfile {
     job_titles?: string[];
     security_stamp: number;
     email: string;
+    birth_date?: string;
 }
 
 interface AuthContextType {
@@ -85,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
             const { data, error } = await supabase
                 .from('users')
-                .select('id, name, avatar_url, role, job_titles, security_stamp, email')
+                .select('id, name, avatar_url, role, job_titles, security_stamp, email, birth_date')
                 .eq('id', authUser.id)
                 .single();
 
@@ -98,6 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     job_titles: data.job_titles || [],
                     security_stamp: data.security_stamp || 0,
                     email: data.email || authUser.email || '',
+                    birth_date: data.birth_date || undefined,
                 });
             } else if (error) {
                 console.error('Error fetching profile:', error);

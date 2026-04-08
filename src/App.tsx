@@ -15,7 +15,7 @@ const Agenda = lazy(() => import('./pages/Agenda'));
 const Suggestions = lazy(() => import('./pages/Suggestions'));
 const CalendarPage = lazy(() => import('./pages/CalendarPage'));
 const ReportsPremium = lazy(() => import('./pages/ReportsPremium'));
-const Profile = lazy(() => import('./pages/Profile'));
+const ProfileV2 = lazy(() => import('./pages/ProfileV2'));
 const SendNotification = lazy(() => import('./pages/SendNotification'));
 const Cronograma = lazy(() => import('./pages/Cronograma'));
 const Radar = lazy(() => import('./pages/Radar'));
@@ -45,7 +45,7 @@ function AppRoutes() {
               <Route path="sugestoes" element={<Suggestions />} />
               <Route path="relatorios" element={user && (user.role === 'admin' || user.role === 'desenvolvedor') ? <ReportsPremium /> : <Navigate to="/" />} />
               <Route path="noticias" element={<News />} />
-              <Route path="perfil" element={<Profile />} />
+              <Route path="perfil" element={<ProfileV2 />} />
               <Route path="notificacoes" element={<SendNotification />} />
               <Route path="cronograma" element={<Cronograma />} />
               <Route path="radar-secom" element={<Radar />} />

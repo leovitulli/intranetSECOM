@@ -4,6 +4,7 @@ import type { Task, InaugurationTipo, InaugurationChecklistItem } from '../types
 import { useAuth } from '../contexts/AuthContext';
 import SecretariasMultiSelect from './SecretariasMultiSelect';
 import TeamMultiSelect from './TeamMultiSelect';
+import { generateUUID } from '../utils/taskUtils';
 import './CreateInaugurationModal.css';
 
 interface CreateInaugurationModalProps {
@@ -60,7 +61,7 @@ export default function CreateInaugurationModal({ onClose, onCreate }: CreateIna
         const inaugDate = new Date(dataInauguracao + 'T12:00:00');
 
         const newTask: Task = {
-            id: crypto.randomUUID(),
+            id: generateUUID(),
             title: nome.toUpperCase(),
             description: `**Nome:** ${nome}\n**Endereço:** ${endereco || '—'}\n**Secretarias:** ${secretarias.join(', ')}\n**Tipo:** ${tipo === 'simples' ? 'Inauguração Simples' : 'Inauguração Master'}`,
             status: 'inauguracao',

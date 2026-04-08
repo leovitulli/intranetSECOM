@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Task, TaskType, TaskPriority, InaugurationTipo, InaugurationChecklistItem } from '../types/kanban';
-import { X, Plus, MapPin, AlertCircle, Building2 } from 'lucide-react';
+import { X, Plus, MapPin, AlertCircle, Building2, Clock } from 'lucide-react';
 import './CreateTaskModal.css';
 import SecretariasMultiSelect from './SecretariasMultiSelect';
 import TeamMultiSelect from './TeamMultiSelect';
@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { generateUUID } from '../utils/taskUtils';
 
 interface CreateTaskModalProps {
     onClose: () => void;
@@ -111,6 +112,43 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
         } catch { return ''; }
     };
 
+    // ── Rascunho Local ────────────────────────────────────────────────────────
+    useEffect(() => {
+        const draft = localStorage.getItem('pauta_draft');
+        if (draft && !title) {
+            // Se houver rascunho e o formulário estiver vazio, podemos oferecer a recuperação
+            // ou carregar automaticamente. Vamos carregar automaticamente se o título estiver vazio.
+            try {
+                const data = JSON.parse(draft);
+                if (data.title) setTitle(data.title);
+                if (data.description) setDescription(data.description);
+                if (data.types) setTypes(data.types);
+                if (data.priority) setPriority(data.priority);
+                if (data.secretarias) setSecretarias(data.secretarias);
+                if (data.pautaData) setPautaData(data.pautaData);
+                if (data.pautaEndereco) setPautaEndereco(data.pautaEndereco);
+                if (data.videoBriefing) setVideoBriefing(data.videoBriefing);
+                if (data.postCriacaoTexto) setPostCriacaoTexto(data.postCriacaoTexto);
+                if (data.activeTab) setActiveTab(data.activeTab);
+            } catch (e) {
+                console.error("Erro ao carregar rascunho:", e);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        const draftData = {
+            title, description, types, priority, secretarias,
+            pautaData, pautaEndereco, videoBriefing, postCriacaoTexto,
+            activeTab, updatedAt: new Date().toISOString()
+        };
+        if (title || description) {
+            localStorage.setItem('pauta_draft', JSON.stringify(draftData));
+        }
+    }, [title, description, types, priority, secretarias, pautaData, pautaEndereco, videoBriefing, postCriacaoTexto, activeTab]);
+
+    const clearDraft = () => localStorage.removeItem('pauta_draft');
+
     // ── Submit ────────────────────────────────────────────────────────────────
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -121,7 +159,7 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
 
         try {
             const newTask: Task = {
-                id: crypto.randomUUID(),
+                id: generateUUID(),
                 title,
                 description: description || '',
                 // ✅ Sempre começa em solicitado — aba Inauguração dentro do card
@@ -187,6 +225,7 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
             const { success, error: apiError } = await onCreate(newTask);
             console.log("🏁 Resultado onCreate:", { success, apiError });
             if (success) {
+                clearDraft();
                 onClose();
             } else {
                 console.error('Erro retornado pela API:', apiError);
@@ -220,6 +259,34 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
 
                     {/* Erro inline */}
                     <InlineError message={errorMsg} />
+
+                    {/* Aviso de Rascunho */}
+                    {localStorage.getItem('pauta_draft') && !errorMsg && (
+                        <div style={{
+                            margin: '0 2.5rem 1rem',
+                            padding: '8px 14px',
+                            background: '#f0f9ff',
+                            border: '1px solid #bae6fd',
+                            borderRadius: 10,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            fontSize: '0.8rem',
+                            color: '#0369a1',
+                            fontWeight: 600
+                        }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <Clock size={14} /> Rascunho recuperado automaticamente
+                            </span>
+                            <button 
+                                type="button" 
+                                onClick={() => { clearDraft(); window.location.reload(); }}
+                                style={{ background: 'none', border: 'none', color: '#0284c7', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.8rem' }}
+                            >
+                                Limpar e começar do zero
+                            </button>
+                        </div>
+                    )}
 
                     {/* ── Abas ── */}
                     <div className="tabs-bar-premium">

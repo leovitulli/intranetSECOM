@@ -136,6 +136,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
         getDayOfWeek,
         unarchiveTask,
         isSaving,
+        saveError,
     } = modalData;
 
     const commonTabProps = {
@@ -260,6 +261,7 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                         onDiscard={handleDiscard}
                         onSave={handleSave}
                         isSaving={isSaving}
+                        saveError={saveError}
                     />
                 </div>
             </div>

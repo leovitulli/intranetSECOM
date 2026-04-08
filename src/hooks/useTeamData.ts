@@ -65,7 +65,8 @@ export function useTeamData() {
                 email: member.email,
                 avatar_url: member.avatar_url,
                 job_titles: member.job_titles,
-                has_login: member.hasLogin
+                has_login: member.hasLogin,
+                birth_date: member.birth_date
             })
             .eq('id', member.id);
 

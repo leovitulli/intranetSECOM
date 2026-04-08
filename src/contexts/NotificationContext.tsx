@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthContext';
-import { Bell } from 'lucide-react';
+import { Bell, PartyPopper } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 export interface Notification {
     id: string;
@@ -28,6 +29,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [toasts, setToasts] = useState<Notification[]>([]);
     const [alertModal, setAlertModal] = useState<Notification | null>(null);
+    const [birthdayUsers, setBirthdayUsers] = useState<{ name: string; avatar_url: string; id?: string }[]>([]);
+    const [showBirthdayModal, setShowBirthdayModal] = useState(false);
+    const [isMyBirthday, setIsMyBirthday] = useState(false);
 
     useEffect(() => {
         if (!user) {
@@ -75,6 +79,57 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         return () => {
             supabase.removeChannel(channel);
         };
+    }, [user]);
+
+    // ========== BIRTHDAY CHECK SYSTEM ==========
+    useEffect(() => {
+        if (!user) return;
+
+        const checkBirthdays = async () => {
+            const today = new Date().toISOString().split('T')[0];
+            const lastCheck = localStorage.getItem(`last_birthday_check_${user.id}`);
+            
+            // Only check once per day per user login session
+            if (lastCheck === today) return;
+
+            const { data, error } = await supabase.rpc('get_birthdays_today');
+            
+            if (data && data.length > 0 && !error) {
+                // Check if current user is in the list
+                const me = data.find((u: any) => u.id === user.id);
+                if (me) {
+                    setIsMyBirthday(true);
+                    triggerConfetti();
+                }
+
+                setBirthdayUsers(data);
+                setShowBirthdayModal(true);
+                localStorage.setItem(`last_birthday_check_${user.id}`, today);
+            }
+        };
+
+        const triggerConfetti = () => {
+            const duration = 5 * 1000;
+            const animationEnd = Date.now() + duration;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999999 };
+
+            const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+            const interval: any = setInterval(function() {
+                const timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+
+                const particleCount = 50 * (timeLeft / duration);
+                
+                confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+                confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+            }, 250);
+        };
+
+        checkBirthdays();
     }, [user]);
 
     const showToast = (notif: Notification) => {
@@ -186,6 +241,100 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                             onMouseOut={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1)'; }}
                         >
                             OK, entendido!
+                        </button>
+                    </div>
+                </div>
+            )}
+            {/* ========== CELEBRATORY BIRTHDAY MODAL ========== */}
+            {showBirthdayModal && birthdayUsers.length > 0 && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        zIndex: 999999,
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        backdropFilter: 'blur(12px) contrast(1.2)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '1rem',
+                        animation: 'fadeInOverlay 0.5s ease',
+                        backgroundSize: '20px 20px',
+                        backgroundImage: 'radial-gradient(circle, #fca311 0.5px, transparent 0.5px)'
+                    }}
+                >
+                    <div
+                        style={{
+                            background: 'white',
+                            borderRadius: '32px',
+                            padding: '3rem 2rem',
+                            maxWidth: '520px',
+                            width: '100%',
+                            boxShadow: '0 50px 100px -20px rgba(252, 163, 17, 0.3), 0 30px 60px -30px rgba(0,0,0,0.3)',
+                            border: '4px solid #fca311',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '1.5rem',
+                            textAlign: 'center',
+                            position: 'relative',
+                            animation: 'popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                        }}
+                    >
+                        <div style={{ position: 'absolute', top: '-40px', background: 'white', padding: '0.8rem', borderRadius: '50%', border: '4px solid #fca311', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', justifyItems: 'center' }}>
+                            <PartyPopper size={40} color="#fca311" />
+                        </div>
+                        
+                        <div style={{ display: 'flex', gap: '-10px', marginTop: '1rem' }}>
+                            {birthdayUsers.map((u, i) => (
+                                <img 
+                                    key={i}
+                                    src={u.avatar_url || `https://ui-avatars.com/api/?name=${u.name}&background=random`} 
+                                    alt={u.name}
+                                    style={{
+                                        width: '80px',
+                                        height: '80px',
+                                        borderRadius: '50%',
+                                        border: '4px solid white',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                        marginLeft: i > 0 ? '-20px' : '0',
+                                        zIndex: birthdayUsers.length - i
+                                    }}
+                                />
+                            ))}
+                        </div>
+
+                        <div>
+                            <h2 style={{ color: '#14213d', fontSize: '2rem', margin: '0 0 0.5rem 0', fontWeight: 900 }}>
+                                {isMyBirthday ? '🎉 Parabéns pra você!' : (birthdayUsers.length === 1 ? 'Aniversariante do Dia!' : 'Aniversariantes do Dia!')}
+                            </h2>
+                            <p style={{ color: '#475569', fontSize: '1.1rem', margin: 0, fontWeight: 500 }}>
+                                {isMyBirthday 
+                                    ? 'A equipe SECOM te deseja um dia incrível repleto de realizações. Você é fundamental para nós!'
+                                    : (birthdayUsers.length === 1 
+                                        ? `Hoje é um dia especial para ${birthdayUsers[0].name.split(' ')[0]}. Vamos comemorar!`
+                                        : `Hoje celebramos o dia de ${birthdayUsers.map(u => u.name.split(' ')[0]).join(', ')}.`)}
+                            </p>
+                        </div>
+
+                        <button
+                            onClick={() => setShowBirthdayModal(false)}
+                            style={{
+                                marginTop: '1rem',
+                                padding: '1rem 3rem',
+                                borderRadius: '16px',
+                                background: '#fca311',
+                                color: '#14213d',
+                                border: 'none',
+                                fontWeight: 800,
+                                fontSize: '1.1rem',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                            }}
+                            onMouseOver={e => { e.currentTarget.style.transform = 'scale(1.05) translateY(-2px)'; }}
+                            onMouseOut={e => { e.currentTarget.style.transform = 'scale(1) translateY(0)'; }}
+                        >
+                            Desejar Parabéns! 🎂
                         </button>
                     </div>
                 </div>

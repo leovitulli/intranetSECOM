@@ -30,6 +30,7 @@ export function useTaskModal(task: Task, onUpdateTask: (t: Task) => void, onClos
     const [editedTask, setEditedTask] = useState<Task>(() => hydrateTask(task));
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
 
     // ── Estado de edição inline por seção ──────────────────────────────────────
     const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -103,6 +104,18 @@ export function useTaskModal(task: Task, onUpdateTask: (t: Task) => void, onClos
         return () => { supabase.removeChannel(channel); };
     }, [task.id]);
 
+    // ── Autosave debounced ──────────────────────────────────────────────────
+    useEffect(() => {
+        if (!hasUnsavedChanges || isSaving || !isRealUUID(task.id)) return;
+
+        const timer = setTimeout(() => {
+            console.log("⏱️ Iniciando Autosave...");
+            handleSave();
+        }, 2000); // 2 segundos de inatividade
+
+        return () => clearTimeout(timer);
+    }, [hasUnsavedChanges, editedTask, isSaving, task.id]);
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     /** Abre o modal de confirmação customizado */
@@ -140,10 +153,11 @@ export function useTaskModal(task: Task, onUpdateTask: (t: Task) => void, onClos
 
             await onUpdateTask(taskToSave);
             setHasUnsavedChanges(false);
+            setSaveError(null);
             if (closeAfter) onClose();
-        } catch (error) {
+        } catch (error: any) {
             console.error("❌ Falha crítica ao salvar pauta:", error);
-            // O erro já deve ter sido logado pelo useTasksData
+            setSaveError('Erro de conexão. Tentando novamente...');
         } finally {
             setIsSaving(false);
         }
@@ -173,7 +187,7 @@ export function useTaskModal(task: Task, onUpdateTask: (t: Task) => void, onClos
         // comentários ainda não salvos em outras seções
         const updatedComments = [...editedTask.comments, comment];
 
-        // Salva imediatamente no servidor
+        // Salva via RPC Atômica v2 (Suporte a JSONB Fixed)
         onUpdateTask({ ...task, comments: updatedComments });
 
         // Atualiza buffer local
@@ -213,7 +227,6 @@ export function useTaskModal(task: Task, onUpdateTask: (t: Task) => void, onClos
                 const result = await Promise.race([uploadPromise, timeoutPromise]) as any;
 
                 if (result?.error) {
-                    // Usa o estado de alerta interno ao invés de window.alert
                     openConfirm(
                         'Erro no Upload',
                         `Erro ao anexar "${file.name}": ${result.error.message}`,
@@ -235,6 +248,8 @@ export function useTaskModal(task: Task, onUpdateTask: (t: Task) => void, onClos
 
             if (newAttachments.length > 0) {
                 const updatedAttachments = [...(task.attachments || []), ...newAttachments];
+                
+                // Salva via RPC Atômica v2 (Suporte a JSONB Fixed)
                 onUpdateTask({ ...task, attachments: updatedAttachments });
                 setEditedTask(prev => ({ ...prev, attachments: updatedAttachments }));
             }
@@ -388,6 +403,7 @@ export function useTaskModal(task: Task, onUpdateTask: (t: Task) => void, onClos
         getDayOfWeek,
         unarchiveTask,
         isSaving,
+        saveError,
     };
 }
 

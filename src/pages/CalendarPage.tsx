@@ -41,11 +41,24 @@ export default function CalendarPage() {
 
     // Filter State
     const [activeFilter, setActiveFilter] = useState<string>('all');
+    const [showBirthdays, setShowBirthdays] = useState(false);
 
     const [comemorativas, setComemorativas] = useState<CalendarEvent[]>([
-        { id: '1', title: 'Confraternização Universal (Feriado)', type: 'feriado', date: parseISO('2026-01-01') },
-        { id: '2', title: 'Carnaval (Feriado)', type: 'feriado', date: parseISO('2026-02-17') },
-        { id: '3', title: 'Dia Internacional da Mulher', type: 'comemorativa', date: parseISO('2026-03-08') },
+        { id: 'h1', title: 'Confraternização Universal (Feriado)', type: 'feriado', date: parseISO('2026-01-01') },
+        { id: 'h2', title: 'Carnaval (Ponto Facultativo)', type: 'feriado', date: parseISO('2026-02-17') },
+        { id: 'h3', title: 'Dia Internacional da Mulher', type: 'comemorativa', date: parseISO('2026-03-08') },
+        { id: 'h4', title: 'Sexta-feira Santa (Feriado)', type: 'feriado', date: parseISO('2026-04-03') },
+        { id: 'h5', title: 'Páscoa', type: 'comemorativa', date: parseISO('2026-04-05') },
+        { id: 'h6', title: 'Tiradentes (Feriado)', type: 'feriado', date: parseISO('2026-04-21') },
+        { id: 'h7', title: 'Dia do Trabalho (Feriado)', type: 'feriado', date: parseISO('2026-05-01') },
+        { id: 'h8', title: 'Corpus Christi (Feriado)', type: 'feriado', date: parseISO('2026-06-04') },
+        { id: 'h9', title: 'Independência do Brasil (Feriado)', type: 'feriado', date: parseISO('2026-09-07') },
+        { id: 'h10', title: 'Nsa. Sra. Aparecida (Feriado)', type: 'feriado', date: parseISO('2026-10-12') },
+        { id: 'h11', title: 'Dia do Servidor Público', type: 'comemorativa', date: parseISO('2026-10-28') },
+        { id: 'h12', title: 'Finados (Feriado)', type: 'feriado', date: parseISO('2026-11-02') },
+        { id: 'h13', title: 'Proclamação da República (Feriado)', type: 'feriado', date: parseISO('2026-11-15') },
+        { id: 'h14', title: 'Consciência Negra (Feriado)', type: 'feriado', date: parseISO('2026-11-20') },
+        { id: 'h15', title: 'Natal (Feriado)', type: 'feriado', date: parseISO('2026-12-25') },
     ]);
 
     const events = useMemo(() => {
@@ -98,8 +111,23 @@ export default function CalendarPage() {
 
         const mappedSystem = comemorativas.filter(() => isAll || activeFilter === 'sistema');
 
-        return [...mappedTasks, ...mappedAgenda, ...mappedSystem];
-    }, [tasks, agendaEvents, comemorativas, activeFilter]);
+        const mappedBirthdays: CalendarEvent[] = showBirthdays 
+            ? team.filter(m => m.birth_date).map(m => {
+                const bDate = new Date(m.birth_date! + 'T12:00:00');
+                // We need to set the birthday to the current view year so it shows up in the calendar
+                const displayDate = new Date(currentMonth.getFullYear(), bDate.getMonth(), bDate.getDate(), 12, 0, 0);
+                
+                return {
+                    id: `birthday-${m.id}`,
+                    title: `🎂 Niver: ${m.name.split(' ')[0]}`,
+                    type: 'comemorativa' as any,
+                    date: displayDate
+                };
+            })
+            : [];
+
+        return [...mappedTasks, ...mappedAgenda, ...mappedSystem, ...mappedBirthdays];
+    }, [tasks, agendaEvents, comemorativas, activeFilter, showBirthdays, team, currentMonth]);
 
     // New Event Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -286,6 +314,33 @@ export default function CalendarPage() {
                             </button>
                         );
                     })}
+                    
+                    {/* Birthday Toggle */}
+                    <button
+                        className={`badge-tag badge-niver ${showBirthdays ? 'active' : ''}`}
+                        onClick={() => setShowBirthdays(!showBirthdays)}
+                        style={{ 
+                            cursor: 'pointer', 
+                            border: 'none',
+                            outline: 'none',
+                            opacity: showBirthdays ? 1 : 0.45,
+                            transform: showBirthdays ? 'scale(1.06)' : 'scale(1)',
+                            transition: 'all 0.2s ease',
+                            fontWeight: showBirthdays ? 800 : 500,
+                            boxShadow: showBirthdays ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
+                            padding: '8px 16px',
+                            fontSize: '0.78rem',
+                            borderRadius: '10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            background: showBirthdays ? '#fef3c7' : 'white',
+                            color: showBirthdays ? '#92400e' : 'inherit',
+                            whiteSpace: 'nowrap'
+                        }}
+                    >
+                        🎂 Aniversários
+                    </button>
                 </div>
 
                 {/* Botão de Adicionar - Premium (Como a nav do Cronograma) */}

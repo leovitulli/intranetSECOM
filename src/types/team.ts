@@ -10,4 +10,5 @@ export interface TeamMember {
     phone?: string;
     avatar_url?: string;
     job_titles?: string[];
+    birth_date?: string;
 }

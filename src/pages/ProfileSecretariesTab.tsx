@@ -127,117 +127,141 @@ export default function ProfileSecretariesTab() {
 
     return (
         <div className="profile-roles-tab">
-            <div className="tab-header">
-                <h2>Gerenciar Secretarias</h2>
-                <p>Gerencie os nomes dos departamentos e secretarias disponíveis no sistema.</p>
-            </div>
-
-            {/* Formulário de adição com Busca/Autocomplete Integrada */}
-            <form onSubmit={handleAdd} className="add-role-form" style={{ position: 'relative', marginBottom: 24 }}>
-                <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
-                    <Search size={18} style={{ position: 'absolute', left: 12, color: '#94a3b8', pointerEvents: 'none' }} />
-                    <input
-                        type="text"
-                        value={newName}
-                        onChange={e => { setNewName(e.target.value); setErrorMsg(''); }}
-                        placeholder="Digite para buscar ou adicionar uma nova secretaria..."
-                        required
-                        disabled={isSaving}
-                        style={{ width: '100%', paddingLeft: 40 }}
-                    />
-
-                    {/* Aviso de duplicidade visual */}
-                    {secretarias.some(s => s.nome.toLowerCase() === newName.trim().toLowerCase()) && (
-                        <div style={{ position: 'absolute', bottom: -18, left: 40, fontSize: '0.65rem', color: '#f59e0b', fontWeight: 700 }}>
-                            ⚠️ Esta secretaria já está cadastrada
-                        </div>
-                    )}
+            {/* SEÇÃO 01: ADIÇÃO E BUSCA */}
+            <div className="modal-section-group-premium">
+                <div className="section-header-premium">
+                    <span className="section-number-premium">01</span>
+                    <h3>Nova Secretaria</h3>
                 </div>
                 
-                <button 
-                    type="submit" 
-                    className="btn-primary" 
-                    disabled={isSaving || !newName.trim() || secretarias.some(s => s.nome.toLowerCase() === newName.trim().toLowerCase())}
-                    style={{ minWidth: 200 }}
-                >
-                    {isSaving ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Plus size={16} />}
-                    <span>Adicionar Secretaria</span>
-                </button>
-            </form>
+                <p className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '1.25rem' }}>
+                    Cadastre novos órgãos, secretarias ou departamentos municipais para o sistema.
+                </p>
 
-            {/* Erro global inline */}
-            <InlineError message={errorMsg} />
-
-            {/* Lista de secretarias filtrada e ordenada */}
-            <div className="roles-list" style={{ marginTop: errorMsg ? 8 : 0 }}>
-                {filteredSecretarias.length === 0 && (
-                    <div className="empty-state">
-                        {newName ? 'Nenhum resultado para sua busca. Clique no botão ao lado para adicionar esta nova secretaria.' : 'Nenhuma secretaria cadastrada.'}
-                    </div>
-                )}
-
-                {filteredSecretarias.map(sec => (
-                    <div key={sec.id}>
-                        <div className="role-item">
-                            {editingId === sec.id ? (
-                                <>
-                                    <input
-                                        type="text"
-                                        value={editingName}
-                                        onChange={e => { setEditingName(e.target.value); setEditError(''); }}
-                                        className="edit-role-input"
-                                        autoFocus
-                                        onKeyDown={e => {
-                                            if (e.key === 'Enter') handleSaveEdit(sec.id);
-                                            if (e.key === 'Escape') handleCancelEdit();
-                                        }}
-                                    />
-                                    <div className="role-actions">
-                                        <button className="icon-btn-small" onClick={() => handleSaveEdit(sec.id)} disabled={isSaving} title="Salvar">
-                                            <Check size={16} />
-                                        </button>
-                                        <button className="icon-btn-small" onClick={handleCancelEdit} disabled={isSaving} title="Cancelar">
-                                            <X size={16} />
-                                        </button>
-                                    </div>
-                                </>
-                            ) : (
-                                <>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <Building2 size={16} style={{ color: '#94a3b8' }} />
-                                        <span>{sec.nome}</span>
-                                    </div>
-                                    <div className="role-actions">
-                                        <button className="icon-btn-small" onClick={() => handleStartEdit(sec.id, sec.nome)} title="Editar">
-                                            <Pencil size={14} />
-                                        </button>
-                                        <button
-                                            className="icon-btn-small danger"
-                                            onClick={() => setConfirmRemoveId(confirmRemoveId === sec.id ? null : sec.id)}
-                                            title="Remover"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-                                </>
-                            )}
+                {/* Formulário de adição com Busca/Autocomplete Integrada */}
+                <form onSubmit={handleAdd} className="add-role-form" style={{ position: 'relative', display: 'flex', gap: '1rem', width: '100%' }}>
+                    <div className="nova-pauta-field-premium" style={{ flex: 1 }}>
+                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                            <Search size={18} style={{ position: 'absolute', left: 12, color: '#94a3b8', pointerEvents: 'none' }} />
+                            <input
+                                type="text"
+                                className="input-premium"
+                                value={newName}
+                                onChange={e => { setNewName(e.target.value); setErrorMsg(''); }}
+                                placeholder="Ex: SEMOB, Saúde, Educação..."
+                                required
+                                disabled={isSaving}
+                                style={{ paddingLeft: 42 }}
+                            />
                         </div>
 
-                        {/* Erro de edição inline */}
-                        {editingId === sec.id && editError && (
-                            <InlineError message={editError} />
-                        )}
-
-                        {/* Confirmação de exclusão inline */}
-                        {confirmRemoveId === sec.id && (
-                            <ConfirmInline
-                                message="Remover esta secretaria? Isso pode afetar filtros existentes."
-                                onConfirm={() => handleRemoveConfirmed(sec.id)}
-                                onCancel={() => setConfirmRemoveId(null)}
-                            />
+                        {/* Aviso de duplicidade visual */}
+                        {secretarias.some(s => s.nome.toLowerCase() === newName.trim().toLowerCase()) && (
+                            <div style={{ fontSize: '0.7rem', color: '#f59e0b', fontWeight: 800, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <AlertTriangle size={12} /> Esta secretaria já existe na base de dados
+                            </div>
                         )}
                     </div>
-                ))}
+                    
+                    <button 
+                        type="submit" 
+                        className="btn-save-premium" 
+                        disabled={isSaving || !newName.trim() || secretarias.some(s => s.nome.toLowerCase() === newName.trim().toLowerCase())}
+                        style={{ height: '48px', minWidth: '180px', padding: '0 1.5rem' }}
+                    >
+                        {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
+                        <span style={{ marginLeft: '8px' }}>Cadastrar</span>
+                    </button>
+                </form>
+            </div>
+
+            {/* SEÇÃO 02: LISTAGEM E EDIÇÃO */}
+            <div className="modal-section-group-premium alternate-bg-premium">
+                <div className="section-header-premium">
+                    <span className="section-number-premium">02</span>
+                    <h3>Departamentos Registrados</h3>
+                </div>
+                
+                <p className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '1rem' }}>
+                    A alteração do nome de uma secretaria aqui será refletida em todos os filtros e relatórios do sistema.
+                </p>
+
+                {/* Lista de secretarias filtrada e ordenada */}
+                <div className="roles-list">
+                    {filteredSecretarias.length === 0 && (
+                        <div className="empty-state">
+                            {newName ? 'Nenhum resultado para sua busca. Clique acima para cadastrar esta nova secretaria.' : 'Nenhuma secretaria cadastrada.'}
+                        </div>
+                    )}
+
+                    {filteredSecretarias.map(sec => (
+                        <div key={sec.id}>
+                            <div className="role-item">
+                                {editingId === sec.id ? (
+                                    <>
+                                        <input
+                                            type="text"
+                                            value={editingName}
+                                            onChange={e => { setEditingName(e.target.value); setEditError(''); }}
+                                            className="edit-role-input input-premium"
+                                            autoFocus
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') handleSaveEdit(sec.id);
+                                                if (e.key === 'Escape') handleCancelEdit();
+                                            }}
+                                        />
+                                        <div className="role-actions">
+                                            <button className="icon-btn-small" onClick={() => handleSaveEdit(sec.id)} disabled={isSaving} title="Salvar">
+                                                <Check size={16} />
+                                            </button>
+                                            <button className="icon-btn-small" onClick={handleCancelEdit} disabled={isSaving} title="Cancelar">
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <Building2 size={16} style={{ color: '#94a3b8' }} />
+                                            <span>{sec.nome}</span>
+                                        </div>
+                                        <div className="role-actions">
+                                            <button className="icon-btn-small" onClick={() => handleStartEdit(sec.id, sec.nome)} title="Editar">
+                                                <Pencil size={14} />
+                                            </button>
+                                            <button
+                                                className="icon-btn-small danger"
+                                                onClick={() => setConfirmRemoveId(confirmRemoveId === sec.id ? null : sec.id)}
+                                                title="Remover"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Erro de edição inline */}
+                            {editingId === sec.id && editError && (
+                                <InlineError message={editError} />
+                            )}
+
+                            {/* Confirmação de exclusão inline */}
+                            {confirmRemoveId === sec.id && (
+                                <ConfirmInline
+                                    message="Remover esta secretaria? Isso pode afetar filtros existentes."
+                                    onConfirm={() => handleRemoveConfirmed(sec.id)}
+                                    onCancel={() => setConfirmRemoveId(null)}
+                                />
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Erro global inline */}
+            <div style={{ padding: '0 2.5rem' }}>
+                <InlineError message={errorMsg} />
             </div>
         </div>
     );

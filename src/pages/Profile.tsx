@@ -6,17 +6,22 @@ import { Camera, Save, Loader2, User, Users, Shield, Building2 } from 'lucide-re
 import ProfileTeamTab from './ProfileTeamTab';
 import ProfileRolesTab from './ProfileRolesTab';
 import ProfileSecretariesTab from './ProfileSecretariesTab';
+import ProfileSecurityLogsTab from './ProfileSecurityLogsTab';
 import './Profile.css';
 
-export default function Profile() {
+interface ProfileProps {
+    forcedTab?: 'perfil' | 'equipe' | 'cargos' | 'secretarias' | 'auditoria';
+    hideTabs?: boolean;
+}
+
+export default function Profile({ forcedTab, hideTabs }: ProfileProps) {
     const { user, fetchProfile } = useAuth();
     const { jobFunctions } = useData();
 
-    // Tabs state - Force 'perfil' if user is not admin
-    const [activeTab, setActiveTab] = useState<'perfil' | 'equipe' | 'cargos' | 'secretarias'>(() => {
+    // Tabs state
+    const [activeTab, setActiveTab] = useState<'perfil' | 'equipe' | 'cargos' | 'secretarias' | 'auditoria'>(() => {
+        if (forcedTab) return forcedTab;
         const stored = localStorage.getItem('profileActiveTab');
-        // Initial safety check: we only allow stored tab if user will be admin
-        // Since we don't have user yet during state initialization, we'll sync it in useEffect
         return (stored as any) || 'perfil';
     });
 
@@ -24,12 +29,16 @@ export default function Profile() {
     const isAdmin = user?.role === 'admin' || user?.role === 'desenvolvedor';
 
     useEffect(() => {
+        if (forcedTab) {
+            setActiveTab(forcedTab);
+            return;
+        }
         // Critical Security: If user is not admin, force 'perfil' tab
         if (user && !isAdmin && activeTab !== 'perfil') {
             setActiveTab('perfil');
         }
         localStorage.setItem('profileActiveTab', activeTab);
-    }, [activeTab, isAdmin, user]);
+    }, [activeTab, isAdmin, user, forcedTab]);
 
     // Form state for My Profile
     const [name, setName] = useState('');
@@ -39,6 +48,8 @@ export default function Profile() {
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [birthDate, setBirthDate] = useState('');
+    const [bio, setBio] = useState('');
 
     // UI state
     const [isSaving, setIsSaving] = useState(false);
@@ -59,6 +70,9 @@ export default function Profile() {
                     setEmail(data.session.user.email || '');
                 }
             });
+
+            setBirthDate(user.birth_date || '');
+            setBio((user as any).bio || '');
         }
     }, [user]);
 
@@ -81,7 +95,9 @@ export default function Profile() {
         try {
             const updatePayload: any = {
                 name,
-                job_titles: jobTitles
+                job_titles: jobTitles,
+                birth_date: birthDate || null,
+                bio: bio || null
             };
 
             // Only Admins update role visually from here (or maybe they don't, but let's keep it safe)
@@ -227,31 +243,55 @@ export default function Profile() {
                 </div>
             )}
 
-            {isAdmin && (
-                <div className="profile-tabs">
+            {!user.birth_date && activeTab === 'perfil' && (
+                <div className="profile-nudge-banner glass animate-slide-down">
+                    <div className="nudge-icon">🎂</div>
+                    <div className="nudge-content">
+                        <h3>Complete o seu perfil</h3>
+                        <p>Adicione sua data de nascimento para que possamos celebrar com você no dia do seu aniversário!</p>
+                    </div>
+                    <button className="btn-nudge-action" onClick={() => document.getElementById('birth_date_input')?.focus()}>
+                        Completar Agora
+                    </button>
+                </div>
+            )}
+
+            {!hideTabs && isAdmin && (
+                <div className="tabs-bar-premium">
                     <button
-                        className={`tab-btn ${activeTab === 'perfil' ? 'active' : ''}`}
+                        className={`tab-btn-premium ${activeTab === 'perfil' ? 'active' : ''}`}
                         onClick={() => setActiveTab('perfil')}
+                        data-tab="perfil"
                     >
                         <User size={18} /> Meu Perfil
                     </button>
                     <button
-                        className={`tab-btn ${activeTab === 'equipe' ? 'active' : ''}`}
+                        className={`tab-btn-premium ${activeTab === 'equipe' ? 'active' : ''}`}
                         onClick={() => setActiveTab('equipe')}
+                        data-tab="equipe"
                     >
                         <Users size={18} /> Gestão da Equipe
                     </button>
                     <button
-                        className={`tab-btn ${activeTab === 'cargos' ? 'active' : ''}`}
+                        className={`tab-btn-premium ${activeTab === 'cargos' ? 'active' : ''}`}
                         onClick={() => setActiveTab('cargos')}
+                        data-tab="cargos"
                     >
                         <Shield size={18} /> Cargos do Sistema
                     </button>
                     <button
-                        className={`tab-btn ${activeTab === 'secretarias' ? 'active' : ''}`}
+                        className={`tab-btn-premium ${activeTab === 'secretarias' ? 'active' : ''}`}
                         onClick={() => setActiveTab('secretarias')}
+                        data-tab="secretarias"
                     >
                         <Building2 size={18} /> Secretarias
+                    </button>
+                    <button
+                        className={`tab-btn-premium ${activeTab === 'auditoria' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('auditoria')}
+                        data-tab="auditoria"
+                    >
+                        <Shield size={18} /> Auditoria
                     </button>
                 </div>
             )}
@@ -310,6 +350,28 @@ export default function Profile() {
                                     value={email}
                                     disabled
                                     title="O e-mail de acesso não pode ser alterado por aqui"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Data de Nascimento</label>
+                                <input
+                                    id="birth_date_input"
+                                    type="date"
+                                    value={birthDate}
+                                    onChange={e => setBirthDate(e.target.value)}
+                                    placeholder="DD/MM/AAAA"
+                                    required
+                                />
+                            </div>
+
+                            <div className="form-group full-width">
+                                <label>Sobre Mim (Bio)</label>
+                                <textarea
+                                    value={bio}
+                                    onChange={e => setBio(e.target.value)}
+                                    placeholder="Conte um pouco sobre sua trajetória na SECOM..."
+                                    rows={3}
                                 />
                             </div>
 
@@ -401,6 +463,7 @@ export default function Profile() {
                         {activeTab === 'equipe' && <ProfileTeamTab />}
                         {activeTab === 'cargos' && <ProfileRolesTab />}
                         {activeTab === 'secretarias' && <ProfileSecretariesTab />}
+                        {activeTab === 'auditoria' && <ProfileSecurityLogsTab />}
                     </>
                 )}
             </div>

@@ -23,9 +23,12 @@ import {
     Filter,
     ExternalLink,
     Users,
-    FileText
+    FileText,
+    ChevronDown,
+    ChevronUp
 } from 'lucide-react';
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { Search } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useRadarNoticias, type FilterParams } from '../hooks/useRadarNoticias';
 import './RadarNoticias.css';
@@ -57,6 +60,7 @@ export default function RadarNoticias() {
     const [syncing, setSyncing] = useState(false);
     const [syncSuccess, setSyncSuccess] = useState(false);
     const [fullSyncing, setFullSyncing] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const tableRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -90,18 +94,86 @@ export default function RadarNoticias() {
         return baseFilters;
     }, [period, selectedCategory, selectedEntregaType]);
 
+    const [collapsedCards, setCollapsedCards] = useState<Record<string, boolean>>({
+        ranking: false,
+        deliveryTypes: false,
+        evolution: false,
+        feed: false,
+        details: false
+    });
+
+    const toggleCard = (cardId: string) => {
+        setCollapsedCards(prev => ({ ...prev, [cardId]: !prev[cardId] }));
+    };
+
     const { data, loading, error, refetch } = useRadarNoticias(filters);
 
-    const displayedNews = useMemo(() => {
-        if (!data?.allNews) return [];
-        if (!activeFilter) return data.allNews;
+    const filteredAnalytics = useMemo(() => {
+        if (!data?.allNews) return null;
+        
+        let filtered = data.allNews;
 
-        return data.allNews.filter(n => {
-            if (activeFilter.type === 'category') return n.category === activeFilter.value;
-            if (activeFilter.type === 'entrega') return n.entrega_type === activeFilter.value;
-            return true;
+        if (activeFilter) {
+            filtered = filtered.filter(n => {
+                if (activeFilter.type === 'category') return n.category === activeFilter.value;
+                if (activeFilter.type === 'entrega') return n.entrega_type === activeFilter.value;
+                return true;
+            });
+        }
+
+        if (searchQuery) {
+            const normalizeStr = (str: string) => 
+                str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            
+            const q = normalizeStr(searchQuery);
+            const qSin = q.endsWith('s') && q.length > 4 ? q.slice(0, -1) : q; // Simple singularization
+            
+            filtered = filtered.filter(n => {
+                const titleNorm = normalizeStr(n.title || "");
+                return titleNorm.includes(q) || titleNorm.includes(qSin) || q.includes(titleNorm);
+            });
+        }
+
+        const catMap = new Map<string, number>();
+        filtered.forEach(n => {
+            const cat = n.category || 'Outros';
+            catMap.set(cat, (catMap.get(cat) || 0) + 1);
         });
-    }, [data?.allNews, activeFilter]);
+        const byCategory = Array.from(catMap.entries())
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => b.value - a.value);
+
+        const entregas = filtered.filter(n => n.is_entrega);
+        const deliveryMap = new Map<string, number>();
+        entregas.forEach(n => {
+            const type = n.entrega_type || 'outros';
+            deliveryMap.set(type, (deliveryMap.get(type) || 0) + 1);
+        });
+        const deliveries = Array.from(deliveryMap.entries())
+            .map(([type, count]) => ({ type, count }))
+            .sort((a, b) => b.count - a.count);
+
+        const yearMap = new Map<number, number>();
+        filtered.forEach(n => {
+            if (n.published_at) {
+                const year = new Date(n.published_at).getFullYear();
+                yearMap.set(year, (yearMap.get(year) || 0) + 1);
+            }
+        });
+        const byYear = Array.from(yearMap.entries())
+            .map(([year, count]) => ({ year, count }))
+            .sort((a, b) => a.year - b.year);
+
+        return {
+            news: filtered,
+            byCategory,
+            deliveries,
+            byYear,
+            totalFiltered: filtered.length,
+            entregasTotal: entregas.length,
+            recentNews: entregas.slice(0, 15)
+        };
+    }, [data?.allNews, activeFilter, searchQuery]);
 
     async function handleSync() {
         try {
@@ -157,11 +229,35 @@ export default function RadarNoticias() {
                         <Zap size={24} color="#fff" fill="#fff" />
                     </div>
                     <div className="brand-texts">
-                        <h1>Radar de Dados SECOM</h1>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <h1>Radar de Dados SECOM</h1>
+                            <div style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 10px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 700, border: '1px solid rgba(255,255,255,0.2)' }}>
+                                {data?.totalCount?.toLocaleString() || 0} TOTAL
+                            </div>
+                        </div>
                         <p>Monitoramento estratégico dos canais oficiais da prefeitura</p>
                     </div>
                 </div>
                 <div className="header-actions">
+                    <div className="radar-search-wrapper-header" style={{ position: 'relative', width: 280 }}>
+                        <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.6)' }} />
+                        <input
+                            type="text"
+                            placeholder="Pesquisar nos registros..."
+                            className="radar-search-input-header"
+                            style={{ 
+                                width: '100%', 
+                                padding: '10px 12px 10px 38px', 
+                                background: 'rgba(0,0,0,0.2)', 
+                                border: '1px solid rgba(255,255,255,0.1)', 
+                                borderRadius: '10px', 
+                                color: 'white',
+                                fontSize: '0.875rem'
+                            }}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
                     {data && data.totalCount > 0 && (
                         <button
                             className="hub-sync-btn full-sync-btn"
@@ -196,14 +292,14 @@ export default function RadarNoticias() {
                         <button className={period === 'all' ? 'active' : ''} onClick={() => setPeriod('all')}>TUDO</button>
                     </div>
                 </div>
-                <div className="filter-selectors">
-                    <select value={activeFilter?.type === 'category' ? activeFilter.value : selectedCategory} onChange={e => { setSelectedCategory(e.target.value); setActiveFilter(null); }} className="radar-select">
+                <div className="filter-selectors" style={{ flex: 1, display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                    <select value={activeFilter?.type === 'category' ? activeFilter.value : selectedCategory} onChange={e => { setSelectedCategory(e.target.value); setActiveFilter(null); }} className="radar-select" style={{ maxWidth: 200 }}>
                         <option value="">Todas as Secretarias</option>
                         {data?.categories.map(cat => (
                             <option key={cat} value={cat}>{cat}</option>
                         ))}
                     </select>
-                    <select value={activeFilter?.type === 'entrega' ? activeFilter.value : selectedEntregaType} onChange={e => { setSelectedEntregaType(e.target.value); setActiveFilter(null); }} className="radar-select">
+                    <select value={activeFilter?.type === 'entrega' ? activeFilter.value : selectedEntregaType} onChange={e => { setSelectedEntregaType(e.target.value); setActiveFilter(null); }} className="radar-select" style={{ maxWidth: 180 }}>
                         <option value="">Todos os Tipos</option>
                         <option value="reforma">Reforma</option>
                         <option value="revitalizacao">Revitalização</option>
@@ -230,196 +326,240 @@ export default function RadarNoticias() {
 
             <div className="kpi-grid">
                 <div className="kpi-card kpi-total">
-                    <div className="kpi-icon-wrapper"><FileText size={24} /></div>
+                    <div className="kpi-icon-wrapper" style={{ background: '#f8fafc', color: '#1e3a8a' }}><Activity size={24} /></div>
                     <div className="kpi-content">
-                        <h3>Total de Notícias</h3>
-                        <div className="kpi-value">{data?.totalCount?.toLocaleString() || 0}</div>
-                        <p className="kpi-label">Capturadas do site</p>
+                        <h3>Notícias Filtradas</h3>
+                        <div className="kpi-value">{filteredAnalytics?.totalFiltered?.toLocaleString() || 0}</div>
+                        <p className="kpi-label">Baseada na busca atual</p>
                     </div>
                 </div>
                 <div className="kpi-card kpi-entregas">
                     <div className="kpi-icon-wrapper"><Construction size={24} /></div>
                     <div className="kpi-content">
-                        <h3>Entregas Mapeadas</h3>
-                        <div className="kpi-value">{data?.entregasTotal?.toLocaleString() || 0}</div>
-                        <p className="kpi-label">Obras e serviços</p>
+                        <h3>Inaugurações Mapeadas</h3>
+                        <div className="kpi-value">{filteredAnalytics?.entregasTotal?.toLocaleString() || 0}</div>
+                        <p className="kpi-label">Baseado na busca atual</p>
                     </div>
                 </div>
                 <div className="kpi-card kpi-secretarias">
                     <div className="kpi-icon-wrapper"><Users size={24} /></div>
                     <div className="kpi-content">
                         <h3>Secretarias Ativas</h3>
-                        <div className="kpi-value">{data?.categories?.length || 0}</div>
-                        <p className="kpi-label">Com publicações</p>
+                        <div className="kpi-value">{filteredAnalytics?.byCategory?.length || 0}</div>
+                        <p className="kpi-label">No filtro atual</p>
                     </div>
                 </div>
-                <div className="kpi-card kpi-semana">
-                    <div className="kpi-icon-wrapper"><Calendar size={24} /></div>
+                <div className="kpi-card kpi-semana" style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)', color: 'white' }}>
+                    <div className="kpi-icon-wrapper" style={{ background: 'rgba(255,255,255,0.2)', color: 'white' }}><Search size={24} /></div>
                     <div className="kpi-content">
-                        <h3>Notícias no Período</h3>
-                        <div className="kpi-value">{data?.total?.toLocaleString() || 0}</div>
-                        <p className="kpi-label">{period === '7d' ? 'Últimos 7 dias' : period === '30d' ? 'Últimos 30 dias' : period === '90d' ? 'Últimos 90 dias' : period === '2025' ? 'Desde jan/2025' : 'Todas as notícias'}</p>
+                        <h3>Volume de Amostra</h3>
+                        <div className="kpi-value">{Math.round(((filteredAnalytics?.totalFiltered || 0) / (data?.total || 1)) * 100)}%</div>
+                        <p className="kpi-label" style={{ color: 'rgba(255,255,255,0.8)' }}>Da base carregada</p>
                     </div>
                 </div>
             </div>
 
-            <main className="hub-radar-content">
-                <div className="radar-main-column">
-                    <div className="hub-card ranking-card">
-                        <div className="card-header">
-                            <h2><Target size={18} /> RANKING DE SECRETARIAS</h2>
-                            <p>Demandas por órgão municipal</p>
+            <main className="hub-radar-content" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '1.5rem', alignItems: 'start' }}>
+                <div className="radar-main-column" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div className={`hub-card ranking-card ${collapsedCards.ranking ? 'collapsed' : ''}`}>
+                        <div className="card-header" onClick={() => toggleCard('ranking')} style={{ cursor: 'pointer' }}>
+                            <div className="title-group">
+                                <Target size={18} /> 
+                                <div>
+                                    <h2>RANKING DE SECRETARIAS</h2>
+                                    {!collapsedCards.ranking && <p>Demandas por órgão municipal</p>}
+                                </div>
+                            </div>
+                            {collapsedCards.ranking ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
                         </div>
-                        <div className="card-body chart-box">
-                            {(data?.byCategory.length || 0) > 0 ? (
-                                <div className="ranking-pro-list">
-                                    {(data?.byCategory || []).slice(0, 8).map((item, idx) => (
-                                        <div
-                                            key={item.name}
-                                            className="ranking-pro-item"
-                                            onClick={() => { setActiveFilter({ type: 'category', value: item.name }); }}
+                        {!collapsedCards.ranking && (
+                            <div className="card-body chart-box">
+                                {(filteredAnalytics?.byCategory.length || 0) > 0 ? (
+                                    <div className="ranking-pro-list">
+                                        {(filteredAnalytics?.byCategory || []).slice(0, 8).map((item, idx) => (
+                                            <div
+                                                key={item.name}
+                                                className="ranking-pro-item"
+                                                onClick={(e) => { e.stopPropagation(); setActiveFilter({ type: 'category', value: item.name }); }}
+                                                style={{ cursor: 'pointer' }}
+                                            >
+                                                <div className="ranking-pro-info">
+                                                    <span className="rank-pos">{idx + 1}</span>
+                                                    <span className="rank-name">{item.name}</span>
+                                                </div>
+                                                <div className="rank-bar-container">
+                                                    <div className="rank-bar" style={{ width: `${(item.value / (filteredAnalytics?.byCategory[0]?.value || 1)) * 100}%` }}></div>
+                                                    <span className="rank-value">{item.value}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="empty-state">Sem dados de secretarias.</div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className={`hub-card delivery-analysis-card ${collapsedCards.deliveryTypes ? 'collapsed' : ''}`}>
+                        <div className="card-header" onClick={() => toggleCard('deliveryTypes')} style={{ cursor: 'pointer' }}>
+                            <div className="title-group">
+                                <Construction size={18} />
+                                <div>
+                                    <h2>INAUGURAÇÕES POR TIPO</h2>
+                                    {!collapsedCards.deliveryTypes && <p>Divisão por tipo de obra ou serviço</p>}
+                                </div>
+                            </div>
+                            {collapsedCards.deliveryTypes ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                        </div>
+                        {!collapsedCards.deliveryTypes && (
+                            <div className="card-body chart-box">
+                                <ResponsiveContainer width="100%" height={250}>
+                                    <BarChart data={filteredAnalytics?.deliveries}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                        <XAxis dataKey="type" stroke="#64748b" tick={{ fontSize: 11 }} />
+                                        <YAxis hide />
+                                        <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '4px' }} />
+                                        <Bar
+                                            dataKey="count" radius={[4, 4, 0, 0]} barSize={40}
+                                            onClick={(d) => setActiveFilter({ type: 'entrega', value: d.type || '' })}
                                             style={{ cursor: 'pointer' }}
                                         >
-                                            <div className="ranking-pro-info">
-                                                <span className="rank-pos">{idx + 1}</span>
-                                                <span className="rank-name">{item.name}</span>
-                                            </div>
-                                            <div className="rank-bar-container">
-                                                <div className="rank-bar" style={{ width: `${(item.value / (data?.byCategory[0]?.value || 1)) * 100}%` }}></div>
-                                                <span className="rank-value">{item.value}</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="empty-state">Sem dados de secretarias.</div>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="hub-card delivery-analysis-card">
-                        <div className="card-header">
-                            <h2><Construction size={18} /> ENTREGAS POR TIPO</h2>
-                            <p>Divisão por tipo de obra ou serviço</p>
-                        </div>
-                        <div className="card-body chart-box">
-                            <ResponsiveContainer width="100%" height={250}>
-                                <BarChart data={data?.deliveries}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                    <XAxis dataKey="type" stroke="#64748b" tick={{ fontSize: 11 }} />
-                                    <YAxis hide />
-                                    <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '4px' }} />
-                                    <Bar
-                                        dataKey="count" radius={[4, 4, 0, 0]} barSize={40}
-                                        onClick={(d) => setActiveFilter({ type: 'entrega', value: d.type || '' })}
-                                        style={{ cursor: 'pointer' }}
-                                    >
-                                        {data?.deliveries.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={deliveryTypeColors[entry.type] || '#64748b'} />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
-
-                    <div className="hub-card trends-card">
-                        <div className="card-header">
-                            <h2><Activity size={18} /> EVOLUÇÃO VOLUMÉTRICA</h2>
-                            <p>Publicações ao longo do tempo</p>
-                        </div>
-                        <div className="card-body chart-box">
-                            <ResponsiveContainer width="100%" height={250}>
-                                <LineChart data={data?.byYear}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                    <XAxis dataKey="year" stroke="#64748b" tick={{ fontSize: 12 }} />
-                                    <YAxis stroke="#64748b" tick={{ fontSize: 12 }} />
-                                    <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '4px' }} />
-                                    <Line type="monotone" dataKey="count" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981' }} activeDot={{ r: 6 }} />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        </div>
+                                            {filteredAnalytics?.deliveries.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={deliveryTypeColors[entry.type] || '#64748b'} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                <aside className="radar-feed-column">
-                    <div className="hub-card feed-card">
-                        <div className="card-header">
-                            <h2><Zap size={18} color="#f97316" fill="#f97316" /> ENTREGAS DO PERÍODO</h2>
-                            <p>Obras e serviços finalizados</p>
+                <aside className="radar-feed-column" style={{ height: '100%' }}>
+                    <div className={`hub-card feed-card ${collapsedCards.feed ? 'collapsed' : ''}`} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                        <div className="card-header" onClick={() => toggleCard('feed')} style={{ cursor: 'pointer' }}>
+                            <div className="title-group">
+                                <Zap size={18} color="#f97316" fill="#f97316" />
+                                <div>
+                                    <h2>INAUGURAÇÕES DO PERÍODO</h2>
+                                    {!collapsedCards.feed && <p>Obras e serviços finalizados</p>}
+                                </div>
+                            </div>
+                            {collapsedCards.feed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
                         </div>
-                        <div className="card-body feed-list">
-                            {data?.recentNews.filter(n => n.is_entrega).slice(0, 15).map(news => (
-                                <a key={news.id} href={news.url} target="_blank" rel="noopener noreferrer" className="feed-item-premium">
-                                    <div className="feed-item-icon">
-                                        <div className="dot-radar active" style={{ background: deliveryTypeColors[news.entrega_type || 'outros'] }}></div>
-                                    </div>
-                                    <div className="feed-item-content">
-                                        <span className="feed-cat">{news.category} — {news.entrega_type?.toUpperCase()}</span>
-                                        <span className="feed-title">{news.title}</span>
-                                        <div className="feed-meta">
-                                            <Calendar size={12} /> {new Date(news.published_at).toLocaleDateString('pt-BR')}
-                                            <ArrowUpRight size={14} className="ml-auto" />
+                        {!collapsedCards.feed && (
+                            <div className="card-body feed-list" style={{ flex: 1, overflowY: 'auto' }}>
+                                {filteredAnalytics?.recentNews.map(news => (
+                                    <a key={news.id} href={news.url} target="_blank" rel="noopener noreferrer" className="feed-item-premium">
+                                        <div className="feed-item-icon">
+                                            <div className="dot-radar active" style={{ background: deliveryTypeColors[news.entrega_type || 'outros'] }}></div>
                                         </div>
-                                    </div>
-                                </a>
-                            ))}
-                            {data?.recentNews.filter(n => n.is_entrega).length === 0 && (
-                                <p className="feed-empty">Nenhuma entrega no período selecionado.</p>
-                            )}
-                        </div>
+                                        <div className="feed-item-content">
+                                            <span className="feed-cat">{news.category} — {news.entrega_type?.toUpperCase()}</span>
+                                            <span className="feed-title">{news.title}</span>
+                                            <div className="feed-meta">
+                                                <Calendar size={12} /> {new Date(news.published_at).toLocaleDateString('pt-BR')}
+                                                <ArrowUpRight size={14} className="ml-auto" />
+                                            </div>
+                                        </div>
+                                    </a>
+                                ))}
+                                {filteredAnalytics?.recentNews.length === 0 && (
+                                    <p className="feed-empty">Nenhuma inauguração no período.</p>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </aside>
+
+                <div className="radar-full-column" style={{ gridColumn: 'span 2' }}>
+                    <div className={`hub-card trends-card ${collapsedCards.evolution ? 'collapsed' : ''}`}>
+                        <div className="card-header" onClick={() => toggleCard('evolution')} style={{ cursor: 'pointer' }}>
+                            <div className="title-group">
+                                <Activity size={18} />
+                                <div>
+                                    <h2>EVOLUÇÃO VOLUMÉTRICA</h2>
+                                    {!collapsedCards.evolution && <p>Publicações ao longo do tempo</p>}
+                                </div>
+                            </div>
+                            {collapsedCards.evolution ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                        </div>
+                        {!collapsedCards.evolution && (
+                            <div className="card-body chart-box">
+                                <ResponsiveContainer width="100%" height={250}>
+                                    <LineChart data={filteredAnalytics?.byYear}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                        <XAxis dataKey="year" stroke="#64748b" tick={{ fontSize: 12 }} />
+                                        <YAxis stroke="#64748b" tick={{ fontSize: 12 }} />
+                                        <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '4px' }} />
+                                        <Line type="monotone" dataKey="count" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981' }} activeDot={{ r: 6 }} />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </main>
 
-            <div className="hub-card table-card" ref={tableRef}>
-                <div className="card-header">
-                    <h2><FileText size={18} /> DETALHAMENTO DAS NOTÍCIAS</h2>
-                    <p>{displayedNews.length} notícias no período {activeFilter ? `(Filtro: ${activeFilter.type === 'category' ? 'Secretaria' : 'Tipo'})` : ''}</p>
-                </div>
-                <div className="table-responsive">
-                    <table className="radar-table">
-                        <thead>
-                            <tr>
-                                <th>Título</th>
-                                <th>Secretaria</th>
-                                <th>Data</th>
-                                <th>Tipo</th>
-                                <th>Link</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {displayedNews.slice(0, 100).map(news => (
-                                <tr key={news.id}>
-                                    <td className="t-title">{news.title}</td>
-                                    <td>{news.category || '—'}</td>
-                                    <td>{news.published_at ? new Date(news.published_at).toLocaleDateString('pt-BR') : '—'}</td>
-                                    <td>
-                                        {news.is_entrega ? (
-                                            <span className="entrega-badge" style={{ background: statusColors[news.entrega_type] || '#64748b' }}>
-                                                {news.entrega_type?.toUpperCase()}
-                                            </span>
-                                        ) : (
-                                            <span className="noticia-badge">NOTÍCIA</span>
-                                        )}
-                                    </td>
-                                    <td>
-                                        <a href={news.url} target="_blank" rel="noopener noreferrer" className="news-link" title="Abrir notícia">
-                                            <ExternalLink size={16} />
-                                        </a>
-                                    </td>
-                                </tr>
-                            ))}
-                            {displayedNews.length === 0 && (
-                                <tr><td colSpan={5} className="empty-table">Nenhuma notícia encontrada.</td></tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-                {displayedNews.length > 100 && (
-                    <div className="table-footer-note">
-                        Mostrando 100 de {displayedNews.length} notícias. Use os filtros para refinar.
+            <div className={`hub-card table-card ${collapsedCards.details ? 'collapsed' : ''}`} ref={tableRef}>
+                <div className="card-header" onClick={() => toggleCard('details')} style={{ cursor: 'pointer' }}>
+                    <div className="title-group">
+                        <FileText size={18} />
+                        <div>
+                            <h2>DETALHAMENTO DAS NOTÍCIAS</h2>
+                            {!collapsedCards.details && <p>{filteredAnalytics?.news.length} notícias no período {activeFilter ? `(Filtro: ${activeFilter.type === 'category' ? 'Secretaria' : 'Tipo'})` : ''}</p>}
+                        </div>
                     </div>
+                    {collapsedCards.details ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                </div>
+                {!collapsedCards.details && (
+                    <>
+                        <div className="table-responsive">
+                            <table className="radar-table">
+                                <thead>
+                                    <tr>
+                                        <th>Título</th>
+                                        <th>Secretaria</th>
+                                        <th>Data</th>
+                                        <th>Tipo</th>
+                                        <th>Link</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredAnalytics?.news.slice(0, 100).map(news => (
+                                        <tr key={news.id}>
+                                            <td className="t-title">{news.title}</td>
+                                            <td>{news.category || '—'}</td>
+                                            <td>{news.published_at ? new Date(news.published_at).toLocaleDateString('pt-BR') : '—'}</td>
+                                            <td>
+                                                {news.is_entrega ? (
+                                                    <span className="entrega-badge" style={{ background: statusColors[news.entrega_type] || '#64748b' }}>
+                                                        {news.entrega_type?.toUpperCase()}
+                                                    </span>
+                                                ) : (
+                                                    <span className="noticia-badge">NOTÍCIA</span>
+                                                )}
+                                            </td>
+                                            <td>
+                                                <a href={news.url} target="_blank" rel="noopener noreferrer" className="news-link" title="Abrir notícia">
+                                                    <ExternalLink size={16} />
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {filteredAnalytics?.news.length === 0 && (
+                                        <tr><td colSpan={5} className="empty-table">Nenhuma notícia encontrada.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                        {(filteredAnalytics?.news.length || 0) > 100 && (
+                            <div className="table-footer-note">
+                                Mostrando 100 de {filteredAnalytics?.news.length} notícias. Use os filtros para refinar.
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </div>

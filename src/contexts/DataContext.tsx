@@ -27,7 +27,7 @@ interface DataContextType {
     // Métodos (expostos pelos hooks)
     updateTaskStatus: (taskId: string, newStatus: Task['status']) => Promise<void>;
     updateTask: (updatedTask: Task) => Promise<void>;
-    addTask: (task: Omit<Task, 'id' | 'comments' | 'attachments'>) => Promise<{ success: boolean; error?: any }>;
+    addTask: (task: Omit<Task, 'id'>, teamIds?: string[]) => Promise<{ success: boolean; error?: any }>;
     addTeamMember: (member: TeamMember, password?: string) => Promise<{ success: boolean; error?: string }>;
     deleteTask: (taskId: string) => Promise<void>;
     updateTeamMember: (member: TeamMember) => Promise<void>;
@@ -100,6 +100,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                     hasLogin: u.has_login ?? (u.role !== 'Motorista'),
                     avatar_url: u.avatar_url || undefined,
                     job_titles: (u.job_titles || []).sort(),
+                    birth_date: u.birth_date || undefined,
                     color: 'hsl(210, 100%, 50%)',
                 })));
             }

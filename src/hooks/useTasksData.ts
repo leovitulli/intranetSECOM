@@ -43,7 +43,7 @@ export function useTasksData() {
         return null;
     };
 
-    const addTask = async (taskData: Omit<Task, 'id' | 'comments' | 'attachments'>, teamIds?: string[]): Promise<{ success: boolean; error?: any }> => {
+    const addTask = async (taskData: Omit<Task, 'id'>, teamIds?: string[]): Promise<{ success: boolean; error?: any }> => {
         try {
             console.log("🚀 Iniciando criação Atômica de Pauta via Hook...");
             
@@ -103,7 +103,9 @@ export function useTasksData() {
                 p_post_material_solicitado: taskData.post_material_solicitado || [],
                 p_foto_briefing: taskData.foto_briefing || null,
                 p_arte_pecas: taskData.arte_pecas || null,
-                p_arte_informacoes: taskData.arte_informacoes || null
+                p_arte_informacoes: taskData.arte_informacoes || null,
+                p_comments: taskData.comments || [],
+                p_attachments: taskData.attachments || []
             });
 
             if (rpcError) {
@@ -212,7 +214,9 @@ export function useTasksData() {
                 p_post_material_solicitado: updatedTask.post_material_solicitado || [],
                 p_foto_briefing: updatedTask.foto_briefing || null,
                 p_arte_pecas: updatedTask.arte_pecas || null,
-                p_arte_informacoes: updatedTask.arte_informacoes || null
+                p_arte_informacoes: updatedTask.arte_informacoes || null,
+                p_comments: updatedTask.comments || [],
+                p_attachments: updatedTask.attachments || []
             });
 
             if (error) {

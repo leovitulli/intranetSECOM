@@ -3,6 +3,7 @@ import React from 'react';
 interface SaveBannerProps {
     show: boolean;
     isSaving: boolean;
+    saveError: string | null;
     onDiscard: () => void;
     onSave: (closeAfter?: boolean) => void;
 }
@@ -10,6 +11,7 @@ interface SaveBannerProps {
 export const SaveBanner: React.FC<SaveBannerProps> = ({
     show,
     isSaving,
+    saveError,
     onDiscard,
     onSave
 }) => {
@@ -24,20 +26,21 @@ export const SaveBanner: React.FC<SaveBannerProps> = ({
             padding: '1.25rem', 
             background: '#1e293b', 
             borderRadius: 16, 
-            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)', 
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', 
             zIndex: 1100,
             animation: 'slideUp 0.3s ease-out',
             border: '1px solid rgba(255,255,255,0.1)'
         }}>
-            <div style={{ color: 'white', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.85rem', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <div style={{ color: 'white', fontSize: '0.8rem', fontWeight: 600, marginBottom: '0.85rem', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                 <div style={{ 
-                    width: 6, 
-                    height: 6, 
-                    background: isSaving ? '#3b82f6' : '#f59e0b', 
+                    width: 8, 
+                    height: 8, 
+                    background: saveError ? '#ef4444' : (isSaving ? '#10b981' : '#f59e0b'), 
                     borderRadius: '50%',
-                    boxShadow: isSaving ? '0 0 8px #3b82f6' : 'none'
+                    boxShadow: saveError ? '0 0 12px #ef4444' : (isSaving ? '0 0 12px #10b981' : 'none'),
+                    animation: isSaving ? 'pulse 1.5s infinite' : 'none'
                 }}></div>
-                {isSaving ? 'Salvando alterações...' : 'Alterações não salvas'}
+                {saveError ? saveError : (isSaving ? 'Autosave em curso...' : 'Aguardando alterações (Autosave)')}
             </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button 

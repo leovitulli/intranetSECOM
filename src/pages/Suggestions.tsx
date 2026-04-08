@@ -6,6 +6,7 @@ import './Suggestions.css';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
+import { sanitizeText } from '../utils/sanitize';
 import FileViewer from '../components/FileViewer';
 import type { Attachment } from '../types/kanban';
 
@@ -19,7 +20,7 @@ function getFileIcon(file: File) {
 }
 
 export default function Suggestions() {
-    const { suggestions, loading, addSuggestion, addTask, deleteSuggestion } = useData();
+    const { suggestions, secretarias, loading, addSuggestion, addTask, deleteSuggestion } = useData();
     const { user } = useAuth();
     const isAdmin = user?.role === 'admin' || user?.role === 'desenvolvedor';
 
@@ -115,6 +116,8 @@ export default function Suggestions() {
                     creator: suggestion.author || suggestion.department,
                     priority: 'media',
                     assignees: [],
+                    attachments: [],
+                    comments: [],
                     dueDate: null,
                     createdAt: new Date()
                 });
@@ -203,41 +206,9 @@ export default function Suggestions() {
                                     required
                                 >
                                     <option value="">Selecione...</option>
-                                    <option>SVCS - Secretaria do Verde</option>
-                                    <option>SVCS - Gestão de Resíduos</option>
-                                    <option>SVCS - Bem-estar Animal</option>
-                                    <option>SRC - Receita</option>
-                                    <option>SIURB - Infraestrutura</option>
-                                    <option>SCT - Cultura e Turismo</option>
-                                    <option>SDH - Direitos Humanos</option>
-                                    <option>SDH - Juventude</option>
-                                    <option>SDH - Mulher</option>
-                                    <option>SDH - Acessibilidade</option>
-                                    <option>SDH - Igualdade Racial</option>
-                                    <option>SDH - Diversidade</option>
-                                    <option>SCTI - Tecnologia e Inovação</option>
-                                    <option>SGE - Gestão</option>
-                                    <option>SS - Saúde</option>
-                                    <option>SE - Educação</option>
-                                    <option>SDET - Des. Econômico e Trabalho</option>
-                                    <option>CFSS - Fundo Social</option>
-                                    <option>CPDC - Procon</option>
-                                    <option>SH - Habitação</option>
-                                    <option>SDS - Des. Social</option>
-                                    <option>SDS - Defesa Civil</option>
-                                    <option>SDS - Idoso</option>
-                                    <option>SCC - Casa Civil</option>
-                                    <option>CGP - Chefia de Gabinete</option>
-                                    <option>SAR</option>
-                                    <option>SDU</option>
-                                    <option>SEL - Esportes</option>
-                                    <option>SJC - Justiça</option>
-                                    <option>SFI - Finanças</option>
-                                    <option>SEMOB</option>
-                                    <option>SJCP - Procuradoria</option>
-                                    <option>Controladoria</option>
-                                    <option>Ouvidoria</option>
-                                    <option>Segurança</option>
+                                    {secretarias.map(sec => (
+                                        <option key={sec.id} value={sec.nome}>{sec.nome}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div className="form-group flex-1">
@@ -369,7 +340,7 @@ export default function Suggestions() {
                                         </span>
                                     </div>
 
-                                    <h3 className="suggestion-title">{suggestion.title}</h3>
+                                    <h3 className="suggestion-title">{sanitizeText(suggestion.title)}</h3>
                                     {suggestion.department && (
                                         <span style={{
                                             display: 'inline-flex', alignItems: 'center', gap: 4,

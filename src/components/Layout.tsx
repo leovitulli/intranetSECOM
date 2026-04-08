@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, Newspaper, LogOut, Bell, BellPlus, Search, CalendarDays, CalendarClock, MessageSquarePlus, BarChart3, Check, X, Menu, AlignEndHorizontal, Zap } from 'lucide-react';
+import { LayoutDashboard, LogOut, Bell, Search, CalendarDays, CalendarClock, BarChart3, Check, X, Menu, AlignEndHorizontal, Zap, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useData } from '../contexts/DataContext';
@@ -15,7 +15,41 @@ export default function Layout() {
     const isAdmin = user?.role === 'admin' || user?.role === 'desenvolvedor';
     const [isNotifOpen, setIsNotifOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
+    const [isSidebarLocked, setIsSidebarLocked] = useState(() => {
+        const stored = localStorage.getItem('sidebarLocked');
+        return stored === 'true'; // Default to false (collapsed) if not set
+    });
+    const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
     const notifRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (isDarkMode) {
+            document.body.classList.add('dark-mode');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.body.classList.remove('dark-mode');
+            localStorage.setItem('theme', 'light');
+        }
+    }, [isDarkMode]);
+
+    useEffect(() => {
+        localStorage.setItem('sidebarLocked', String(isSidebarLocked));
+    }, [isSidebarLocked]);
+
+    // Network Status Listeners
+    useEffect(() => {
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -35,11 +69,17 @@ export default function Layout() {
                 <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)} />
             )}
             {/* Sidebar */}
-            <aside className={`sidebar ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+            <aside className={`sidebar ${isSidebarOpen ? 'sidebar-open' : ''} ${!isSidebarLocked ? 'collapsed' : ''}`}>
                 <div className="sidebar-header">
-                    <div className="logo">
-                        <div className="logo-icon text-gradient">SECOM</div>
-                        <h2>Comunica Hub</h2>
+                    <div className="logo" onClick={() => setIsSidebarLocked(!isSidebarLocked)} style={{ cursor: 'pointer' }}>
+                        <div className="logo-brand">
+                            <span className="brand-prefix">SECOM</span>
+                            <span className="brand-dot"></span>
+                        </div>
+                        <div className="logo-text-group">
+                            <h2>Comunica Hub</h2>
+                            <span className="logo-version">v2.0</span>
+                        </div>
                     </div>
                 </div>
 
@@ -48,7 +88,7 @@ export default function Layout() {
                         to="/dashboard"
                         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                     >
-                        <LayoutDashboard size={20} />
+                        <div className="nav-icon-box"><LayoutDashboard size={20} /></div>
                         <span>Gestão de Pautas</span>
                     </NavLink>
 
@@ -56,7 +96,7 @@ export default function Layout() {
                         to="/agenda"
                         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                     >
-                        <CalendarClock size={20} />
+                        <div className="nav-icon-box"><CalendarClock size={20} /></div>
                         <span>Agenda Externa</span>
                     </NavLink>
 
@@ -64,23 +104,15 @@ export default function Layout() {
                         to="/cronograma"
                         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                     >
-                        <AlignEndHorizontal size={20} />
+                        <div className="nav-icon-box"><AlignEndHorizontal size={20} /></div>
                         <span>Cronograma Semanal</span>
-                    </NavLink>
-
-                    <NavLink
-                        to="/sugestoes"
-                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                    >
-                        <MessageSquarePlus size={20} />
-                        <span>Caixa de Sugestões</span>
                     </NavLink>
 
                     <NavLink
                         to="/calendario"
                         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                     >
-                        <CalendarDays size={20} />
+                        <div className="nav-icon-box"><CalendarDays size={20} /></div>
                         <span>Calendário</span>
                     </NavLink>
 
@@ -89,26 +121,8 @@ export default function Layout() {
                         to="/relatorios"
                         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                     >
-                        <BarChart3 size={20} />
+                        <div className="nav-icon-box"><BarChart3 size={20} /></div>
                         <span>Produtividade</span>
-                    </NavLink>
-
-                    {isAdmin && (
-                        <NavLink
-                            to="/notificacoes"
-                            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                        >
-                            <BellPlus size={20} />
-                            <span>Enviar Alerta</span>
-                        </NavLink>
-                    )}
-
-                    <NavLink
-                        to="/noticias"
-                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                    >
-                        <Newspaper size={20} />
-                        <span>MURAL</span>
                     </NavLink>
 
                     {isAdmin && (
@@ -116,25 +130,27 @@ export default function Layout() {
                             to="/radar-noticias"
                             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                         >
-                            <Zap size={20} />
+                            <div className="nav-icon-box"><Zap size={20} /></div>
                             <span>Notícias SECOM</span>
                         </NavLink>
                     )}
                 </nav>
 
                 <div className="sidebar-footer">
-                    <NavLink to="/perfil" className="user-profile" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <img src={user?.avatar} alt="Profile" className="avatar" />
-                        <div className="user-info">
-                            <span className="user-name">{user?.name}</span>
-                            <span className="user-role" style={{ textTransform: 'capitalize' }}>
-                                {user?.job_titles && user.job_titles.length > 0
-                                    ? user.job_titles.join(', ')
-                                    : user?.role}
+                    <NavLink to="/perfil" className="user-profile-premium" title="Ver Perfil">
+                        <div className="avatar-container">
+                            <img src={user?.avatar} alt={user?.name} className="premium-avatar" />
+                            {!user?.birth_date && <div className="nudge-dot-premium" title="Perfil incompleto">!</div>}
+                            <div className={`online-ring ${!isOnline ? 'offline' : ''}`} title={isOnline ? 'Conectado' : 'Sem Internet'}></div>
+                        </div>
+                        <div className="user-meta">
+                            <span className="meta-name">{user?.name}</span>
+                            <span className="meta-role">
+                                {user?.job_titles && user.job_titles.length > 0 ? user.job_titles[0] : user?.role}
                             </span>
                         </div>
                     </NavLink>
-                    <button onClick={logout} className="logout-btn" title="Sair">
+                    <button onClick={logout} className="logout-btn-premium" title="Sair do Sistema">
                         <LogOut size={20} />
                     </button>
                 </div>
@@ -182,7 +198,15 @@ export default function Layout() {
                             <span className="online-count-hint">{onlineUsers.length} online</span>
                         </div>
                     )}
-                    <div className="topbar-actions" ref={notifRef} style={{ position: 'relative' }}>
+                    <div className="topbar-actions" ref={notifRef} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button 
+                            className="icon-btn theme-toggle" 
+                            onClick={() => setIsDarkMode(!isDarkMode)}
+                            title={isDarkMode ? "Ativar Modo Claro" : "Ativar Modo Noturno"}
+                        >
+                            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                        </button>
+
                         <button className="icon-btn" onClick={() => setIsNotifOpen(!isNotifOpen)}>
                             <Bell size={20} />
                             {unreadCount > 0 && <span className="badge">{unreadCount}</span>}

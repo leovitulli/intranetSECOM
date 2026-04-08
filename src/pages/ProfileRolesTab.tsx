@@ -127,117 +127,142 @@ export default function ProfileRolesTab() {
 
     return (
         <div className="profile-roles-tab">
-            <div className="tab-header">
-                <h2>Cargos do Sistema</h2>
-                <p>Gerencie os nomes das funções que podem ser atribuídas à equipe.</p>
-            </div>
-
-            {/* Formulário de adição com Busca/Autocomplete Integrada */}
-            <form onSubmit={handleAdd} className="add-role-form" style={{ position: 'relative', marginBottom: 24 }}>
-                <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
-                    <Search size={18} style={{ position: 'absolute', left: 12, color: '#94a3b8', pointerEvents: 'none' }} />
-                    <input
-                        type="text"
-                        value={newTitle}
-                        onChange={e => { setNewTitle(e.target.value); setErrorMsg(''); }}
-                        placeholder="Digite para buscar ou adicionar um novo cargo..."
-                        required
-                        disabled={isSaving}
-                        style={{ width: '100%', paddingLeft: 40 }}
-                    />
-
-                    {/* Aviso de duplicidade visual */}
-                    {jobFunctions.some(jf => jf.title.toLowerCase() === newTitle.trim().toLowerCase()) && (
-                        <div style={{ position: 'absolute', bottom: -18, left: 40, fontSize: '0.65rem', color: '#f59e0b', fontWeight: 700 }}>
-                            ⚠️ Este cargo já está cadastrado
-                        </div>
-                    )}
+            {/* SEÇÃO 01: ADIÇÃO E BUSCA */}
+            <div className="modal-section-group-premium">
+                <div className="section-header-premium">
+                    <span className="section-number-premium">01</span>
+                    <h3>Novo Cargo</h3>
                 </div>
                 
-                <button 
-                    type="submit" 
-                    className="btn-primary" 
-                    disabled={isSaving || !newTitle.trim() || jobFunctions.some(jf => jf.title.toLowerCase() === newTitle.trim().toLowerCase())}
-                    style={{ minWidth: 200 }}
-                >
-                    {isSaving ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Plus size={16} />}
-                    <span>Adicionar Cargo</span>
-                </button>
-            </form>
+                <p className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '1.25rem' }}>
+                    Digite o nome da função que deseja cadastrar. O sistema buscará cargos existentes em tempo real para evitar duplicidade.
+                </p>
 
-            {/* Erro global inline */}
-            <InlineError message={errorMsg} />
-
-            {/* Lista de cargos filtrada e ordenada */}
-            <div className="roles-list" style={{ marginTop: errorMsg ? 8 : 0 }}>
-                {filteredJobFunctions.length === 0 && (
-                    <div className="empty-state">
-                        {newTitle ? 'Nenhum resultado para sua busca. Clique no botão ao lado para adicionar este novo cargo.' : 'Nenhum cargo cadastrado.'}
-                    </div>
-                )}
-
-                {filteredJobFunctions.map(jf => (
-                    <div key={jf.id}>
-                        <div className="role-item">
-                            {editingId === jf.id ? (
-                                <>
-                                    <input
-                                        type="text"
-                                        value={editingTitle}
-                                        onChange={e => { setEditingTitle(e.target.value); setEditError(''); }}
-                                        className="edit-role-input"
-                                        autoFocus
-                                        onKeyDown={e => {
-                                            if (e.key === 'Enter') handleSaveEdit(jf.id);
-                                            if (e.key === 'Escape') handleCancelEdit();
-                                        }}
-                                    />
-                                    <div className="role-actions">
-                                        <button className="icon-btn-small" onClick={() => handleSaveEdit(jf.id)} disabled={isSaving} title="Salvar">
-                                            <Check size={16} />
-                                        </button>
-                                        <button className="icon-btn-small" onClick={handleCancelEdit} disabled={isSaving} title="Cancelar">
-                                            <X size={16} />
-                                        </button>
-                                    </div>
-                                </>
-                            ) : (
-                                <>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                        <Shield size={16} style={{ color: '#94a3b8' }} />
-                                        <span>{jf.title}</span>
-                                    </div>
-                                    <div className="role-actions">
-                                        <button className="icon-btn-small" onClick={() => handleStartEdit(jf.id, jf.title)} title="Editar">
-                                            <Pencil size={14} />
-                                        </button>
-                                        <button
-                                            className="icon-btn-small danger"
-                                            onClick={() => setConfirmRemoveId(confirmRemoveId === jf.id ? null : jf.id)}
-                                            title="Remover"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-                                </>
-                            )}
+                {/* Formulário de adição com Busca/Autocomplete Integrada */}
+                <form onSubmit={handleAdd} className="add-role-form" style={{ position: 'relative', display: 'flex', gap: '1rem', width: '100%' }}>
+                    <div className="nova-pauta-field-premium" style={{ flex: 1 }}>
+                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                            <Search size={18} style={{ position: 'absolute', left: 12, color: '#94a3b8', pointerEvents: 'none' }} />
+                            <input
+                                type="text"
+                                className="input-premium"
+                                value={newTitle}
+                                onChange={e => { setNewTitle(e.target.value); setErrorMsg(''); }}
+                                placeholder="Ex: Fotógrafo, Designer, Social Media..."
+                                required
+                                disabled={isSaving}
+                                style={{ paddingLeft: 42 }}
+                            />
                         </div>
 
-                        {/* Erro de edição inline */}
-                        {editingId === jf.id && editError && (
-                            <InlineError message={editError} />
-                        )}
-
-                        {/* Confirmação de exclusão inline */}
-                        {confirmRemoveId === jf.id && (
-                            <ConfirmInline
-                                message="Remover este cargo? Perfis que já o possuem não serão afetados."
-                                onConfirm={() => handleRemoveConfirmed(jf.id)}
-                                onCancel={() => setConfirmRemoveId(null)}
-                            />
+                        {/* Aviso de duplicidade visual */}
+                        {jobFunctions.some(jf => jf.title.toLowerCase() === newTitle.trim().toLowerCase()) && (
+                            <div style={{ fontSize: '0.7rem', color: '#f59e0b', fontWeight: 800, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <AlertTriangle size={12} /> Este cargo já existe na base de dados
+                            </div>
                         )}
                     </div>
-                ))}
+                    
+                    <button 
+                        type="submit" 
+                        className="btn-save-premium" 
+                        disabled={isSaving || !newTitle.trim() || jobFunctions.some(jf => jf.title.toLowerCase() === newTitle.trim().toLowerCase())}
+                        style={{ height: '48px', minWidth: '180px', padding: '0 1.5rem' }}
+                    >
+                        {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
+                        <span style={{ marginLeft: '8px' }}>Cadastrar</span>
+                    </button>
+                </form>
+            </div>
+
+            {/* SEÇÃO 02: LISTAGEM E EDIÇÃO */}
+            <div className="modal-section-group-premium alternate-bg-premium">
+                <div className="section-header-premium">
+                    <span className="section-number-premium">02</span>
+                    <h3>Banco de Funções</h3>
+                </div>
+                
+                <p className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '1rem' }}>
+                    Clique no ícone de lápis para editar um nome ou na lixeira para remover. 
+                    <span style={{ color: '#d97706', fontWeight: 600 }}> Nota:</span> Remover um cargo aqui não o retira dos perfis que já o possuem.
+                </p>
+
+                {/* Lista de cargos filtrada e ordenada */}
+                <div className="roles-list">
+                    {filteredJobFunctions.length === 0 && (
+                        <div className="empty-state">
+                            {newTitle ? 'Nenhum resultado para sua busca. Pode clicar no botão superior para cadastrar.' : 'Nenhum cargo cadastrado.'}
+                        </div>
+                    )}
+
+                    {filteredJobFunctions.map(jf => (
+                        <div key={jf.id}>
+                            <div className="role-item">
+                                {editingId === jf.id ? (
+                                    <>
+                                        <input
+                                            type="text"
+                                            value={editingTitle}
+                                            onChange={e => { setEditingTitle(e.target.value); setEditError(''); }}
+                                            className="edit-role-input input-premium"
+                                            autoFocus
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') handleSaveEdit(jf.id);
+                                                if (e.key === 'Escape') handleCancelEdit();
+                                            }}
+                                        />
+                                        <div className="role-actions">
+                                            <button className="icon-btn-small" onClick={() => handleSaveEdit(jf.id)} disabled={isSaving} title="Salvar">
+                                                <Check size={16} />
+                                            </button>
+                                            <button className="icon-btn-small" onClick={handleCancelEdit} disabled={isSaving} title="Cancelar">
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <Shield size={16} style={{ color: '#94a3b8' }} />
+                                            <span>{jf.title}</span>
+                                        </div>
+                                        <div className="role-actions">
+                                            <button className="icon-btn-small" onClick={() => handleStartEdit(jf.id, jf.title)} title="Editar">
+                                                <Pencil size={14} />
+                                            </button>
+                                            <button
+                                                className="icon-btn-small danger"
+                                                onClick={() => setConfirmRemoveId(confirmRemoveId === jf.id ? null : jf.id)}
+                                                title="Remover"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Erro de edição inline */}
+                            {editingId === jf.id && editError && (
+                                <InlineError message={editError} />
+                            )}
+
+                            {/* Confirmação de exclusão inline */}
+                            {confirmRemoveId === jf.id && (
+                                <ConfirmInline
+                                    message="Remover este cargo? Perfis que já o possuem não serão afetados."
+                                    onConfirm={() => handleRemoveConfirmed(jf.id)}
+                                    onCancel={() => setConfirmRemoveId(null)}
+                                />
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+            
+            {/* Erro global inline */}
+            <div style={{ padding: '0 2.5rem' }}>
+                <InlineError message={errorMsg} />
             </div>
         </div>
     );

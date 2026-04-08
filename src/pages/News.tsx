@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Calendar, Trash2, Pin, X, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { Plus, Calendar, Trash2, Pin, X, ChevronDown, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
+import { sanitizeText, sanitizeHTML } from '../utils/sanitize';
 import './News.css';
 
 interface NewsItem {
@@ -35,6 +36,7 @@ export default function News() {
     const [showModal, setShowModal] = useState(false);
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [filterCategory, setFilterCategory] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
     // Form state
@@ -171,9 +173,26 @@ export default function News() {
         fetchNews();
     };
 
-    const filtered = filterCategory
-        ? news.filter(n => n.category === filterCategory)
-        : news;
+    const filtered = useMemo(() => {
+        let result = news;
+        
+        if (filterCategory) {
+            result = result.filter(n => n.category === filterCategory);
+        }
+        
+        if (searchQuery) {
+            const normalize = (str: string) => 
+                str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            const q = normalize(searchQuery);
+            result = result.filter(n => 
+                normalize(n.title).includes(q) || 
+                normalize(n.body).includes(q) ||
+                normalize(n.author_name).includes(q)
+            );
+        }
+        
+        return result;
+    }, [news, filterCategory, searchQuery]);
 
     return (
         <div className="news-container">
@@ -183,11 +202,22 @@ export default function News() {
                     <p className="subtitle">Avisos, diretrizes e informes da equipe.</p>
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                    <div style={{ position: 'relative' }}>
+                        <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                        <input
+                            type="text"
+                            placeholder="Buscar no mural..."
+                            className="edit-input-small"
+                            style={{ paddingLeft: '34px', minWidth: 240, height: '38px', fontSize: '0.85rem' }}
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                        />
+                    </div>
                     <select
                         className="edit-input-small"
                         value={filterCategory}
                         onChange={e => setFilterCategory(e.target.value)}
-                        style={{ minWidth: 160, fontSize: '0.85rem' }}
+                        style={{ minWidth: 160, height: '38px', fontSize: '0.85rem' }}
                     >
                         <option value="">Todas as categorias</option>
                         {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
@@ -208,7 +238,7 @@ export default function News() {
                 </div>
             ) : (
                 <div className="news-grid">
-                    {filtered.map(item => {
+                    {filtered.map((item: NewsItem) => {
                         const isExpanded = expandedId === item.id;
                         const isLong = item.body.length > 220;
                         const displayBody = isLong && !isExpanded ? item.body.slice(0, 220) + '…' : item.body;
@@ -245,8 +275,8 @@ export default function News() {
                                         </div>
                                     )}
 
-                                    <h2 className="news-title">{item.title}</h2>
-                                    <p className="news-excerpt" style={{ whiteSpace: 'pre-wrap' }}>{displayBody}</p>
+                                    <h2 className="news-title">{sanitizeText(item.title)}</h2>
+                                    <p className="news-excerpt" style={{ whiteSpace: 'pre-wrap' }} dangerouslySetInnerHTML={{ __html: sanitizeHTML(displayBody) }}></p>
                                     {isLong && (
                                         <button
                                             onClick={() => setExpandedId(isExpanded ? null : item.id)}

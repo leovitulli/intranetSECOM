@@ -1,43 +1,41 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/tests/setup.ts',
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+      exclude: [
+        'node_modules/',
+        'src/tests/',
+      ],
+    },
+  },
   server: {
     host: true,
     port: 5173,
     strictPort: true,
   },
-
   build: {
-    // Aumenta o limite de aviso de chunk (padrão é 500kb)
     chunkSizeWarningLimit: 1000,
-
     rollupOptions: {
       output: {
-        // Divide o bundle em chunks por biblioteca
         manualChunks: {
-          // React core — carregado primeiro, sempre em cache
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-
-          // Supabase — isolado pois é grande
           'vendor-supabase': ['@supabase/supabase-js'],
-
-          // Recharts — só usado na página de Relatórios
           'vendor-recharts': ['recharts'],
-
-          // date-fns — utilitário de datas
           'vendor-datefns': ['date-fns'],
-
-          // Lucide — ícones (grande, mas cacheável)
           'vendor-lucide': ['lucide-react'],
         },
       },
     },
   },
-
-  // Pré-carrega dependências em dev para acelerar HMR
   optimizeDeps: {
     include: [
       'react',

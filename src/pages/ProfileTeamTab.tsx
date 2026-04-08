@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { UserPlus, Pencil, Trash2, Mail, Phone, KeySquare, Slash, LayoutGrid, List, RefreshCw, ShieldCheck, AlertCircle, CheckCircle, X, Search } from 'lucide-react';
+import { UserPlus, Pencil, Trash2, Mail, Phone, KeySquare, Slash, LayoutGrid, List, RefreshCw, ShieldCheck, AlertCircle, CheckCircle, X, Search, Activity } from 'lucide-react';
 import type { TeamMember } from '../types/team';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -87,7 +87,6 @@ export default function ProfileTeamTab() {
                 showToast(`${member.name} foi adicionado à equipe.`, 'success');
                 return null;
             } else {
-                // Se o erro indicar duplicidade, trata amigavelmente
                 const msg = result.error || 'Erro desconhecido';
                 if (msg.includes('already registered') || msg.includes('identity_already_exists') || msg.includes('duplicate key')) {
                     return `O e-mail "${member.email}" já está em uso em algum lugar do Supabase.`;
@@ -193,147 +192,159 @@ export default function ProfileTeamTab() {
                 />
             )}
 
-            <div className="page-header" style={{ marginBottom: '2rem' }}>
-                <div>
-                    <h2>Gestão de Equipe</h2>
-                    <p className="subtitle">Adicione, edite, remova colaboradores e gerencie acessos ao sistema.</p>
+            {/* SEÇÃO 01: GESTÃO E BUSCA */}
+            <div className="modal-section-group-premium">
+                <div className="section-header-premium">
+                    <span className="section-number-premium">01</span>
+                    <h3>Gestão de Equipe</h3>
                 </div>
-                <div className="header-actions" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    {/* Barra de Busca Dinâmica */}
-                    <div className="team-search-wrapper" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                        <Search size={16} style={{ position: 'absolute', left: 12, color: '#94a3b8' }} />
+                
+                <p className="text-muted" style={{ fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+                    Adicione novos membros, edite perfis existentes e gerencie permissões de acesso ao sistema.
+                </p>
+
+                <div className="header-actions" style={{ display: 'flex', gap: '12px', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div className="team-search-wrapper" style={{ position: 'relative', display: 'flex', alignItems: 'center', flex: 1 }}>
+                        <Search size={18} style={{ position: 'absolute', left: 14, color: '#94a3b8' }} />
                         <input 
                             type="text" 
-                            placeholder="Buscar colaborador..."
+                            className="input-premium"
+                            placeholder="Buscar por nome, e-mail ou cargo..."
                             value={localSearch}
                             onChange={(e) => setLocalSearch(e.target.value)}
-                            style={{ 
-                                padding: '8px 12px 8px 36px',
-                                borderRadius: '10px',
-                                border: '1px solid var(--color-border)',
-                                background: 'white',
-                                fontSize: '0.875rem',
-                                width: '220px',
-                                outline: 'none',
-                                transition: 'all 0.2s'
-                            }}
+                            style={{ paddingLeft: 44 }}
                         />
                     </div>
 
-                    <div className="view-toggle" style={{ display: 'flex', backgroundColor: 'var(--color-surface)', borderRadius: 'var(--radius-md)', padding: '0.25rem', border: '1px solid var(--color-border)' }}>
-                        <button className={`icon-btn-small ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grade">
-                            <LayoutGrid size={16} />
-                        </button>
-                        <button className={`icon-btn-small ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')} title="Lista">
-                            <List size={16} />
-                        </button>
-                    </div>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <div className="view-toggle" style={{ display: 'flex', backgroundColor: '#f1f5f9', borderRadius: '12px', padding: '0.25rem', border: '1px solid #e2e8f0' }}>
+                            <button className={`icon-btn-small ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grade">
+                                <LayoutGrid size={16} />
+                            </button>
+                            <button className={`icon-btn-small ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')} title="Lista">
+                                <List size={16} />
+                            </button>
+                        </div>
 
-                    {isAdmin && (
-                        <button className="btn-primary" onClick={() => { setEditingMember(null); setIsModalOpen(true); }} style={{ height: '40px' }}>
-                            <UserPlus size={18} />
-                            <span className="hide-mobile">Novo Usuário</span>
-                        </button>
-                    )}
+                        {isAdmin && (
+                            <button className="btn-save-premium" onClick={() => { setEditingMember(null); setIsModalOpen(true); }} style={{ height: '48px', padding: '0 1.5rem' }}>
+                                <UserPlus size={18} />
+                                <span className="hide-mobile" style={{ marginLeft: '8px' }}>Novo Colaborador</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 
-            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+            {/* SEÇÃO 02: DIRETÓRIO DE COLABORADORES */}
+            <div className="modal-section-group-premium alternate-bg-premium" style={{ flex: 1, minHeight: '400px' }}>
+                <div className="section-header-premium">
+                    <span className="section-number-premium">02</span>
+                    <h3>Diretório Profissional</h3>
+                </div>
+                
+                {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-            <div className={viewMode === 'grid' ? 'directory-grid' : 'team-list-view'}>
-                {loading && <div className="empty-state" style={{ width: '100%', gridColumn: '1 / -1' }}>Carregando equipe...</div>}
+                <div className={viewMode === 'grid' ? 'directory-grid' : 'team-list-view'}>
+                    {loading && (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem', color: '#94a3b8', width: '100%', gridColumn: '1/-1' }}>
+                            <div className="animate-spin mb-4"><Activity size={24} /></div>
+                            <p>Carregando equipe...</p>
+                        </div>
+                    )}
 
-                {!loading && filteredTeam.length === 0 && (
-                    <div className="empty-state" style={{ gridColumn: '1 / -1' }}>
-                        {localSearch ? `Nenhum colaborador encontrado para "${localSearch}"` : 'Nenhum colaborador cadastrado.'}
-                    </div>
-                )}
+                    {!loading && filteredTeam.length === 0 && (
+                        <div className="empty-state" style={{ gridColumn: '1 / -1', padding: '4rem', textAlign: 'center', width: '100%' }}>
+                            {localSearch ? `Nenhum colaborador encontrado para "${localSearch}"` : 'Nenhum colaborador cadastrado.'}
+                        </div>
+                    )}
 
-                {!loading && filteredTeam.map((member: TeamMember) => {
-                    const isBusy = busyIds.has(member.id);
-                    return (
-                        <div key={member.id} className={`team-card glass ${viewMode === 'list' ? 'list-item' : ''}`}>
-                            <div className="team-card-header">
-                                {member.avatar_url ? (
-                                    <img src={member.avatar_url} alt={member.name} className={viewMode === 'grid' ? 'team-avatar-large' : 'team-avatar-small'} style={{ border: `2px solid ${member.color}`, objectFit: 'cover' }} />
-                                ) : (
-                                    <div className={viewMode === 'grid' ? 'team-avatar-large' : 'team-avatar-small'} style={{ backgroundColor: member.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', fontSize: viewMode === 'grid' ? '1.5rem' : '1rem' }}>
-                                        {member.name.charAt(0).toUpperCase()}
-                                    </div>
-                                )}
-
-                                {viewMode === 'list' && (
-                                    <div className="team-list-info" style={{ marginLeft: '12px' }}>
-                                        <h3 className="team-card-name" style={{ margin: 0, fontSize: '0.95rem' }}>{member.name}</h3>
-                                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                                            {member.job_titles && member.job_titles.length > 0 ? member.job_titles.join(', ') : (member.role === 'motorista' ? 'Motorista' : 'Colaborador')}
-                                        </span>
-                                    </div>
-                                )}
-
-                                <div className="team-actions" style={viewMode === 'list' ? { marginLeft: 'auto', display: 'flex', gap: '4px' } : {}}>
-                                    {isAdmin && (
-                                        <>
-                                            <button className="icon-btn-small" title="Editar" disabled={isBusy} onClick={() => { setEditingMember(member); setIsModalOpen(true); }}>
-                                                <Pencil size={14} />
-                                            </button>
-                                            {member.email && member.hasLogin && (
-                                                <button
-                                                    className={`icon-btn-small ${member.pending_email && member.pending_email !== member.email ? 'active' : ''}`}
-                                                    title="Sincronizar / Resetar"
-                                                    disabled={isBusy}
-                                                    onClick={() => handleRefreshSync(member)}
-                                                >
-                                                    <RefreshCw size={14} className={member.pending_email && member.pending_email !== member.email ? 'spin-slow' : ''} />
-                                                </button>
-                                            )}
-                                            <button className="icon-btn-small danger" title="Remover" disabled={isBusy} onClick={() => setConfirmDelete(member)}>
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </>
+                    {!loading && filteredTeam.map((member: TeamMember) => {
+                        const isBusy = busyIds.has(member.id);
+                        return (
+                            <div key={member.id} className={`team-card glass ${viewMode === 'list' ? 'list-item' : ''}`}>
+                                <div className="team-card-header">
+                                    {member.avatar_url ? (
+                                        <img src={member.avatar_url} alt={member.name} className={viewMode === 'grid' ? 'team-avatar-large' : 'team-avatar-small'} style={{ border: `2px solid ${member.color}`, objectFit: 'cover' }} />
+                                    ) : (
+                                        <div className={viewMode === 'grid' ? 'team-avatar-large' : 'team-avatar-small'} style={{ backgroundColor: member.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', fontSize: viewMode === 'grid' ? '1.5rem' : '1rem' }}>
+                                            {member.name.charAt(0).toUpperCase()}
+                                        </div>
                                     )}
-                                </div>
-                            </div>
 
-                            {viewMode === 'grid' && (
-                                <div className="team-card-body">
-                                    <h3 className="team-card-name" style={{ marginBottom: 4 }}>{member.name}</h3>
-                                    <div style={{ display: 'flex', gap: '2px', flexWrap: 'wrap', marginBottom: 10, minHeight: '24px' }}>
-                                        {member.job_titles?.map((jb: string) => (
-                                            <span key={jb} className="badge" style={{ backgroundColor: 'var(--color-surface-hover)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--color-border)', color: 'var(--color-text)', fontSize: '0.65rem' }}>{jb}</span>
-                                        ))}
-                                    </div>
-                                    <div className="team-card-contact">
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-                                            <ShieldCheck size={13} style={{ color: 'var(--color-primary)' }} />
-                                            <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
-                                                {member.job_titles && member.job_titles.length > 0 ? member.job_titles[0] : (member.role === 'motorista' ? 'Motorista' : 'Colaborador')}
+                                    {viewMode === 'list' && (
+                                        <div className="team-list-info" style={{ marginLeft: '12px' }}>
+                                            <h3 className="team-card-name" style={{ margin: 0, fontSize: '0.95rem' }}>{member.name}</h3>
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                                                {member.job_titles && member.job_titles.length > 0 ? member.job_titles.join(', ') : (member.role === 'motorista' ? 'Motorista' : 'Colaborador')}
                                             </span>
                                         </div>
-                                        {member.email && (
-                                            <div className="contact-item" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                <Mail size={13} />
-                                                <span style={{ whiteSpace: 'nowrap' }}>{member.email}</span>
-                                            </div>
-                                        )}
-                                        {member.phone && (
-                                            <div className="contact-item" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem' }}>
-                                                <Phone size={13} /> <span>{member.phone}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="team-card-footer" style={{ marginTop: '12px', borderTop: '1px solid var(--color-border)', paddingTop: '8px' }}>
-                                        {member.hasLogin ? (
-                                            <span className="login-status has-login" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', color: 'var(--color-success)' }}><KeySquare size={13} /> Acesso completo</span>
-                                        ) : (
-                                            <span className="login-status no-login" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', color: 'var(--color-text-muted)' }}><Slash size={13} /> Sem acesso</span>
+                                    )}
+
+                                    <div className="team-actions" style={viewMode === 'list' ? { marginLeft: 'auto', display: 'flex', gap: '4px' } : {}}>
+                                        {isAdmin && (
+                                            <>
+                                                <button className="icon-btn-small" title="Editar" disabled={isBusy} onClick={() => { setEditingMember(member); setIsModalOpen(true); }}>
+                                                    <Pencil size={14} />
+                                                </button>
+                                                {member.email && member.hasLogin && (
+                                                    <button
+                                                        className={`icon-btn-small ${member.pending_email && member.pending_email !== member.email ? 'active' : ''}`}
+                                                        title="Sincronizar / Resetar"
+                                                        disabled={isBusy}
+                                                        onClick={() => handleRefreshSync(member)}
+                                                    >
+                                                        <RefreshCw size={14} className={member.pending_email && member.pending_email !== member.email ? 'spin-slow' : ''} />
+                                                    </button>
+                                                )}
+                                                <button className="icon-btn-small danger" title="Remover" disabled={isBusy} onClick={() => setConfirmDelete(member)}>
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </>
                                         )}
                                     </div>
                                 </div>
-                            )}
-                        </div>
-                    );
-                })}
+
+                                {viewMode === 'grid' && (
+                                    <div className="team-card-body">
+                                        <h3 className="team-card-name" style={{ marginBottom: 4 }}>{member.name}</h3>
+                                        <div style={{ display: 'flex', gap: '2px', flexWrap: 'wrap', marginBottom: 10, minHeight: '24px' }}>
+                                            {member.job_titles?.map((jb: string) => (
+                                                <span key={jb} className="badge" style={{ backgroundColor: 'var(--color-surface-hover)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--color-border)', color: 'var(--color-text)', fontSize: '0.65rem' }}>{jb}</span>
+                                            ))}
+                                        </div>
+                                        <div className="team-card-contact">
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                                                <ShieldCheck size={13} style={{ color: 'var(--color-primary)' }} />
+                                                <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
+                                                    {member.job_titles && member.job_titles.length > 0 ? member.job_titles[0] : (member.role === 'motorista' ? 'Motorista' : 'Colaborador')}
+                                                </span>
+                                            </div>
+                                            {member.email && (
+                                                <div className="contact-item" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                    <Mail size={13} />
+                                                    <span style={{ whiteSpace: 'nowrap' }}>{member.email}</span>
+                                                </div>
+                                            )}
+                                            {member.phone && (
+                                                <div className="contact-item" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem' }}>
+                                                    <Phone size={13} /> <span>{member.phone}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="team-card-footer" style={{ marginTop: '12px', borderTop: '1px solid var(--color-border)', paddingTop: '8px' }}>
+                                            {member.hasLogin ? (
+                                                <span className="login-status has-login" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', color: '#16a34a' }}><KeySquare size={13} /> Acesso completo</span>
+                                            ) : (
+                                                <span className="login-status no-login" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.7rem', color: '#94a3b8' }}><Slash size={13} /> Sem acesso</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
 
             {isModalOpen && (

@@ -2,6 +2,7 @@ import React from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Send, X } from 'lucide-react';
+import { sanitizeText } from '../../../utils/sanitize';
 import type { Task } from '../../../types/kanban';
 
 interface CommentSystemProps {
@@ -40,7 +41,7 @@ export const CommentSystem: React.FC<CommentSystemProps> = ({
                                     {format(new Date(comment.date), "d 'de' MMM 'às' HH:mm", { locale: ptBR })}
                                 </span>
                             </div>
-                            <p className="comment-text">{comment.text}</p>
+                            <p className="comment-text">{sanitizeText(comment.text)}</p>
                         </div>
                         {(user?.role === 'admin' || user?.role === 'desenvolvedor' || user?.name === comment.author) && (
                             <div className="comment-actions" style={{ marginLeft: 10, display: 'flex', gap: 5, opacity: 0.5, alignItems: 'center' }}>
