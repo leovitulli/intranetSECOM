@@ -12,7 +12,7 @@ export default function Layout() {
     const { user, logout } = useAuth();
     const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
     const { searchTerm, setSearchTerm, onlineUsers } = useData();
-    const isAdmin = user?.role === 'admin' || user?.role === 'desenvolvedor';
+
     const [isNotifOpen, setIsNotifOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -114,15 +114,13 @@ export default function Layout() {
                         <span>Produtividade</span>
                     </NavLink>
 
-                    {isAdmin && (
-                        <NavLink
-                            to="/radar-noticias"
-                            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                        >
-                            <div className="nav-icon-box"><Zap size={20} /></div>
-                            <span>Notícias SECOM</span>
-                        </NavLink>
-                    )}
+                    <NavLink
+                        to="/radar-noticias"
+                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                    >
+                        <div className="nav-icon-box"><Zap size={20} /></div>
+                        <span>Notícias SECOM</span>
+                    </NavLink>
                 </nav>
 
                 <div className="sidebar-footer">
