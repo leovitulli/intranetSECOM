@@ -44,11 +44,12 @@
 }
 
 .dark-mode {
-  --color-background: 220 35% 8%;
-  --color-surface: 220 30% 12%;
+  --color-background: 222 47% 7%;
+  --color-surface: 217 33% 12%;
   --color-text: 210 40% 98%;
-  --color-text-muted: 215 20% 70%;
-  --color-border: 220 30% 18%;
+  --color-text-muted: 215 20% 65%;
+  --color-border: 217 32% 17%;
+  --color-primary-light: 220 80% 60%;
 }
 
 /* Global Dark Mode Fixes */
@@ -58,24 +59,56 @@ body.dark-mode {
 }
 
 body.dark-mode .glass {
-  background: hsla(220, 30%, 12%, 0.8);
+  background: hsla(222, 47%, 7%, 0.7);
   border-color: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+body.dark-mode .sidebar,
+body.dark-mode .topbar,
+body.dark-mode .sidebar-header,
+body.dark-mode .sidebar-footer {
+    background-color: hsl(var(--color-surface)) !important;
+    border-color: hsl(var(--color-border)) !important;
+}
+
+body.dark-mode .sidebar-nav .nav-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+body.dark-mode .sidebar-nav .nav-item.active {
+    background: hsl(var(--color-primary) / 0.15);
+}
+
+body.dark-mode .search-bar {
+    background-color: rgba(0, 0, 0, 0.3);
+    border-color: hsl(var(--color-border));
 }
 
 body.dark-mode input, 
 body.dark-mode textarea, 
 body.dark-mode select {
-    background-color: hsla(0, 0%, 0%, 0.2);
-    border-color: hsl(var(--color-border));
-    color: hsl(var(--color-text));
+    background-color: rgba(0, 0, 0, 0.2) !important;
+    border-color: hsl(var(--color-border)) !important;
+    color: hsl(var(--color-text)) !important;
 }
 
 body.dark-mode .card,
+body.dark-mode .bento-card,
 body.dark-mode .hub-card,
-body.dark-mode .bento-card {
+body.dark-mode .modal-content,
+body.dark-mode .task-card,
+body.dark-mode .analytics-card {
     background-color: hsl(var(--color-surface)) !important;
-    border-color: hsla(255, 255, 255, 0.05) !important;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.4) !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
+    color: hsl(var(--color-text)) !important;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5) !important;
+}
+
+body.dark-mode .text-gradient {
+    background: linear-gradient(135deg, white, #6366f1);
+    -webkit-background-clip: text;
+    background-clip: text;
 }
 
 * {
