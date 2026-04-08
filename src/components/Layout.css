@@ -494,16 +494,6 @@
     border-color: hsl(var(--color-text-muted));
 }
 
-.theme-toggle:hover svg {
-    transform: rotate(20deg);
-}
-
-body.dark-mode .theme-toggle {
-    background-color: hsl(var(--color-primary) / 0.1);
-    color: #fbbf24;
-    border-color: #fbbf24 / 0.3;
-}
-
 .icon-btn .badge {
     position: absolute;
     top: -2px;

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, LogOut, Bell, Search, CalendarDays, CalendarClock, BarChart3, Check, X, Menu, AlignEndHorizontal, Zap, Moon, Sun } from 'lucide-react';
+import { LayoutDashboard, LogOut, Bell, Search, CalendarDays, CalendarClock, BarChart3, Check, X, Menu, AlignEndHorizontal, Zap } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useData } from '../contexts/DataContext';
@@ -20,18 +20,7 @@ export default function Layout() {
         const stored = localStorage.getItem('sidebarLocked');
         return stored === 'true'; // Default to false (collapsed) if not set
     });
-    const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
     const notifRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (isDarkMode) {
-            document.body.classList.add('dark-mode');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            document.body.classList.remove('dark-mode');
-            localStorage.setItem('theme', 'light');
-        }
-    }, [isDarkMode]);
 
     useEffect(() => {
         localStorage.setItem('sidebarLocked', String(isSidebarLocked));
@@ -198,15 +187,7 @@ export default function Layout() {
                             <span className="online-count-hint">{onlineUsers.length} online</span>
                         </div>
                     )}
-                    <div className="topbar-actions" ref={notifRef} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <button 
-                            className="icon-btn theme-toggle" 
-                            onClick={() => setIsDarkMode(!isDarkMode)}
-                            title={isDarkMode ? "Ativar Modo Claro" : "Ativar Modo Noturno"}
-                        >
-                            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-                        </button>
-
+                    <div className="topbar-actions" ref={notifRef} style={{ position: 'relative' }}>
                         <button className="icon-btn" onClick={() => setIsNotifOpen(!isNotifOpen)}>
                             <Bell size={20} />
                             {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
