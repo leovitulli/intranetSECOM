@@ -37,6 +37,7 @@ const PAGE_SIZE = 1000;
 export function useRadarNoticias(filters?: FilterParams) {
     const [data, setData] = useState<AnalyticsData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [fetchedCount, setFetchedCount] = useState(0);
     const [error, setError] = useState<string | null>(null);
 
     async function fetchAnalytics() {
@@ -65,6 +66,7 @@ export function useRadarNoticias(filters?: FilterParams) {
                 if (!page || page.length === 0) break;
 
                 allNews = allNews.concat(page);
+                setFetchedCount(allNews.length);
 
                 if (page.length < PAGE_SIZE) break;
                 from += PAGE_SIZE;
@@ -136,5 +138,5 @@ export function useRadarNoticias(filters?: FilterParams) {
         fetchAnalytics();
     }, [filters?.startDate, filters?.endDate, filters?.category, filters?.entregaType]);
 
-    return { data, loading, error, refetch: fetchAnalytics };
+    return { data, loading, fetchedCount, error, refetch: fetchAnalytics };
 }

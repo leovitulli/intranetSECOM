@@ -106,7 +106,7 @@ export default function RadarNoticias() {
         setCollapsedCards(prev => ({ ...prev, [cardId]: !prev[cardId] }));
     };
 
-    const { data, loading, error, refetch } = useRadarNoticias(filters);
+    const { data, loading, fetchedCount, error, refetch } = useRadarNoticias(filters);
 
     const filteredAnalytics = useMemo(() => {
         if (!data?.allNews) return null;
@@ -213,10 +213,58 @@ export default function RadarNoticias() {
     }
 
     if (loading && !data) {
+        // Cálculo do percentual de progresso (estimado baseado em volume histórico de ~15-20k)
+        const progress = Math.min(Math.round((fetchedCount / 15000) * 100), 98);
+
         return (
-            <div className="radar-loading-container">
-                <Activity className="animate-pulse" size={48} color="#1e3a8a" />
-                <p>Mapeando notícias da cidade...</p>
+            <div className="radar-loading-dashboard">
+                <div className="loading-progress-overlay">
+                    <div className="loading-progress-bar" style={{ width: `${progress}%` }}></div>
+                </div>
+
+                <div className="loading-status-pill">
+                    <div className="status-dot"></div>
+                    <span className="status-text">
+                        {fetchedCount > 0 ? `Mapeando pautas: ${fetchedCount.toLocaleString()}` : 'Iniciando radar...'}
+                    </span>
+                </div>
+
+                <div className="skeleton-kpi-grid">
+                    {[1, 2, 3, 4].map(i => (
+                        <div key={i} className="skeleton-card">
+                            <div className="skeleton-box skeleton-circle" style={{ marginBottom: '1rem' }}></div>
+                            <div className="skeleton-box skeleton-title"></div>
+                            <div className="skeleton-box skeleton-text"></div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="skeleton-main-layout">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                        <div className="skeleton-card skeleton-chart-card">
+                            <div className="skeleton-box skeleton-title" style={{ width: '30%', marginBottom: '2rem' }}></div>
+                            <div className="skeleton-box" style={{ height: '200px', width: '100%' }}></div>
+                        </div>
+                        <div className="skeleton-card skeleton-chart-card" style={{ height: '300px' }}>
+                            <div className="skeleton-box skeleton-title" style={{ width: '40%', marginBottom: '2rem' }}></div>
+                            <div className="skeleton-box" style={{ height: '180px', width: '100%' }}></div>
+                        </div>
+                    </div>
+                    <div className="skeleton-card skeleton-feed-card">
+                        <div className="skeleton-box skeleton-title" style={{ width: '80%', marginBottom: '2rem' }}></div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            {[1, 2, 3, 4, 5, 6].map(i => (
+                                <div key={i} style={{ display: 'flex', gap: '1rem' }}>
+                                    <div className="skeleton-box skeleton-circle" style={{ width: '12px', height: '12px' }}></div>
+                                    <div style={{ flex: 1 }}>
+                                        <div className="skeleton-box skeleton-title" style={{ width: '90%' }}></div>
+                                        <div className="skeleton-box skeleton-text" style={{ width: '40%' }}></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }
