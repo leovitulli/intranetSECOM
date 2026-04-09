@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { Task, TaskType, TaskPriority, InaugurationTipo, InaugurationChecklistItem } from '../types/kanban';
 import { X, Plus, MapPin, AlertCircle, Building2, Clock } from 'lucide-react';
 import './CreateTaskModal.css';
@@ -33,21 +33,21 @@ function InlineError({ message }: { message: string }) {
 
 export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalProps) {
     const { user } = useAuth();
-    const { tasks } = useData();
+    const { tasks, team } = useData();
 
-    // Endereços anteriores para autocomplete
-    const uniqueAddresses = Array.from(new Set(
+    // Endereços anteriores para autocomplete (Memoizado para evitar lentidão ao digitar)
+    const uniqueAddresses = useMemo(() => Array.from(new Set(
         tasks.map((t: Task) => t.pauta_endereco).filter(Boolean)
-    )) as string[];
+    )) as string[], [tasks]);
 
     // ── Estado do formulário ──────────────────────────────────────────────────
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [types, setTypes] = useState<TaskType[]>(['release']);
     const [priority, setPriority] = useState<TaskPriority>('media');
-    const [assignees, setAssignees] = useState<string[]>([]);
+    const [assignees, setAssignees] = useState<string[]>([]); // IDs dos responsáveis
     const [secretarias, setSecretarias] = useState<string[]>([]);
-    const [creators, setCreators] = useState<string[]>(user?.name ? [user.name] : []);
+    const [creators, setCreators] = useState<string[]>(user?.id ? [user.id] : []); // IDs dos criadores
     const [presencaPrefeito, setPresencaPrefeito] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
@@ -158,6 +158,9 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
         setErrorMsg('');
 
         try {
+            const creatorNames = creators.map(id => team.find(m => m.id === id)?.name || id).join(', ');
+            const assigneeNames = assignees.map(id => team.find(m => m.id === id)?.name || id);
+
             const newTask: Task = {
                 id: generateUUID(),
                 title,
@@ -166,9 +169,9 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                 // cuidará de configurar a inauguração após a criação
                 status: 'solicitado',
                 type: types,
-                creator: creators.length > 0 ? creators.join(', ') : (user?.name || 'Sistema'),
+                creator: creatorNames || (user?.name || 'Sistema'),
                 priority,
-                assignees,
+                assignees: assigneeNames,
                 dueDate: pautaData ? new Date(pautaData) : null,
                 createdAt: new Date(),
                 comments: [],
@@ -187,9 +190,9 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                 presenca_prefeito: presencaPrefeito,
 
                 // Vídeo
-                video_captacao_equipe: videoCaptacaoEquipe.length > 0 ? videoCaptacaoEquipe : undefined,
+                video_captacao_equipe: videoCaptacaoEquipe.length > 0 ? videoCaptacaoEquipe.map(id => team.find(m => m.id === id)?.name || id) : undefined,
                 video_captacao_data: videoCaptacaoData ? new Date(videoCaptacaoData) : null,
-                video_edicao_equipe: videoEdicaoEquipe.length > 0 ? videoEdicaoEquipe : undefined,
+                video_edicao_equipe: videoEdicaoEquipe.length > 0 ? videoEdicaoEquipe.map(id => team.find(m => m.id === id)?.name || id) : undefined,
                 video_edicao_data: videoEdicaoData ? new Date(videoEdicaoData) : null,
                 video_briefing: videoBriefing || undefined,
                 video_necessidades: videoNecessidades.length > 0 ? videoNecessidades : undefined,
@@ -222,7 +225,8 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
             };
 
             console.log("🚀 Enviando nova pauta para onCreate...");
-            const { success, error: apiError } = await onCreate(newTask);
+            // Passamos os IDs (assignees) como segundo argumento para o addTask que já os espera
+            const { success, error: apiError } = await (onCreate as any)(newTask, assignees);
             console.log("🏁 Resultado onCreate:", { success, apiError });
             if (success) {
                 clearDraft();
@@ -469,13 +473,13 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                                 </div>
                                 <div className="nova-pauta-field-premium">
                                     <label className="field-label-premium">Responsável pela Pauta</label>
-                                    <TeamMultiSelect selected={creators} onChange={setCreators} placeholder="Busque os responsáveis..." />
+                                    <TeamMultiSelect selectedIds={creators} onChange={setCreators} placeholder="Busque os responsáveis..." />
                                 </div>
                             </div>
                             {isPautaExterna && (
                                 <div className="nova-pauta-field-premium mt-1-premium">
                                     <label className="field-label-premium">Equipe Externa (Agenda)</label>
-                                    <TeamMultiSelect selected={assignees} onChange={setAssignees} placeholder="Busque os membros da equipe..." />
+                                    <TeamMultiSelect selectedIds={assignees} onChange={setAssignees} placeholder="Busque os membros da equipe..." />
                                 </div>
                             )}
                         </div>
@@ -634,7 +638,7 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                             <div className="fields-grid-2-premium">
                                 <div className="nova-pauta-field-premium">
                                     <label className="field-label-premium">Captação (Imagens)</label>
-                                    <TeamMultiSelect selected={videoCaptacaoEquipe} onChange={setVideoCaptacaoEquipe} placeholder="Quem vai gravar?" />
+                                    <TeamMultiSelect selectedIds={videoCaptacaoEquipe} onChange={setVideoCaptacaoEquipe} placeholder="Quem vai gravar?" />
                                 </div>
                                 <div className="nova-pauta-field-premium">
                                     <label className="field-label-premium">Data da Captação</label>
@@ -645,7 +649,7 @@ export default function CreateTaskModal({ onClose, onCreate }: CreateTaskModalPr
                             <div className="fields-grid-2-premium mt-1-premium">
                                 <div className="nova-pauta-field-premium">
                                     <label className="field-label-premium">Edição / Finalização</label>
-                                    <TeamMultiSelect selected={videoEdicaoEquipe} onChange={setVideoEdicaoEquipe} placeholder="Quem vai editar?" />
+                                    <TeamMultiSelect selectedIds={videoEdicaoEquipe} onChange={setVideoEdicaoEquipe} placeholder="Quem vai editar?" />
                                 </div>
                                 <div className="nova-pauta-field-premium">
                                     <label className="field-label-premium">Previsão de Edição</label>

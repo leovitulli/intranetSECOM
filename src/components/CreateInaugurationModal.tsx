@@ -4,6 +4,7 @@ import type { Task, InaugurationTipo, InaugurationChecklistItem } from '../types
 import { useAuth } from '../contexts/AuthContext';
 import SecretariasMultiSelect from './SecretariasMultiSelect';
 import TeamMultiSelect from './TeamMultiSelect';
+import { useData } from '../contexts/DataContext';
 import { generateUUID } from '../utils/taskUtils';
 import './CreateInaugurationModal.css';
 
@@ -31,13 +32,14 @@ function buildChecklist(tipo: InaugurationTipo): InaugurationChecklistItem[] {
 
 export default function CreateInaugurationModal({ onClose, onCreate }: CreateInaugurationModalProps) {
     const { user } = useAuth();
+    const { team } = useData();
     const [nome, setNome] = useState('');
     const [endereco, setEndereco] = useState('');
     const [secretarias, setSecretarias] = useState<string[]>([]);
     const [dataInauguracao, setDataInauguracao] = useState('');
     const [tipo, setTipo] = useState<InaugurationTipo>('simples');
     const [checklist, setChecklist] = useState<InaugurationChecklistItem[]>(buildChecklist('simples'));
-    const [assignees, setAssignees] = useState<string[]>([]);
+    const [assignees, setAssignees] = useState<string[]>([]); // IDs dos responsáveis
 
     const handleTipoChange = (newTipo: InaugurationTipo) => {
         setTipo(newTipo);
@@ -53,10 +55,12 @@ export default function CreateInaugurationModal({ onClose, onCreate }: CreateIna
         e.preventDefault();
         if (!nome.trim() || secretarias.length === 0 || !dataInauguracao) return;
 
-        // Creator always included in responsáveis
-        const finalAssignees = user && !assignees.includes(user.name)
-            ? [user.name, ...assignees]
-            : assignees.length > 0 ? assignees : (user ? [user.name] : []);
+        // Creator (user.id) sempre incluído nos IDs
+        const finalAssigneeIds = user && !assignees.includes(user.id)
+            ? [user.id, ...assignees]
+            : assignees.length > 0 ? assignees : (user ? [user.id] : []);
+
+        const assigneeNames = finalAssigneeIds.map(id => team.find(m => m.id === id)?.name || id);
 
         const inaugDate = new Date(dataInauguracao + 'T12:00:00');
 
@@ -68,7 +72,7 @@ export default function CreateInaugurationModal({ onClose, onCreate }: CreateIna
             type: ['inauguracao'],
             creator: secretarias.join(', ') || (user?.name || 'Desconhecido'),
             priority: 'alta',
-            assignees: finalAssignees,
+            assignees: assigneeNames,
             dueDate: inaugDate, // Data da inauguração = prazo de execução
             comments: [],
             attachments: [],
@@ -81,7 +85,7 @@ export default function CreateInaugurationModal({ onClose, onCreate }: CreateIna
             createdAt: new Date(),
         };
 
-        const success = await onCreate(newTask);
+        const success = await (onCreate as any)(newTask, finalAssigneeIds);
         if (success) {
             onClose();
         }
@@ -168,7 +172,7 @@ export default function CreateInaugurationModal({ onClose, onCreate }: CreateIna
                             <small style={{ fontWeight: 400, marginLeft: '6px', color: 'hsl(var(--color-text-muted))' }}>— você é incluído automaticamente</small>
                         </label>
                         <TeamMultiSelect
-                            selected={assignees}
+                            selectedIds={assignees}
                             onChange={setAssignees}
                             placeholder="Busque e selecione os membros da equipe..."
                         />

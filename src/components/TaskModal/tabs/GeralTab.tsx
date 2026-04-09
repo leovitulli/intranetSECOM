@@ -4,6 +4,7 @@ import { MapPin, Award, Plus, File, X } from 'lucide-react';
 import { PremiumSection } from '../components/PremiumSection';
 import SecretariasMultiSelect from '../../SecretariasMultiSelect';
 import TeamMultiSelect from '../../TeamMultiSelect';
+import { useData } from '../../../contexts/DataContext';
 import type { Task, Attachment, TaskType } from '../../../types/kanban';
 
 interface GeralTabProps {
@@ -55,6 +56,7 @@ export const GeralTab: React.FC<GeralTabProps> = ({
     setViewingFile,
     isSaving
 }) => {
+    const { team } = useData();
     const { isEditingDesc, isEditingAgendamento, isEditingEquipe, isEditingExtras } = editingStates;
     const { setIsEditingDesc, setIsEditingAgendamento, setIsEditingEquipe, setIsEditingExtras } = setEditingStates;
 
@@ -314,16 +316,28 @@ export const GeralTab: React.FC<GeralTabProps> = ({
                         <div className="nova-pauta-field-premium">
                             <label className="field-label-premium">Responsáveis na SECOM</label>
                             <TeamMultiSelect
-                                selected={(task.creator || '').split(',').map(s => s.trim()).filter(Boolean)}
-                                onChange={v => onFieldChange('creator', v.join(', '))}
+                                selectedIds={(task.creator || '').split(',').map(s => {
+                                    const t = team.find(m => m.name === s.trim());
+                                    return t ? t.id : s.trim();
+                                }).filter(Boolean)}
+                                onChange={ids => {
+                                    const names = ids.map(id => team.find(m => m.id === id)?.name || id);
+                                    onFieldChange('creator', names.join(', '));
+                                }}
                             />
                         </div>
                         {task.is_pauta_externa && (
                             <div className="nova-pauta-field-premium">
                                 <label className="field-label-premium">Equipe de Cobertura (Externa)</label>
                                 <TeamMultiSelect
-                                    selected={task.assignees || []}
-                                    onChange={v => onFieldChange('assignees', v)}
+                                    selectedIds={(task.assignees || []).map(name => {
+                                        const t = team.find(m => m.name === name);
+                                        return t ? t.id : name;
+                                    })}
+                                    onChange={ids => {
+                                        const names = ids.map(id => team.find(m => m.id === id)?.name || id);
+                                        onFieldChange('assignees', names);
+                                    }}
                                 />
                             </div>
                         )}

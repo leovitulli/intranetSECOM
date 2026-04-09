@@ -7,20 +7,20 @@ export function useTasksData() {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [archivedTasks, setArchivedTasks] = useState<Task[]>([]);
 
-    const logActivity = async (taskId: string, actionType: string, details: string) => {
+    const logActivity = async (taskId: string, actionType: string, details: string, userName?: string) => {
         if (!taskId.includes('-')) return;
         try {
             const { data: sessionData } = await supabase.auth.getUser();
             const user = sessionData?.user;
             if (!user) return;
 
-            const { data: profile } = await supabase.from('users').select('name').eq('id', user.id).single();
-            const userName = profile?.name || 'Sistema';
+            // Se o nome não foi passado, tenta usar o que está na meta-data da sessão (mais rápido que consulta)
+            const finalUserName = userName || user.user_metadata?.name || 'Sistema';
 
             await supabase.from('task_logs').insert([{
                 task_id: taskId,
                 user_id: user.id,
-                user_name: userName,
+                user_name: finalUserName,
                 action_type: actionType,
                 details
             }]);
@@ -44,20 +44,16 @@ export function useTasksData() {
     };
 
     const addTask = async (taskData: Omit<Task, 'id'>, teamIds?: string[]): Promise<{ success: boolean; error?: any }> => {
+        // Controle de timeout para evitar travamento infinito (15 segundos)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
         try {
             console.log("🚀 Iniciando criação Atômica de Pauta via Hook...");
             
-            let assigneeIds = teamIds || [];
-            
-            // Se não recebeu os IDs prontos, tenta mapear pelos nomes (compatibilidade legada)
-            if (!teamIds || teamIds.length === 0) {
-                const { data: teamData, error: teamError } = await supabase.from('users').select('id, name');
-                if (!teamError && teamData) {
-                    assigneeIds = (taskData.assignees || [])
-                        .map(name => teamData.find((m: any) => m.name === name)?.id)
-                        .filter(Boolean) as string[];
-                }
-            }
+            const assigneeIds = teamIds || [];
+            // REMOVIDO: Busca de todos os usuários para mapear nomes. 
+            // Agora confiamos que os IDs vêm diretamente do componente ou são vazios.
 
             let finalStatus = taskData.status || 'solicitado';
 
@@ -106,7 +102,7 @@ export function useTasksData() {
                 p_arte_informacoes: taskData.arte_informacoes || null,
                 p_comments: taskData.comments || [],
                 p_attachments: taskData.attachments || []
-            });
+            }).abortSignal(controller.signal);
 
             if (rpcError) {
                 console.error("❌ Erro RPC (Hook):", rpcError);
@@ -122,8 +118,14 @@ export function useTasksData() {
             }
             return { success: false, error: { message: 'Dados não recebidos do banco.' } };
         } catch (err: any) {
+            if (err.name === 'AbortError') {
+                console.error("⏱️ Timeout de 15s atingido na criação de pauta.");
+                return { success: false, error: { message: 'O servidor demorou muito para responder. Verifique sua conexão.' } };
+            }
             console.error("💥 Erro Inesperado (Hook addTask):", err);
             return { success: false, error: err };
+        } finally {
+            clearTimeout(timeoutId);
         }
     };
 

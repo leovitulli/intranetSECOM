@@ -124,8 +124,8 @@ export default function Dashboard() {
         if (selectedTask?.id === updatedTask.id) setSelectedTask(updatedTask);
     };
 
-    const handleCreateTask = async (newTask: Task): Promise<{ success: boolean; error?: any }> => {
-        const result = await addTask(newTask);
+    const handleCreateTask = async (newTask: Task, teamIds?: string[]): Promise<{ success: boolean; error?: any }> => {
+        const result = await addTask(newTask, teamIds);
         if (result.success) {
             setIsCreateModalOpen(false);
         } else {

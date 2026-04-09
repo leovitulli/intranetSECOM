@@ -4,12 +4,12 @@ import { useData } from '../contexts/DataContext';
 import './TeamMultiSelect.css';
 
 interface TeamMultiSelectProps {
-    selected: string[];
-    onChange: (selected: string[]) => void;
+    selectedIds: string[];
+    onChange: (selectedIds: string[]) => void;
     placeholder?: string;
 }
 
-export default function TeamMultiSelect({ selected, onChange, placeholder = "Selecione responsáveis..." }: TeamMultiSelectProps) {
+export default function TeamMultiSelect({ selectedIds, onChange, placeholder = "Selecione responsáveis..." }: TeamMultiSelectProps) {
     const { team } = useData();
     const [isOpen, setIsOpen] = useState(false);
     const [query, setQuery] = useState('');
@@ -20,7 +20,7 @@ export default function TeamMultiSelect({ selected, onChange, placeholder = "Sel
     const sortedTeam = [...team].sort((a, b) => a.name.localeCompare(b.name));
     
     const filtered = sortedTeam.filter(m =>
-        m.name.toLowerCase().includes(query.toLowerCase()) && !selected.includes(m.name)
+        m.name.toLowerCase().includes(query.toLowerCase()) && !selectedIds.includes(m.id)
     );
 
     useEffect(() => {
@@ -34,16 +34,20 @@ export default function TeamMultiSelect({ selected, onChange, placeholder = "Sel
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const toggleOption = (name: string) => {
-        const newSelected = [...selected, name];
+    const toggleOption = (id: string) => {
+        const newSelected = [...selectedIds, id];
         onChange(newSelected);
         setQuery('');
         inputRef.current?.focus();
     };
 
-    const removeOption = (name: string, e: React.MouseEvent) => {
+    const removeOption = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        onChange(selected.filter(s => s !== name));
+        onChange(selectedIds.filter(s => s !== id));
+    };
+
+    const getMemberName = (id: string) => {
+        return team.find(m => m.id === id)?.name || id;
     };
 
     return (
@@ -57,13 +61,13 @@ export default function TeamMultiSelect({ selected, onChange, placeholder = "Sel
             >
                 <div className="tms-content-wrapper">
                     <div className="tms-pills">
-                        {selected.map(name => (
-                            <span key={name} className="tms-pill">
-                                {name}
+                        {selectedIds.map(id => (
+                            <span key={id} className="tms-pill">
+                                {getMemberName(id)}
                                 <button
                                     type="button"
                                     className="tms-pill-remove"
-                                    onClick={(e) => removeOption(name, e)}
+                                    onClick={(e) => removeOption(id, e)}
                                 >
                                     <X size={10} />
                                 </button>
@@ -75,7 +79,7 @@ export default function TeamMultiSelect({ selected, onChange, placeholder = "Sel
                         ref={inputRef}
                         type="text"
                         className="tms-input-field"
-                        placeholder={selected.length === 0 ? placeholder : ''}
+                        placeholder={selectedIds.length === 0 ? placeholder : ''}
                         value={query}
                         onChange={(e) => {
                             setQuery(e.target.value);
@@ -101,7 +105,7 @@ export default function TeamMultiSelect({ selected, onChange, placeholder = "Sel
                                     className="tms-option"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        toggleOption(member.name);
+                                        toggleOption(member.id);
                                     }}
                                 >
                                     <div className="tms-option-avatar" style={{ backgroundColor: member.color || '#3b82f6' }}>
