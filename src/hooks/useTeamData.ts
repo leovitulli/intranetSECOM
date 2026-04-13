@@ -10,8 +10,8 @@ export function useTeamData() {
     const addTeamMember = async (member: TeamMember, password?: string): Promise<{ success: boolean; error?: string }> => {
         try {
             if (password) {
-                // Chama a função SQL RPC segura que criamos para gerenciar Auth + Public Users
-                const { data: userId, error: rpcError } = await supabase.rpc('create_new_user_with_auth', {
+                // Promise.race garante timeout real de 15s independente do supabase-js
+                const rpcCall = supabase.rpc('create_new_user_with_auth', {
                     p_email:              member.email,
                     p_password:           password,
                     p_full_name:          member.name,
@@ -21,19 +21,24 @@ export function useTeamData() {
                     p_has_login_val:      member.hasLogin || false
                 });
 
+                const timeoutPromise = new Promise<never>((_, reject) =>
+                    setTimeout(() => reject(new Error('TIMEOUT_15S')), 15000)
+                );
+
+                const { data: userId, error: rpcError } = await Promise.race([rpcCall, timeoutPromise]);
+
                 if (rpcError) {
                     console.error('RPC Error:', rpcError);
                     return { success: false, error: rpcError.message };
                 }
-                
-                // Atualiza o estado local com o ID real retornado pelo banco
+
                 if (userId) {
                     setTeam(prev => [...prev, { ...member, id: userId as string }]);
                 }
-                
+
                 return { success: true };
             } else {
-                // Apenas insere na tabela pública caso não tenha login/senha
+                // Insere na tabela pública para usuários sem login (motoristas, etc)
                 const { data, error } = await supabase.from('users').insert([{
                     name:       member.name,
                     role:       member.role,
@@ -49,9 +54,12 @@ export function useTeamData() {
             }
         } catch (error: any) {
             console.error('Error adding team member:', error);
-            return { 
-                success: false, 
-                error: error.message || error.details || 'Falha desconhecida no banco de dados' 
+            const isTimeout = error?.message === 'TIMEOUT_15S';
+            return {
+                success: false,
+                error: isTimeout
+                    ? 'A operação demorou mais de 15 segundos. Verifique sua conexão e tente novamente.'
+                    : (error.message || error.details || 'Falha desconhecida no banco de dados')
             };
         }
     };
