@@ -19,8 +19,6 @@ import {
     FileText,
     Filter
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { normalizeText } from '../utils/searchUtils';
 import './InstagramInsights.css';
 

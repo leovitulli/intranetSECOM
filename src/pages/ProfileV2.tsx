@@ -3,7 +3,6 @@ import { useData } from '../contexts/DataContext';
 import { useNavigate } from 'react-router-dom';
 import { Newspaper, Clock, X, Users, Shield, Building2, PartyPopper, Trophy, Pencil, Check, Activity, Camera } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { normalizeText } from '../utils/searchUtils';
 import TaskModal from '../components/TaskModal';
 import Profile from './Profile';

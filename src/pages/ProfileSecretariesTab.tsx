@@ -126,10 +126,6 @@ export default function ProfileSecretariesTab() {
         normalizeText(s.nome).includes(normalizeText(newName))
     );
 
-    const isDuplicate = secretarias.some(s => 
-        s.id !== editingId && 
-        normalizeText(s.nome) === normalizeText(newName)
-    );
 
     return (
         <div className="profile-roles-tab">

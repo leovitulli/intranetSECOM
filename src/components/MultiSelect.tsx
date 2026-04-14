@@ -15,8 +15,8 @@
  *     getValue={m => m.name}
  *   />
  */
-import React, { useState, useRef, useEffect } from 'react';
-import { Check, X, ChevronDown, Search } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { X, ChevronDown, Search } from 'lucide-react';
 import { normalizeText } from '../utils/searchUtils';
 import './MultiSelect.css';
 
@@ -91,9 +91,9 @@ export default function MultiSelect<T extends AnyOption>({
                             value={query} onChange={e => setQuery(e.target.value)} />
                     </div>
                     <ul className="ms-list">
-                        {filtered.length === 0
+                        {filteredOptions.length === 0
                             ? <li className="ms-empty">Nenhum resultado.</li>
-                            : filtered.map((o, i) => {
+                            : filteredOptions.map((o, i) => {
                                 const v = val(o);
                                 const s = sub(o);
                                 const sel = selected.includes(v);
