@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useData } from '../contexts/DataContext';
 import { Trash2, Plus, Pencil, Check, X, Loader2, AlertCircle, AlertTriangle, Shield, Search } from 'lucide-react';
+import { normalizeText } from '../utils/searchUtils';
 import './Profile.css';
 
 // ── Feedback inline (substitui window.alert) ──────────────────────────────────
@@ -122,7 +123,7 @@ export default function ProfileRolesTab() {
     // Ordenação Alfabética e Filtragem em Tempo Real
     const sortedJobFunctions = [...jobFunctions].sort((a, b) => a.title.localeCompare(b.title));
     const filteredJobFunctions = sortedJobFunctions.filter(jf => 
-        jf.title.toLowerCase().includes(newTitle.toLowerCase())
+        normalizeText(jf.title).includes(normalizeText(newTitle))
     );
 
     return (
@@ -156,7 +157,7 @@ export default function ProfileRolesTab() {
                         </div>
 
                         {/* Aviso de duplicidade visual */}
-                        {jobFunctions.some(jf => jf.title.toLowerCase() === newTitle.trim().toLowerCase()) && (
+                        {jobFunctions.some(jf => normalizeText(jf.title) === normalizeText(newTitle.trim())) && (
                             <div style={{ fontSize: '0.7rem', color: '#f59e0b', fontWeight: 800, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 <AlertTriangle size={12} /> Este cargo já existe na base de dados
                             </div>
@@ -166,7 +167,7 @@ export default function ProfileRolesTab() {
                     <button 
                         type="submit" 
                         className="btn-save-premium" 
-                        disabled={isSaving || !newTitle.trim() || jobFunctions.some(jf => jf.title.toLowerCase() === newTitle.trim().toLowerCase())}
+                        disabled={isSaving || !newTitle.trim() || jobFunctions.some(jf => normalizeText(jf.title) === normalizeText(newTitle.trim()))}
                         style={{ height: '48px', minWidth: '180px', padding: '0 1.5rem' }}
                     >
                         {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}

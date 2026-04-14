@@ -30,6 +30,7 @@ import { ptBR } from 'date-fns/locale';
 import { useState, useMemo, useRef } from 'react';
 import { useData } from '../contexts/DataContext';
 import type { Task } from '../types/kanban';
+import { normalizeText } from '../utils/searchUtils';
 import { 
     XAxis, 
     YAxis, 
@@ -310,7 +311,8 @@ export default function ReportsPremium() {
         let list = [...filteredTasks];
         
         if (searchTerm) {
-            list = list.filter(t => t.title.toLowerCase().includes(searchTerm.toLowerCase()));
+            const term = normalizeText(searchTerm);
+            list = list.filter(t => normalizeText(t.title).includes(term));
         }
 
         if (activeFilter) {

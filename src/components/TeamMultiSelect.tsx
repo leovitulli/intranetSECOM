@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, X } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
+import { normalizeText } from '../utils/searchUtils';
 import './TeamMultiSelect.css';
 
 interface TeamMultiSelectProps {
@@ -17,11 +18,9 @@ export default function TeamMultiSelect({ selectedIds, onChange, placeholder = "
     const inputRef = useRef<HTMLInputElement>(null);
 
     // Listagem dinâmica da equipe ordenada alfabeticamente
-    const sortedTeam = [...team].sort((a, b) => a.name.localeCompare(b.name));
-    
-    const filtered = sortedTeam.filter(m =>
-        m.name.toLowerCase().includes(query.toLowerCase()) && !selectedIds.includes(m.id)
-    );
+    const filtered = team.filter(m => 
+        normalizeText(m.name).includes(normalizeText(query)) && !selectedIds.includes(m.id)
+    ).sort((a, b) => a.name.localeCompare(b.name));
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

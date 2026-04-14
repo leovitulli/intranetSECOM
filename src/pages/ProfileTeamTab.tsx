@@ -4,6 +4,7 @@ import type { TeamMember } from '../types/team';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import TeamMemberModal from '../components/TeamMemberModal';
+import { normalizeText } from '../utils/searchUtils';
 import './ProfileTeamTab.css';
 
 // ── Toast de feedback inline (substitui window.alert) ─────────────────────────
@@ -172,14 +173,13 @@ export default function ProfileTeamTab() {
     };
 
     // ── FILTRAGEM E ORDENAÇÃO ────────────────────────────────────────────────
-    const sortedTeam = [...team].sort((a, b) => a.name.localeCompare(b.name));
-    const filteredTeam = sortedTeam.filter(m => {
+    const filteredTeam = team.filter(m => {
         if (!localSearch) return true;
-        const s = localSearch.toLowerCase();
-        return m.name.toLowerCase().includes(s) || 
-               m.email?.toLowerCase().includes(s) || 
-               m.job_titles?.some((t: string) => t.toLowerCase().includes(s));
-    });
+        const s = normalizeText(localSearch);
+        return normalizeText(m.name).includes(s) || 
+               (m.email && normalizeText(m.email).includes(s)) || 
+               m.job_titles?.some((t: string) => normalizeText(t).includes(s));
+    }).sort((a, b) => a.name.localeCompare(b.name));
 
     return (
         <div className="profile-team-tab">

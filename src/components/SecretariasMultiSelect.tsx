@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
+import { normalizeText } from '../utils/searchUtils';
 import './SecretariasMultiSelect.css';
 
 interface SecretariasMultiSelectProps {
@@ -17,13 +18,12 @@ export default function SecretariasMultiSelect({ selected, onChange, placeholder
     const inputRef = useRef<HTMLInputElement>(null);
 
     // Lista dinâmica do banco ordenada alfabeticamente
-    const listaSecretarias = [...secretarias]
+    const filtered = secretarias
+        .filter(s =>
+            normalizeText(s.nome).includes(normalizeText(query)) && !selected.includes(s.nome)
+        )
         .sort((a, b) => a.nome.localeCompare(b.nome))
         .map(s => s.nome);
-
-    const filtered = listaSecretarias.filter(s =>
-        s.toLowerCase().includes(query.toLowerCase()) && !selected.includes(s)
-    );
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

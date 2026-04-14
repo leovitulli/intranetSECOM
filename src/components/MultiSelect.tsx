@@ -15,8 +15,9 @@
  *     getValue={m => m.name}
  *   />
  */
-import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, X, Search } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Check, X, ChevronDown, Search } from 'lucide-react';
+import { normalizeText } from '../utils/searchUtils';
 import './MultiSelect.css';
 
 type AnyOption = string | Record<string, any>;
@@ -43,8 +44,8 @@ export default function MultiSelect<T extends AnyOption>({
     const val = (o: T) => getValue ? getValue(o) : (o as string);
     const sub = (o: T) => getSubLabel ? getSubLabel(o) : undefined;
 
-    const filtered = options.filter(o =>
-        lbl(o).toLowerCase().includes(query.toLowerCase())
+    const filteredOptions = options.filter(o => 
+        normalizeText(lbl(o)).includes(normalizeText(query))
     );
 
     const toggle = (o: T) => {

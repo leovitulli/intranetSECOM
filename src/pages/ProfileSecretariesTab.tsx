@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useData } from '../contexts/DataContext';
+import { normalizeText } from '../utils/searchUtils';
 import { Trash2, Plus, Pencil, Check, X, Loader2, AlertCircle, AlertTriangle, Building2, Search } from 'lucide-react';
 import './Profile.css';
 
@@ -122,7 +123,12 @@ export default function ProfileSecretariesTab() {
     // Ordenação Alfabética e Filtragem em Tempo Real
     const sortedSecretarias = [...secretarias].sort((a, b) => a.nome.localeCompare(b.nome));
     const filteredSecretarias = sortedSecretarias.filter(s => 
-        s.nome.toLowerCase().includes(newName.toLowerCase())
+        normalizeText(s.nome).includes(normalizeText(newName))
+    );
+
+    const isDuplicate = secretarias.some(s => 
+        s.id !== editingId && 
+        normalizeText(s.nome) === normalizeText(newName)
     );
 
     return (
@@ -156,7 +162,7 @@ export default function ProfileSecretariesTab() {
                         </div>
 
                         {/* Aviso de duplicidade visual */}
-                        {secretarias.some(s => s.nome.toLowerCase() === newName.trim().toLowerCase()) && (
+                        {secretarias.some(s => normalizeText(s.nome) === normalizeText(newName.trim())) && (
                             <div style={{ fontSize: '0.7rem', color: '#f59e0b', fontWeight: 800, marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 <AlertTriangle size={12} /> Esta secretaria já existe na base de dados
                             </div>
@@ -166,7 +172,7 @@ export default function ProfileSecretariesTab() {
                     <button 
                         type="submit" 
                         className="btn-save-premium" 
-                        disabled={isSaving || !newName.trim() || secretarias.some(s => s.nome.toLowerCase() === newName.trim().toLowerCase())}
+                        disabled={isSaving || !newName.trim() || secretarias.some(s => normalizeText(s.nome) === normalizeText(newName.trim()))}
                         style={{ height: '48px', minWidth: '180px', padding: '0 1.5rem' }}
                     >
                         {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}

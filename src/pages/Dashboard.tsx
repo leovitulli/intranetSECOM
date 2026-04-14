@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import TaskModal from '../components/TaskModal';
 import CreateTaskModal from '../components/CreateTaskModal';
 import TaskTeamAvatars from '../components/TaskTeamAvatars';
+import { normalizeText } from '../utils/searchUtils';
 import './Dashboard.css';
 
 const FLOW_COLUMNS: { id: TaskStatus; title: string }[] = [
@@ -37,10 +38,10 @@ export default function Dashboard() {
     // ── Filtro de busca ───────────────────────────────────────────────────────
     const filteredTasks = tasks.filter(task => {
         if (!searchTerm) return true;
-        const term = searchTerm.toLowerCase();
+        const term = normalizeText(searchTerm);
 
-        if (task.title.toLowerCase().includes(term)) return true;
-        if (task.description?.toLowerCase().includes(term)) return true;
+        if (normalizeText(task.title).includes(term)) return true;
+        if (normalizeText(task.description).includes(term)) return true;
 
         const typeLabels: Record<string, string> = {
             release: 'release pauta',
@@ -49,12 +50,12 @@ export default function Dashboard() {
             foto: 'fotos fotografia',
             inauguracao: 'inauguração evento',
         };
-        if (task.type.some(t => typeLabels[t]?.includes(term))) return true;
-        if (task.inauguracao_secretarias?.some(s => s.toLowerCase().includes(term))) return true;
-        if (task.secretarias?.some(s => s.toLowerCase().includes(term))) return true;
-        if (task.assignees?.some(n => n.toLowerCase().includes(term))) return true;
-        if (task.inauguracao_nome?.toLowerCase().includes(term)) return true;
-        if (task.inauguracao_endereco?.toLowerCase().includes(term)) return true;
+        if (task.type.some(t => normalizeText(typeLabels[t]).includes(term))) return true;
+        if (task.inauguracao_secretarias?.some(s => normalizeText(s).includes(term))) return true;
+        if (task.secretarias?.some(s => normalizeText(s).includes(term))) return true;
+        if (task.assignees?.some(n => normalizeText(n).includes(term))) return true;
+        if (normalizeText(task.inauguracao_nome).includes(term)) return true;
+        if (normalizeText(task.inauguracao_endereco).includes(term)) return true;
 
         return false;
     });

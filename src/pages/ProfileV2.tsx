@@ -3,8 +3,11 @@ import { useData } from '../contexts/DataContext';
 import { useNavigate } from 'react-router-dom';
 import { Newspaper, Clock, X, Users, Shield, Building2, PartyPopper, Trophy, Pencil, Check, Activity, Camera } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { normalizeText } from '../utils/searchUtils';
 import TaskModal from '../components/TaskModal';
 import Profile from './Profile';
+import ImageCropperModal from '../components/ImageCropperModal';
 import './ProfileV2.css';
 import type { Task } from '../types/kanban';
 import type { TeamMember } from '../types/team';
@@ -25,6 +28,7 @@ export default function ProfileV2() {
     const [isEditing, setIsEditing] = useState(false);
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [previewAvatar, setPreviewAvatar] = useState<string | null>(null);
+    const [cropperImageSrc, setCropperImageSrc] = useState<string | null>(null);
     
     // Form States
     const [editName, setEditName] = useState('');
@@ -75,24 +79,31 @@ export default function ProfileV2() {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setAvatarFile(file);
-            setPreviewAvatar(URL.createObjectURL(file));
+            const tempUrl = URL.createObjectURL(file);
+            setCropperImageSrc(tempUrl);
         }
+        e.target.value = ''; // Reset to allow re-selection
+    };
+
+    const handleCropComplete = (croppedFile: File, previewUrl: string) => {
+        setAvatarFile(croppedFile);
+        setPreviewAvatar(previewUrl);
+        setCropperImageSrc(null);
     };
 
     // ─── Lógica de Pautas Reais ──────────────────────────────────
     const myTasks = useMemo(() => {
         if (!user || !tasks) return [];
-        const userName = user.name.toLowerCase();
+        const userName = normalizeText(user.name);
         
         return tasks
             .filter(t => {
-                const inTitle = t.title?.toLowerCase().includes(userName);
-                const inDesc = t.description?.toLowerCase().includes(userName);
-                const isCreator = t.creator?.toLowerCase().includes(userName);
-                const isAssignee = t.assignees?.some(a => a.toLowerCase().includes(userName));
-                const isVideo = t.video_captacao_equipe?.some(e => e.toLowerCase().includes(userName)) || 
-                               t.video_edicao_equipe?.some(e => e.toLowerCase().includes(userName));
+                const inTitle = normalizeText(t.title).includes(userName);
+                const inDesc = normalizeText(t.description).includes(userName);
+                const isCreator = normalizeText(t.creator).includes(userName);
+                const isAssignee = t.assignees?.some(a => normalizeText(a).includes(userName));
+                const isVideo = t.video_captacao_equipe?.some(e => normalizeText(e).includes(userName)) || 
+                               t.video_edicao_equipe?.some(e => normalizeText(e).includes(userName));
                 
                 return inTitle || inDesc || isCreator || isAssignee || isVideo;
             })
@@ -163,7 +174,7 @@ export default function ProfileV2() {
                     bio: editBio,
                     birth_date: editBirthDate || null,
                     job_titles: editJobTitles,
-                    avatar: finalAvatarUrl
+                    avatar_url: finalAvatarUrl
                 })
                 .eq('id', user.id);
             
@@ -272,6 +283,15 @@ export default function ProfileV2() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* ─── Modal de Recorte de Imagem ────────────────────────────────── */}
+            {cropperImageSrc && (
+                <ImageCropperModal 
+                    imageSrc={cropperImageSrc} 
+                    onClose={() => setCropperImageSrc(null)}
+                    onCropCompleteAction={handleCropComplete}
+                />
             )}
 
             <div className="bento-grid">

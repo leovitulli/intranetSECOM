@@ -19,6 +19,9 @@ import {
     FileText,
     Filter
 } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { normalizeText } from '../utils/searchUtils';
 import './InstagramInsights.css';
 
 type Sentiment = 'positive' | 'negative' | 'neutral';
@@ -194,7 +197,11 @@ export default function InstagramInsights() {
             if (sentimentFilter !== 'all' && c.sentiment !== sentimentFilter) return false;
             if (replyFilter === 'replied' && !c.replied) return false;
             if (replyFilter === 'pending' && c.replied) return false;
-            if (searchTerm && !c.text.toLowerCase().includes(searchTerm.toLowerCase()) && !c.author.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+            
+            if (searchTerm) {
+                const term = normalizeText(searchTerm);
+                if (!normalizeText(c.text).includes(term) && !normalizeText(c.author).includes(term)) return false;
+            }
             return true;
         });
     }, [selectedPeriod, sentimentFilter, replyFilter, searchTerm]);

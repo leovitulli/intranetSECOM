@@ -13,6 +13,7 @@ import {
     LayoutDashboard
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { normalizeText } from '../utils/searchUtils';
 import './Radar.css';
 
 interface ClippingItem {
@@ -98,9 +99,10 @@ export default function Radar() {
     }, []);
 
     const filteredItems = useMemo(() => {
+        const term = normalizeText(searchTerm);
         return MOCKED_CLIPPING.filter(item => {
-            const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                                item.source.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesSearch = !term || normalizeText(item.title).includes(term) || 
+                                normalizeText(item.source).includes(term);
             const matchesSentiment = filterSentiment === 'all' || item.sentiment === filterSentiment;
             return matchesSearch && matchesSentiment;
         });
