@@ -67,7 +67,7 @@ export default function CalendarPage() {
         const mappedTasks: CalendarEvent[] = tasks
             .filter(t => {
                 // Nova Lógica Inteligente: A pauta precisa ter PELO MENOS UMA dessas datas
-                return t.pauta_data || t.inauguracao_data || t.video_captacao_data || t.arte_entrega_data || t.dueDate;
+                return t.pauta_data || t.inauguracao_data || t.video_captacao_data || t.arte_entrega_data || t.post_data_postagem || t.dueDate;
             })
             .filter(t => {
                 if (isAll) return true;
@@ -87,6 +87,8 @@ export default function CalendarPage() {
                     eventDate = t.video_captacao_data;
                 } else if (t.type.includes('arte') && t.arte_entrega_data) {
                     eventDate = t.arte_entrega_data;
+                } else if (t.type.includes('post') && t.post_data_postagem) {
+                    eventDate = new Date(t.post_data_postagem + 'T12:00:00');
                 } else {
                     eventDate = t.dueDate || t.createdAt;
                 }

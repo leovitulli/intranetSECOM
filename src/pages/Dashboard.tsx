@@ -84,8 +84,26 @@ export default function Dashboard() {
     );
 
     // ── Formatação de data ────────────────────────────────────────────────────
-    const formatDueDate = (date: Date | null) => {
+    const formatDueDate = (task: Task) => {
+        let date = task.dueDate;
+        
+        // Fallback Inteligente: se não houver dueDate, buscar data da pauta, post ou inauguração
+        if (!date) {
+            if (task.type?.includes('post') && task.post_data_postagem) {
+                date = new Date(task.post_data_postagem + 'T12:00:00');
+            } else if (task.pauta_data) {
+                date = new Date(task.pauta_data + 'T12:00:00');
+            } else if (task.inauguracao_data) {
+                date = task.inauguracao_data;
+            } else if (task.type?.includes('video') && task.video_captacao_data) {
+                date = task.video_captacao_data;
+            } else if (task.type?.includes('arte') && task.arte_entrega_data) {
+                date = task.arte_entrega_data;
+            }
+        }
+
         if (!date) return null;
+        
         const isOverdue = date < new Date() && date.toDateString() !== new Date().toDateString();
         return (
             <span className={`date-badge ${isOverdue ? 'overdue' : ''}`}>
@@ -195,7 +213,7 @@ export default function Dashboard() {
                 )}
 
                 <div className="card-footer" style={{ marginTop: 8 }}>
-                    <div className="card-meta">{formatDueDate(task.dueDate)}</div>
+                    <div className="card-meta">{formatDueDate(task)}</div>
                     <TaskTeamAvatars task={task} team={team} />
                 </div>
             </div>
@@ -242,7 +260,7 @@ export default function Dashboard() {
 
             <div className="card-footer">
                 <div className="card-meta">
-                    {formatDueDate(task.dueDate)}
+                    {formatDueDate(task)}
                     {task.comments.length > 0 && (
                         <span className="meta-item"><MessageSquare size={12} /> {task.comments.length}</span>
                     )}
