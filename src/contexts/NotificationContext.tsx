@@ -95,15 +95,34 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             const { data, error } = await supabase.rpc('get_birthdays_today');
             
             if (data && data.length > 0 && !error) {
-                // Check if current user is in the list
+                // 1. Logic for ME (Celebrating)
                 const me = data.find((u: any) => u.id === user.id);
                 if (me) {
                     setIsMyBirthday(true);
                     triggerConfetti();
+                    setBirthdayUsers([me]);
+                    setShowBirthdayModal(true);
                 }
 
-                setBirthdayUsers(data);
-                setShowBirthdayModal(true);
+                // 2. Logic for OTHERS (Bell Notification)
+                const others = data.filter((u: any) => u.id !== user.id);
+                if (others.length > 0) {
+                    const names = others.map((u: any) => u.name.split(' ')[0]).join(', ');
+                    const virtualNotif: Notification = {
+                        id: `bday-local-${today}`,
+                        user_id: user.id,
+                        title: '🎂 Aniversário na Equipe!',
+                        message: `Hoje é o dia de ${names}! Não esqueça de deixar seu parabéns.`,
+                        read: false,
+                        created_at: new Date().toISOString(),
+                        module: 'birthday'
+                    };
+                    setNotifications(prev => {
+                        if (prev.some(n => n.id === virtualNotif.id)) return prev;
+                        return [virtualNotif, ...prev];
+                    });
+                }
+
                 localStorage.setItem(`last_birthday_check_${user.id}`, today);
             }
         };
@@ -146,7 +165,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     const markAsRead = async (id: string) => {
         setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-        await supabase.from('notifications').update({ read: true }).eq('id', id);
+        if (!id.startsWith('bday-local-')) {
+            await supabase.from('notifications').update({ read: true }).eq('id', id);
+        }
     };
 
     const markAllAsRead = async () => {
@@ -245,8 +266,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                     </div>
                 </div>
             )}
-            {/* ========== CELEBRATORY BIRTHDAY MODAL ========== */}
-            {showBirthdayModal && birthdayUsers.length > 0 && (
+            {/* ========== CELEBRATORY BIRTHDAY MODAL (FOR ME ONLY) ========== */}
+            {showBirthdayModal && isMyBirthday && (
                 <div
                     style={{
                         position: 'fixed',
@@ -305,15 +326,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                         </div>
 
                         <div>
-                            <h2 style={{ color: '#14213d', fontSize: '2rem', margin: '0 0 0.5rem 0', fontWeight: 900 }}>
-                                {isMyBirthday ? '🎉 Parabéns pra você!' : (birthdayUsers.length === 1 ? 'Aniversariante do Dia!' : 'Aniversariantes do Dia!')}
+                            <h2 style={{ color: '#14213d', fontSize: '2.5rem', margin: '0 0 0.5rem 0', fontWeight: 950, letterSpacing: '-1px' }}>
+                                🎉 Parabéns pra você!
                             </h2>
-                            <p style={{ color: '#475569', fontSize: '1.1rem', margin: 0, fontWeight: 500 }}>
-                                {isMyBirthday 
-                                    ? 'A equipe SECOM te deseja um dia incrível repleto de realizações. Você é fundamental para nós!'
-                                    : (birthdayUsers.length === 1 
-                                        ? `Hoje é um dia especial para ${birthdayUsers[0].name.split(' ')[0]}. Vamos comemorar!`
-                                        : `Hoje celebramos o dia de ${birthdayUsers.map(u => u.name.split(' ')[0]).join(', ')}.`)}
+                            <p style={{ color: '#475569', fontSize: '1.2rem', margin: 0, fontWeight: 500, lineHeight: 1.5 }}>
+                                A equipe **SECOM** te deseja um dia incrível repleto de realizações. <br/>
+                                Você é fundamental para o nosso sucesso!
                             </p>
                         </div>
 
@@ -334,7 +352,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                             onMouseOver={e => { e.currentTarget.style.transform = 'scale(1.05) translateY(-2px)'; }}
                             onMouseOut={e => { e.currentTarget.style.transform = 'scale(1) translateY(0)'; }}
                         >
-                            Desejar Parabéns! 🎂
+                            OK
                         </button>
                     </div>
                 </div>
