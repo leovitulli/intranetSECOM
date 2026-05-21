@@ -1,7 +1,5 @@
 import React from 'react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Archive, RotateCcw, Trash2, Activity } from 'lucide-react';
+import { Archive, RotateCcw, Trash2 } from 'lucide-react';
 import type { Task } from '../../../types/kanban';
 
 interface TaskModalSidebarProps {
@@ -20,7 +18,7 @@ export const TaskModalSidebar: React.FC<TaskModalSidebarProps> = ({
     task,
     isViewer,
     user,
-    activityLogs,
+    activityLogs: _activityLogs,
     onUnarchive,
     onArchive,
     onClose,

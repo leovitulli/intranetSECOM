@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, LogOut, Bell, Search, CalendarDays, CalendarClock, BarChart3, Check, X, Menu, AlignEndHorizontal, Zap, Sparkles } from 'lucide-react';
+import { LayoutDashboard, LogOut, Bell, Search, CalendarDays, CalendarClock, BarChart3, Check, X, Menu, AlignEndHorizontal, Zap } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useData } from '../contexts/DataContext';

@@ -12,7 +12,7 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 export const isRealUUID = (id: string) => UUID_REGEX.test(id);
 
 // ─── Tipos ─────────────────────────────────────────────────────────────────────
-export type ActiveTab = 'geral' | 'release' | 'post' | 'video' | 'foto' | 'arte' | 'inauguracao';
+export type ActiveTab = 'geral' | 'release' | 'post' | 'video' | 'foto' | 'arte' | 'inauguracao' | 'history';
 
 export interface ConfirmDialogState {
     open: boolean;

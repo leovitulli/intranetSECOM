@@ -9,15 +9,11 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 // Lazy load pages for performance
 const Login = lazy(() => import('./pages/Login'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const News = lazy(() => import('./pages/News'));
-const Agenda = lazy(() => import('./pages/Agenda'));
 const Suggestions = lazy(() => import('./pages/Suggestions'));
 const CalendarPage = lazy(() => import('./pages/CalendarPage'));
 const ReportsPremium = lazy(() => import('./pages/ReportsPremium'));
 const ProfileV2 = lazy(() => import('./pages/ProfileV2'));
 const SendNotification = lazy(() => import('./pages/SendNotification'));
-const Cronograma = lazy(() => import('./pages/Cronograma'));
 const Radar = lazy(() => import('./pages/Radar'));
 const RadarNoticias = lazy(() => import('./pages/RadarNoticias'));
 const InstagramInsights = lazy(() => import('./pages/InstagramInsights'));

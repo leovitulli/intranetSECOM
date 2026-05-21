@@ -2,7 +2,7 @@ import React from 'react';
 import { Activity, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { Task } from '../../../../types/kanban';
+import type { Task } from '../../../types/kanban';
 
 interface HistoryTabProps {
     task: Task;
