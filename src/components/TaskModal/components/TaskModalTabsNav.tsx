@@ -20,6 +20,7 @@ export const TaskModalTabsNav: React.FC<TaskModalTabsNavProps> = ({
         ['foto', '📸 Foto'],
         ['arte', '🎨 Arte'],
         ['inauguracao', '🏛️ Inauguração'],
+        ['history', '📊 Histórico e SLA'],
     ];
 
     return (

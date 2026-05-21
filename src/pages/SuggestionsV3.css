@@ -1,0 +1,769 @@
+/* ==========================================================================
+   Comunica Hub v3.0 - Caixa de Sugestões CSS Styling
+   ========================================================================== */
+
+.suggestions-v3-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding-bottom: 2rem;
+    animation: fadeIn 0.4s ease-out;
+}
+
+/* ── Header Area ────────────────────────────────────────────────────────── */
+.suggestions-v3-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-radius: var(--radius-xl);
+    background: hsl(var(--color-surface) / 0.4);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsl(var(--color-primary) / 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+}
+
+.suggestions-v3-title-box {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.suggestions-v3-title-box h1 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.02em;
+    color: hsl(var(--color-text));
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.suggestions-v3-title-box .beta-tag {
+    font-size: 0.65rem;
+    font-weight: 700;
+    background: hsl(var(--color-primary) / 0.15);
+    color: hsl(var(--color-primary));
+    padding: 2px 8px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 1px solid hsl(var(--color-primary) / 0.2);
+}
+
+.suggestions-v3-title-box .subtitle {
+    margin: 0;
+    font-size: 0.85rem;
+    color: hsl(var(--color-text-muted));
+}
+
+/* ── Suggestions Grid Layout ─────────────────────────────────────────────── */
+.suggestions-v3-layout {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+/* ── Form Wrap Glass ─────────────────────────────────────────────────────── */
+.suggestions-v3-form-wrapper {
+    background: hsl(var(--color-surface) / 0.4);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: var(--radius-xl);
+    padding: 2rem;
+    border: 1px solid hsl(var(--color-border) / 0.5);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.03);
+}
+
+.form-header-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.form-header-box h2 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    margin: 0;
+    color: hsl(var(--color-text));
+}
+
+.form-sub-hint {
+    font-size: 0.82rem;
+    color: hsl(var(--color-text-muted));
+    line-height: 1.4;
+    margin: 0 0 1.5rem 0;
+}
+
+/* Form Fields */
+.suggestion-v3-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.form-group-v3 {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group-v3 label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: hsl(var(--color-text));
+}
+
+.form-group-v3 input,
+.form-group-v3 select,
+.form-group-v3 textarea {
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    border: 1px solid hsl(var(--color-border));
+    background: hsl(var(--color-background) / 0.5);
+    color: hsl(var(--color-text));
+    font-size: 0.88rem;
+    font-family: inherit;
+    outline: none;
+    transition: all 0.2s ease;
+    resize: vertical;
+}
+
+.form-group-v3 input:focus,
+.form-group-v3 select:focus,
+.form-group-v3 textarea:focus {
+    border-color: hsl(var(--color-primary));
+    background: hsl(var(--color-surface));
+    box-shadow: 0 0 0 3px hsl(var(--color-primary) / 0.08);
+}
+
+.form-row-v3 {
+    display: flex;
+    gap: 1rem;
+}
+
+/* Drag & Drop Dropzone */
+.file-format-hint {
+    font-size: 0.75rem;
+    color: hsl(var(--color-text-muted));
+    margin: 0 0 2px 0;
+}
+
+.suggestions-v3-dropzone {
+    border: 2px dashed hsl(var(--color-border));
+    border-radius: var(--radius-md);
+    padding: 1.5rem 1rem;
+    text-align: center;
+    background: hsl(var(--color-background) / 0.3);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.25s ease;
+}
+
+.suggestions-v3-dropzone:hover {
+    border-color: hsl(var(--color-primary) / 0.5);
+    background: hsl(var(--color-primary) / 0.02);
+}
+
+.suggestions-v3-dropzone.dragging {
+    border-color: hsl(var(--color-primary));
+    background: hsl(var(--color-primary) / 0.05);
+    transform: scale(1.01);
+}
+
+.suggestions-v3-dropzone.has-files {
+    border-style: solid;
+    border-color: hsl(var(--color-primary) / 0.3);
+}
+
+.dropzone-icon {
+    color: hsl(var(--color-text-muted));
+    opacity: 0.6;
+    transition: all 0.2s ease;
+}
+
+.suggestions-v3-dropzone:hover .dropzone-icon,
+.suggestions-v3-dropzone.dragging .dropzone-icon {
+    color: hsl(var(--color-primary));
+    transform: translateY(-2px);
+    opacity: 1;
+}
+
+.suggestions-v3-dropzone span {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: hsl(var(--color-text-muted));
+}
+
+/* File list Cards */
+.dropzone-file-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.dropzone-file-card {
+    background: hsl(var(--color-surface) / 0.8) !important;
+    border: 1px solid hsl(var(--color-border) / 0.8) !important;
+    border-radius: var(--radius-md);
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.file-card-icon-box {
+    width: 28px;
+    height: 28px;
+    background: hsl(var(--color-primary) / 0.1);
+    color: hsl(var(--color-primary));
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.file-card-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    overflow: hidden;
+    flex: 1;
+}
+
+.file-card-name {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: hsl(var(--color-text));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-card-size {
+    font-size: 0.65rem;
+    color: hsl(var(--color-text-muted));
+    font-weight: 500;
+}
+
+.file-card-remove-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: hsl(var(--color-text-muted));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px;
+    border-radius: 4px;
+    transition: all 0.15s;
+}
+
+.file-card-remove-btn:hover {
+    background: hsl(var(--color-border) / 0.8);
+    color: hsl(var(--color-text));
+}
+
+.submit-suggestion-btn {
+    height: 44px;
+    margin-top: 0.5rem;
+    justify-content: center;
+    font-size: 0.88rem;
+}
+
+.loading-spinner-v3 {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-right: 6px;
+}
+
+/* ── Inbox Column (Direita) ──────────────────────────────────────────────── */
+.suggestions-v3-inbox {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.inbox-v3-filter-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: hsl(var(--color-surface) / 0.4);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 16px;
+    border: 1px solid hsl(var(--color-border) / 0.5);
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.inbox-filter-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inbox-filter-title h3 {
+    font-size: 1.05rem;
+    font-weight: 800;
+    margin: 0;
+    color: hsl(var(--color-text));
+}
+
+.inbox-counter-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: hsl(var(--color-primary) / 0.15);
+    color: hsl(var(--color-primary));
+    padding: 2px 8px;
+    border-radius: 99px;
+}
+
+.inbox-filters-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.inbox-filter-select {
+    height: 34px;
+    padding: 0 8px;
+    border-radius: 8px;
+    border: 1px solid hsl(var(--color-border));
+    background: hsl(var(--color-background) / 0.5);
+    color: hsl(var(--color-text));
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+    min-width: 130px;
+}
+
+.inbox-filter-select:focus {
+    border-color: hsl(var(--color-primary));
+}
+
+/* Inbox Items Scroll Area */
+.inbox-v3-scroll-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+    padding-right: 2px;
+}
+
+.inbox-empty-hint {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: hsl(var(--color-text-muted));
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Inbox Suggestion Cards */
+.suggestion-v3-card {
+    background: hsl(var(--color-surface) / 0.35);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid hsl(var(--color-border) / 0.5);
+    border-radius: 16px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.suggestion-v3-card:hover {
+    transform: translateY(-2px);
+    background: hsl(var(--color-surface) / 0.45);
+    border-color: hsl(var(--color-border) / 0.8);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+
+.suggestion-v3-header-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.suggestion-v3-date {
+    font-size: 0.75rem;
+    color: hsl(var(--color-text-muted));
+    font-weight: 500;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.status-dot-pulse {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+    position: relative;
+}
+
+@keyframes pulse-status {
+    0% { transform: scale(0.9); opacity: 0.8; }
+    50% { transform: scale(1.4); opacity: 0.4; }
+    100% { transform: scale(0.9); opacity: 0.8; }
+}
+
+.status-dot-pulse::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    animation: pulse-status 1.8s infinite ease-in-out;
+}
+
+/* Pending orange color */
+.status-badge.pending {
+    background: hsl(35 100% 95%);
+    color: hsl(35 100% 32%);
+    border: 1px solid hsl(35 100% 88%);
+}
+.status-dot-pulse.orange, .status-dot-pulse.orange::after {
+    background: hsl(35 100% 45%);
+}
+
+/* Reviewed blue color */
+.status-badge.reviewed {
+    background: hsl(200 100% 95%);
+    color: hsl(200 100% 30%);
+    border: 1px solid hsl(200 100% 88%);
+}
+.status-dot-pulse.blue, .status-dot-pulse.blue::after {
+    background: hsl(200 100% 45%);
+}
+
+/* Approved green color */
+.status-badge.approved {
+    background: hsl(142 70% 93%);
+    color: hsl(142 80% 26%);
+    border: 1px solid hsl(142 70% 84%);
+}
+.status-dot-pulse.green, .status-dot-pulse.green::after {
+    background: hsl(142 70% 40%);
+}
+
+/* Rejected crimson color */
+.status-badge.rejected {
+    background: hsl(350 80% 95%);
+    color: hsl(350 80% 36%);
+    border: 1px solid hsl(350 80% 88%);
+}
+.status-dot-pulse.crimson, .status-dot-pulse.crimson::after {
+    background: hsl(350 80% 50%);
+}
+
+/* Card Body Content */
+.suggestion-v3-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    margin: 0;
+    color: hsl(var(--color-text));
+    line-height: 1.35;
+}
+
+.suggestion-v3-dep-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 99px;
+    background: hsl(var(--color-primary) / 0.08);
+    color: hsl(var(--color-primary));
+    border: 1px solid hsl(var(--color-primary) / 0.15);
+    width: fit-content;
+}
+
+.suggestion-v3-desc {
+    margin: 0;
+    font-size: 0.88rem;
+    color: hsl(var(--color-text-muted));
+    line-height: 1.45;
+}
+
+/* Attachments Grid in Card */
+.suggestion-v3-attachments-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 0.25rem;
+}
+
+.attachment-v3-img-card {
+    cursor: pointer;
+    border-radius: 8px;
+    overflow: hidden;
+    width: 60px;
+    height: 60px;
+    border: 1px solid hsl(var(--color-border));
+    transition: transform 0.2s;
+}
+
+.attachment-v3-img-card:hover {
+    transform: scale(1.06);
+}
+
+.attachment-v3-img-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.attachment-v3-button {
+    height: 32px;
+    padding: 0 10px;
+    font-size: 0.72rem;
+    border-radius: 8px;
+}
+
+/* Subfooter Meta */
+.suggestion-v3-subfooter {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.author-meta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.76rem;
+    color: hsl(var(--color-text-muted));
+    font-weight: 600;
+}
+
+/* Admin Actions Bar */
+.suggestion-v3-actions-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-top: 1px solid hsl(var(--color-border) / 0.3);
+    padding-top: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.inline-action-btn {
+    flex: 1;
+    height: 34px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 8px;
+    justify-content: center;
+}
+
+.inline-action-btn.approve {
+    background: hsl(var(--color-primary));
+    color: white;
+}
+
+.inline-action-btn.approve:hover {
+    background: hsl(var(--color-primary) / 0.9);
+}
+
+.inline-action-btn.reject {
+    color: hsl(350 80% 45%);
+    border-color: hsl(350 80% 80%);
+}
+
+.inline-action-btn.reject:hover {
+    background: hsl(350 80% 97%);
+}
+
+/* Definite Delete developer button */
+.suggestion-v3-delete-row {
+    border-top: 1px solid hsl(var(--color-border) / 0.3);
+    padding-top: 0.5rem;
+    display: flex;
+}
+
+.definite-delete-btn {
+    background: transparent;
+    border: none;
+    color: hsl(var(--color-text-muted));
+    font-size: 0.7rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    opacity: 0.6;
+    margin-left: auto;
+    transition: all 0.2s;
+    padding: 4px;
+}
+
+.definite-delete-btn:hover {
+    opacity: 1;
+    color: hsl(350 80% 50%);
+}
+
+/* ── Custom Glowing Toast Feedbacks ─────────────────────────────────────── */
+.custom-feedback-toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 99999;
+    border-radius: 16px;
+    padding: 12px 24px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: slideUpToast 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    max-width: 90%;
+}
+
+@keyframes slideUpToast {
+    from { transform: translate(-50%, 20px); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.custom-feedback-toast.success {
+    background: hsl(142 70% 97% / 0.9) !important;
+    border: 1px solid hsl(142 70% 80%) !important;
+    color: hsl(142 80% 25%);
+    box-shadow: 0 20px 48px hsl(142 70% 40% / 0.1);
+}
+
+.custom-feedback-toast.error {
+    background: hsl(350 80% 97% / 0.9) !important;
+    border: 1px solid hsl(350 80% 80%) !important;
+    color: hsl(350 80% 30%);
+    box-shadow: 0 20px 48px hsl(350 80% 50% / 0.1);
+}
+
+/* ── Delete Confirmation Card ── */
+.delete-confirm-card {
+    background: hsl(var(--color-surface)) !important;
+    border: 1px solid hsl(var(--color-border)) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2) !important;
+    max-width: 420px;
+    width: 100%;
+    padding: 1.75rem;
+    animation: scaleInModal 0.2s ease-out;
+}
+
+.delete-confirm-card h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: hsl(var(--color-text));
+}
+
+.delete-confirm-card p {
+    margin: 0 0 1.5rem 0;
+    font-size: 0.85rem;
+    color: hsl(var(--color-text-muted));
+    line-height: 1.45;
+}
+
+.delete-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.delete-confirm-actions .btn-danger {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s;
+}
+
+.delete-confirm-actions .btn-danger:hover {
+    background: #dc2626;
+}
+
+/* View Only Form Wrapper State */
+.view-only-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.view-only-icon-box {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: hsl(var(--color-primary) / 0.08);
+    color: hsl(var(--color-primary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+}
+
+.view-only-state h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.view-only-state p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: hsl(var(--color-text-muted));
+    line-height: 1.45;
+}
+
+/* ── Responsive Grid layout ──────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+    .suggestions-v3-layout {
+        grid-template-columns: 1fr;
+    }
+}

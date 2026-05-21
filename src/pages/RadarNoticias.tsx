@@ -25,12 +25,14 @@ import {
     Users,
     FileText,
     ChevronDown,
-    ChevronUp
+    ChevronUp,
+    Download
 } from 'lucide-react';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useRadarNoticias, type FilterParams } from '../hooks/useRadarNoticias';
+import { format } from 'date-fns';
 import './RadarNoticias.css';
 
 const deliveryTypeColors: Record<string, string> = {
@@ -50,10 +52,12 @@ const statusColors: Record<string, string> = {
     insumos: '#facc15'
 };
 
-type Period = '7d' | '30d' | '90d' | '2025' | 'all';
+type Period = '7d' | '30d' | '90d' | '2025' | 'all' | 'custom';
 
 export default function RadarNoticias() {
     const [period, setPeriod] = useState<Period>('all');
+    const [customStartDate, setCustomStartDate] = useState<string>('');
+    const [customEndDate, setCustomEndDate] = useState<string>('');
     const [selectedCategory, setSelectedCategory] = useState<string>('');
     const [selectedEntregaType, setSelectedEntregaType] = useState<string>('');
     const [activeFilter, setActiveFilter] = useState<{ type: string; value: string } | null>(null);
@@ -86,13 +90,17 @@ export default function RadarNoticias() {
             case '2025':
                 baseFilters.startDate = '2025-01-01T00:00:00Z';
                 break;
+            case 'custom':
+                if (customStartDate) baseFilters.startDate = new Date(customStartDate + 'T00:00:00Z').toISOString();
+                if (customEndDate) baseFilters.endDate = new Date(customEndDate + 'T23:59:59Z').toISOString();
+                break;
         }
 
         if (selectedCategory) baseFilters.category = selectedCategory;
         if (selectedEntregaType) baseFilters.entregaType = selectedEntregaType;
 
         return baseFilters;
-    }, [period, selectedCategory, selectedEntregaType]);
+    }, [period, selectedCategory, selectedEntregaType, customStartDate, customEndDate]);
 
     const [collapsedCards, setCollapsedCards] = useState<Record<string, boolean>>({
         ranking: false,
@@ -271,6 +279,22 @@ export default function RadarNoticias() {
 
     return (
         <div className="hub-radar-container">
+            {/* Print Header */}
+            <div className="print-report-header" style={{ display: 'none' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #1e3a8a', paddingBottom: '1rem', marginBottom: '2rem' }}>
+                    <div>
+                        <h1 style={{ color: '#1e3a8a', margin: 0, fontSize: '24px' }}>Relatório de Desempenho e Entregas</h1>
+                        <p style={{ color: '#64748b', margin: '4px 0 0', fontWeight: 600 }}>Comunica Hub - Secretaria de Comunicação</p>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontWeight: 700, color: '#1e293b' }}>
+                            Período: {period === 'all' ? 'Todo o histórico' : period === 'custom' ? `${customStartDate ? format(new Date(customStartDate + 'T12:00:00'), 'dd/MM/yyyy') : '...'} a ${customEndDate ? format(new Date(customEndDate + 'T12:00:00'), 'dd/MM/yyyy') : '...'}` : period === '2025' ? 'Ano de 2025' : `Últimos ${period.replace('d','')} dias`}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>Gerado em: {format(new Date(), 'dd/MM/yyyy HH:mm')}</div>
+                    </div>
+                </div>
+            </div>
+
             <header className="hub-radar-header">
                 <div className="header-brand">
                     <div className="brand-logo-radar">
@@ -306,6 +330,17 @@ export default function RadarNoticias() {
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
+                    
+                    <button
+                        className="hub-sync-btn"
+                        style={{ background: '#0ea5e9' }}
+                        onClick={() => window.print()}
+                        title="Exportar Relatório em PDF"
+                    >
+                        <Download size={16} />
+                        Exportar PDF
+                    </button>
+
                     {data && data.totalCount > 0 && (
                         <button
                             className="hub-sync-btn full-sync-btn"
@@ -330,15 +365,40 @@ export default function RadarNoticias() {
             </header>
 
             <div className="radar-tactical-bar">
-                <div className="period-selector">
+                <div className="period-selector" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
                     <span className="selector-label"><Filter size={14} /> FILTRAR PERÍODO:</span>
                     <div className="period-pills">
                         <button className={period === '7d' ? 'active' : ''} onClick={() => setPeriod('7d')}>7 DIAS</button>
                         <button className={period === '30d' ? 'active' : ''} onClick={() => setPeriod('30d')}>30 DIAS</button>
                         <button className={period === '90d' ? 'active' : ''} onClick={() => setPeriod('90d')}>90 DIAS</button>
                         <button className={period === '2025' ? 'active' : ''} onClick={() => setPeriod('2025')}>2025</button>
+                        <button className={period === 'custom' ? 'active' : ''} onClick={() => setPeriod('custom')}>PERSONALIZADO</button>
                         <button className={period === 'all' ? 'active' : ''} onClick={() => setPeriod('all')}>TUDO</button>
                     </div>
+                    {period === 'custom' && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '0.5rem', background: '#fff', padding: '0.25rem 0.25rem 0.25rem 0.75rem', borderRadius: '8px', border: '1px solid #93c5fd', boxShadow: '0 2px 10px rgba(59, 130, 246, 0.15)' }}>
+                            <input 
+                                type="date" 
+                                className="radar-select premium-date-picker" 
+                                style={{ border: 'none', background: 'transparent', padding: '0', cursor: 'pointer', outline: 'none', fontWeight: 600, color: '#1e3a8a' }} 
+                                value={customStartDate} 
+                                onChange={e => setCustomStartDate(e.target.value)} 
+                                title="Data Inicial"
+                            />
+                            <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 600 }}>até</span>
+                            <input 
+                                type="date" 
+                                className="radar-select premium-date-picker" 
+                                style={{ border: 'none', background: 'transparent', padding: '0', cursor: 'pointer', outline: 'none', fontWeight: 600, color: '#1e3a8a' }} 
+                                value={customEndDate} 
+                                onChange={e => setCustomEndDate(e.target.value)} 
+                                title="Data Final"
+                            />
+                            <button className="hub-sync-btn" style={{ background: '#3b82f6', padding: '0.35rem 0.75rem', borderRadius: '6px', marginLeft: '0.25rem' }} onClick={() => refetch()}>
+                                <Search size={14} /> <span style={{ fontSize: '0.75rem' }}>Buscar</span>
+                            </button>
+                        </div>
+                    )}
                 </div>
                 <div className="filter-selectors" style={{ flex: 1, display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
                     <select value={activeFilter?.type === 'category' ? activeFilter.value : selectedCategory} onChange={e => { setSelectedCategory(e.target.value); setActiveFilter(null); }} className="radar-select" style={{ maxWidth: 200 }}>

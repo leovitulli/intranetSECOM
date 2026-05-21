@@ -19,6 +19,7 @@ import { VideoTab } from './TaskModal/tabs/VideoTab';
 import { FotoTab } from './TaskModal/tabs/FotoTab';
 import { ArteTab } from './TaskModal/tabs/ArteTab';
 import { InauguracaoTab } from './TaskModal/tabs/InauguracaoTab';
+import { HistoryTab } from './TaskModal/tabs/HistoryTab';
 
 import './TaskModal.css';
 
@@ -238,6 +239,13 @@ export default function TaskModal({ task, onClose, onUpdateTask, onArchive }: Ta
                                         {...commonTabProps}
                                         isEditingInauguracao={isEditingInauguracao}
                                         setIsEditingInauguracao={setIsEditingInauguracao}
+                                    />
+                                )}
+
+                                {activeTab === 'history' && (
+                                    <HistoryTab 
+                                        task={editedTask}
+                                        activityLogs={activityLogs}
                                     />
                                 )}
                             </div>

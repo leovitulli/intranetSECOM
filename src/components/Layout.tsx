@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, LogOut, Bell, Search, CalendarDays, CalendarClock, BarChart3, Check, X, Menu, AlignEndHorizontal, Zap } from 'lucide-react';
+import { LayoutDashboard, LogOut, Bell, Search, CalendarDays, CalendarClock, BarChart3, Check, X, Menu, AlignEndHorizontal, Zap, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useData } from '../contexts/DataContext';
@@ -67,7 +67,7 @@ export default function Layout() {
                         </div>
                         <div className="logo-text-group">
                             <h2>Comunica Hub</h2>
-                            <span className="logo-version">v2.0</span>
+                            <span className="logo-version">v3.0</span>
                         </div>
                     </div>
                 </div>
@@ -121,6 +121,8 @@ export default function Layout() {
                         <div className="nav-icon-box"><Zap size={20} /></div>
                         <span>Notícias SECOM</span>
                     </NavLink>
+
+
                 </nav>
 
                 <div className="sidebar-footer">

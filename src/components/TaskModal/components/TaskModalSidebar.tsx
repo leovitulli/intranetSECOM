@@ -74,33 +74,6 @@ export const TaskModalSidebar: React.FC<TaskModalSidebarProps> = ({
                 </div>
             </div>
 
-            {(user?.role === 'admin' || user?.role === 'desenvolvedor') && (
-                <div className="side-section-premium" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <div className="side-title-premium" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748b' }}>
-                        <Activity size={14} /> HISTÓRICO DE ATIVIDADES
-                    </div>
-                    <div className="activity-list" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14, maxHeight: 420, overflowY: 'auto', paddingRight: 8, marginTop: 4 }}>
-                        {activityLogs.filter(log => !log.details.includes('Banco de Dados')).length > 0 ? 
-                            activityLogs
-                                .filter(log => !log.details.includes('Banco de Dados'))
-                                .map((log, idx) => (
-                                <div key={log.id} style={{ fontSize: '0.75rem', borderLeft: '2px solid #f1f5f9', paddingLeft: 14, position: 'relative' }}>
-                                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: idx === 0 ? '#3b82f6' : '#e2e8f0', position: 'absolute', left: -5, top: 4, boxShadow: idx === 0 ? '0 0 0 3px rgba(59,130,246,0.15)' : 'none' }}></div>
-                                    <div style={{ fontWeight: 700, color: '#334155' }}>{log.user_name}</div>
-                                    <div style={{ color: '#64748b', margin: '3px 0', lineHeight: 1.4 }}>
-                                        {log.details.includes('Pauta criada via RPC Blindada') ? 'Pauta criada com sucesso' : log.details}
-                                    </div>
-                                    <div style={{ color: '#cbd5e1', fontSize: '0.65rem', fontWeight: 600 }}>{format(new Date(log.created_at), "dd MMM, HH:mm", { locale: ptBR })}</div>
-                                </div>
-                            )) : (
-                            <div style={{ textAlign: 'center', padding: '2rem 0', color: '#cbd5e1' }}>
-                                <Activity size={20} style={{ opacity: 0.3, marginBottom: 8 }} />
-                                <p style={{ fontSize: '0.7rem', fontStyle: 'italic', margin: 0 }}>Nenhuma atividade registrada.</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
