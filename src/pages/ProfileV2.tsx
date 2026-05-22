@@ -551,7 +551,7 @@ export default function ProfileV2() {
                 </div>
 
                 {/* ─── Minhas Demandas ───────────────────────────────────── */}
-                <div className="bento-card card-wide" style={{ background: '#fff' }}>
+                <div className="bento-card card-large" style={{ background: '#fff' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                         <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem', fontWeight: 800, color: '#1e293b' }}><Clock size={18} color="#3b82f6" /> Missões em Campo</h3>
                         <span style={{ fontSize: '0.7rem', background: '#eff6ff', color: '#3b82f6', padding: '4px 12px', borderRadius: '99px', fontWeight: 800 }}>{myTasks.length} ATIVAS</span>

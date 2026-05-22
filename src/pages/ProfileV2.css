@@ -46,6 +46,7 @@
 .card-large { grid-column: span 3; }
 .card-tall { grid-row: span 2; }
 .card-wide { grid-column: span 2; }
+.card-full { grid-column: span 4; }
 
 /* ─── Profile Main Hub ────────────────────────────────────────── */
 .bento-profile-main {
