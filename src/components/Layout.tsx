@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, LogOut, Bell, Search, CalendarDays, CalendarClock, BarChart3, Check, X, Menu, AlignEndHorizontal, Zap, Trash2 } from 'lucide-react';
+import { LayoutDashboard, LogOut, Bell, Search, CalendarDays, CalendarClock, BarChart3, Check, X, Menu, AlignEndHorizontal, Zap, Trash2, FolderOpen } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useData } from '../contexts/DataContext';
@@ -123,6 +123,15 @@ export default function Layout() {
                         <span>Notícias SECOM</span>
                     </NavLink>
 
+                    {user && (user.role === 'desenvolvedor' || user.role === 'rh') && (
+                        <NavLink
+                            to="/rh"
+                            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                        >
+                            <div className="nav-icon-box"><FolderOpen size={20} /></div>
+                            <span>Recursos Humanos</span>
+                        </NavLink>
+                    )}
 
                 </nav>
 

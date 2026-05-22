@@ -7,6 +7,7 @@ import { normalizeText } from '../utils/searchUtils';
 import TaskModal from '../components/TaskModal';
 import Profile from './Profile';
 import ImageCropperModal from '../components/ImageCropperModal';
+import MeusRegistrosRH from '../components/MeusRegistrosRH';
 import './ProfileV2.css';
 import type { Task } from '../types/kanban';
 import type { TeamMember } from '../types/team';
@@ -582,6 +583,9 @@ export default function ProfileV2() {
                         ))}
                     </div>
                 </div>
+
+                {/* ─── Recursos Humanos (Colaborador) ────────────────────── */}
+                <MeusRegistrosRH />
 
                 {/* ─── Sistema Administrativo ────────────────────────────── */}
                 {isAdmin && (

@@ -195,6 +195,7 @@ export default function TeamMemberModal({ member, onClose, onSave }: TeamMemberM
                                     onChange={e => setRole(e.target.value)} required>
                                     <option value="user">Usuário Comum</option>
                                     <option value="admin">Administrador</option>
+                                    <option value="rh">Recursos Humanos (RH)</option>
                                     <option value="viewer">Somente Visualização</option>
                                     {isDev && <option value="desenvolvedor">Desenvolvedor</option>}
                                 </select>

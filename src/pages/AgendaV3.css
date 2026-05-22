@@ -381,6 +381,8 @@
     position: relative;
     transition: all 0.2s ease;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+    overflow: hidden; /* Evita que itens como avatares saiam do card */
+    flex-shrink: 0; /* Previne o card de ser esmagado caso tenham muitos no dia */
 }
 
 
@@ -483,9 +485,11 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 4px;
+    flex-wrap: wrap; /* Permite quebrar linha se ficar apertado */
+    gap: 6px;
+    margin-top: auto; /* Empurra o footer para a base do card */
     border-top: 1px solid hsl(var(--color-border) / 0.3);
-    padding-top: 6px;
+    padding-top: 8px;
 }
 
 .v3-card-time {
@@ -495,11 +499,23 @@
     font-size: 0.72rem;
     font-weight: 700;
     color: hsl(var(--color-text));
+    flex-shrink: 0;
 }
 
 .v3-card-team {
-    transform: scale(0.85);
-    transform-origin: right center;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    flex: 1;
+    min-width: 80px;
+    /* Remover scale para evitar bounding box quebrado, substituindo por tamanho real menor nas props ou no css do TaskTeamAvatars se necessário */
+}
+/* Força o TaskTeamAvatars a quebrar linha e caber no espaço sem vazar */
+.v3-card-team .team-avatars {
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 /* ── Inline Quick Add Event Form ──────────────────────────────────────────── */

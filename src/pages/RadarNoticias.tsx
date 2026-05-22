@@ -6,8 +6,6 @@ import {
     CartesianGrid,
     Tooltip,
     ResponsiveContainer,
-    LineChart,
-    Line,
     Cell
 } from 'recharts';
 import {
@@ -32,7 +30,10 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useRadarNoticias, type FilterParams } from '../hooks/useRadarNoticias';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { useAuth } from '../contexts/AuthContext';
+import RadarReportModal from '../components/RadarReportModal';
 import './RadarNoticias.css';
 
 const deliveryTypeColors: Record<string, string> = {
@@ -55,6 +56,7 @@ const statusColors: Record<string, string> = {
 type Period = '7d' | '30d' | '90d' | '2025' | 'all' | 'custom';
 
 export default function RadarNoticias() {
+    const { user } = useAuth();
     const [period, setPeriod] = useState<Period>('all');
     const [customStartDate, setCustomStartDate] = useState<string>('');
     const [customEndDate, setCustomEndDate] = useState<string>('');
@@ -65,6 +67,7 @@ export default function RadarNoticias() {
     const [syncSuccess, setSyncSuccess] = useState(false);
     const [fullSyncing, setFullSyncing] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [reportModalOpen, setReportModalOpen] = useState(false);
     const tableRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -162,26 +165,44 @@ export default function RadarNoticias() {
             .sort((a, b) => b.count - a.count);
 
         const yearMap = new Map<number, number>();
+        const monthMap = new Map<string, number>();
+
         filtered.forEach(n => {
             if (n.published_at) {
-                const year = new Date(n.published_at).getFullYear();
+                const date = parseISO(n.published_at);
+                const year = date.getFullYear();
                 yearMap.set(year, (yearMap.get(year) || 0) + 1);
+
+                const m = format(date, 'MMM/yyyy', { locale: ptBR });
+                monthMap.set(m, (monthMap.get(m) || 0) + 1);
             }
         });
         const byYear = Array.from(yearMap.entries())
             .map(([year, count]) => ({ year, count }))
             .sort((a, b) => a.year - b.year);
 
+        const byMonth = Array.from(monthMap.entries()).map(([month, count]) => ({ month, count }));
+        const mediaMensal = byMonth.length > 0 ? Math.round(filtered.length / byMonth.length) : filtered.length;
+
         return {
             news: filtered,
             byCategory,
             deliveries,
             byYear,
+            byMonth,
+            mediaMensal,
             totalFiltered: filtered.length,
             entregasTotal: entregas.length,
             recentNews: entregas.slice(0, 15)
         };
     }, [data?.allNews, activeFilter, searchQuery]);
+
+    const getPeriodLabel = () => {
+        if (period === 'all') return 'Todo o histórico';
+        if (period === '2025') return 'Ano de 2025';
+        if (period === 'custom') return `${customStartDate ? format(new Date(customStartDate + 'T12:00:00'), 'dd/MM/yyyy') : '...'} a ${customEndDate ? format(new Date(customEndDate + 'T12:00:00'), 'dd/MM/yyyy') : '...'}`;
+        return `Últimos ${period.replace('d', '')} dias`;
+    };
 
     async function handleSync() {
         try {
@@ -279,22 +300,6 @@ export default function RadarNoticias() {
 
     return (
         <div className="hub-radar-container">
-            {/* Print Header */}
-            <div className="print-report-header" style={{ display: 'none' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #1e3a8a', paddingBottom: '1rem', marginBottom: '2rem' }}>
-                    <div>
-                        <h1 style={{ color: '#1e3a8a', margin: 0, fontSize: '24px' }}>Relatório de Desempenho e Entregas</h1>
-                        <p style={{ color: '#64748b', margin: '4px 0 0', fontWeight: 600 }}>Comunica Hub - Secretaria de Comunicação</p>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontWeight: 700, color: '#1e293b' }}>
-                            Período: {period === 'all' ? 'Todo o histórico' : period === 'custom' ? `${customStartDate ? format(new Date(customStartDate + 'T12:00:00'), 'dd/MM/yyyy') : '...'} a ${customEndDate ? format(new Date(customEndDate + 'T12:00:00'), 'dd/MM/yyyy') : '...'}` : period === '2025' ? 'Ano de 2025' : `Últimos ${period.replace('d','')} dias`}
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>Gerado em: {format(new Date(), 'dd/MM/yyyy HH:mm')}</div>
-                    </div>
-                </div>
-            </div>
-
             <header className="hub-radar-header">
                 <div className="header-brand">
                     <div className="brand-logo-radar">
@@ -334,11 +339,12 @@ export default function RadarNoticias() {
                     <button
                         className="hub-sync-btn"
                         style={{ background: '#0ea5e9' }}
-                        onClick={() => window.print()}
-                        title="Exportar Relatório em PDF"
+                        onClick={() => setReportModalOpen(true)}
+                        title="Exportar Relatório PDF / Imprimir"
+                        disabled={!filteredAnalytics || filteredAnalytics.news.length === 0}
                     >
                         <Download size={16} />
-                        Exportar PDF
+                        Gerar Relatório
                     </button>
 
                     {data && data.totalCount > 0 && (
@@ -436,23 +442,23 @@ export default function RadarNoticias() {
                 <div className="kpi-card kpi-total">
                     <div className="kpi-icon-wrapper" style={{ background: '#f8fafc', color: '#1e3a8a' }}><Activity size={24} /></div>
                     <div className="kpi-content">
-                        <h3>Notícias Filtradas</h3>
+                        <h3>TOTAL GERAL</h3>
                         <div className="kpi-value">{filteredAnalytics?.totalFiltered?.toLocaleString() || 0}</div>
-                        <p className="kpi-label">Baseada na busca atual</p>
+                        <p className="kpi-label">Volume do filtro selecionado</p>
                     </div>
                 </div>
                 <div className="kpi-card kpi-entregas">
-                    <div className="kpi-icon-wrapper"><Construction size={24} /></div>
+                    <div className="kpi-icon-wrapper"><Calendar size={24} /></div>
                     <div className="kpi-content">
-                        <h3>Inaugurações Mapeadas</h3>
-                        <div className="kpi-value">{filteredAnalytics?.entregasTotal?.toLocaleString() || 0}</div>
-                        <p className="kpi-label">Baseado na busca atual</p>
+                        <h3>MÉDIA MENSAL</h3>
+                        <div className="kpi-value">{filteredAnalytics?.mediaMensal || 0}</div>
+                        <p className="kpi-label">No período filtrado</p>
                     </div>
                 </div>
                 <div className="kpi-card kpi-secretarias">
                     <div className="kpi-icon-wrapper"><Users size={24} /></div>
                     <div className="kpi-content">
-                        <h3>Secretarias Ativas</h3>
+                        <h3>SECRETARIAS ATIVAS</h3>
                         <div className="kpi-value">{filteredAnalytics?.byCategory?.length || 0}</div>
                         <p className="kpi-label">No filtro atual</p>
                     </div>
@@ -474,8 +480,8 @@ export default function RadarNoticias() {
                             <div className="title-group">
                                 <Target size={18} /> 
                                 <div>
-                                    <h2>RANKING DE SECRETARIAS</h2>
-                                    {!collapsedCards.ranking && <p>Demandas por órgão municipal</p>}
+                                    <h2>TOTAL GERAL POR SECRETARIA</h2>
+                                    {!collapsedCards.ranking && <p>Volume de releases por órgão</p>}
                                 </div>
                             </div>
                             {collapsedCards.ranking ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
@@ -587,8 +593,8 @@ export default function RadarNoticias() {
                             <div className="title-group">
                                 <Activity size={18} />
                                 <div>
-                                    <h2>EVOLUÇÃO VOLUMÉTRICA</h2>
-                                    {!collapsedCards.evolution && <p>Publicações ao longo do tempo</p>}
+                                    <h2>TOTAL GERAL POR MÊS</h2>
+                                    {!collapsedCards.evolution && <p>Volume consolidado no período</p>}
                                 </div>
                             </div>
                             {collapsedCards.evolution ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
@@ -596,13 +602,13 @@ export default function RadarNoticias() {
                         {!collapsedCards.evolution && (
                             <div className="card-body chart-box">
                                 <ResponsiveContainer width="100%" height={250}>
-                                    <LineChart data={filteredAnalytics?.byYear}>
+                                    <BarChart data={filteredAnalytics?.byMonth}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                        <XAxis dataKey="year" stroke="#64748b" tick={{ fontSize: 12 }} />
+                                        <XAxis dataKey="month" stroke="#64748b" tick={{ fontSize: 11 }} />
                                         <YAxis stroke="#64748b" tick={{ fontSize: 12 }} />
-                                        <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '4px' }} />
-                                        <Line type="monotone" dataKey="count" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981' }} activeDot={{ r: 6 }} />
-                                    </LineChart>
+                                        <Tooltip contentStyle={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '4px' }} cursor={{fill: '#f1f5f9'}} />
+                                        <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} barSize={40} />
+                                    </BarChart>
                                 </ResponsiveContainer>
                             </div>
                         )}
@@ -635,7 +641,7 @@ export default function RadarNoticias() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredAnalytics?.news.slice(0, 100).map(news => (
+                                    {filteredAnalytics?.news.map(news => (
                                         <tr key={news.id}>
                                             <td className="t-title">{news.title}</td>
                                             <td>{news.category || '—'}</td>
@@ -662,14 +668,17 @@ export default function RadarNoticias() {
                                 </tbody>
                             </table>
                         </div>
-                        {(filteredAnalytics?.news.length || 0) > 100 && (
-                            <div className="table-footer-note">
-                                Mostrando 100 de {filteredAnalytics?.news.length} notícias. Use os filtros para refinar.
-                            </div>
-                        )}
                     </>
                 )}
             </div>
+            <RadarReportModal 
+                isOpen={reportModalOpen} 
+                onClose={() => setReportModalOpen(false)}
+                news={filteredAnalytics?.news || []}
+                byCategory={filteredAnalytics?.byCategory || []}
+                periodLabel={getPeriodLabel()}
+                userName={user?.name || 'Sistema'}
+            />
         </div>
     );
 }

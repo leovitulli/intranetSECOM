@@ -21,6 +21,7 @@ const DashboardV3 = lazy(() => import('./pages/DashboardV3'));
 const AgendaV3 = lazy(() => import('./pages/AgendaV3'));
 const NewsV3 = lazy(() => import('./pages/NewsV3'));
 const CronogramaV3 = lazy(() => import('./pages/CronogramaV3'));
+const RH = lazy(() => import('./pages/RH'));
 
 
 
@@ -43,6 +44,7 @@ function AppRoutes() {
               <Route path="agenda" element={<AgendaV3 />} />
               <Route path="calendario" element={<CalendarPage />} />
               <Route path="sugestoes" element={<Suggestions />} />
+              <Route path="rh" element={user && (user.role === 'desenvolvedor' || user.role === 'rh') ? <RH /> : <Navigate to="/" />} />
               <Route path="relatorios" element={user && (user.role === 'admin' || user.role === 'desenvolvedor') ? <ReportsPremium /> : <Navigate to="/" />} />
               <Route path="noticias" element={<NewsV3 />} />
               <Route path="perfil" element={<ProfileV2 />} />

@@ -490,18 +490,14 @@ export default function AgendaV3() {
                                             )}
 
                                             <div className="v3-card-details">
-                                                {task.pauta_endereco && (
-                                                    <div className="v3-detail-item" title={task.pauta_endereco}>
-                                                        <MapPin size={12} className="text-warning" />
-                                                        <span>{task.pauta_endereco}</span>
-                                                    </div>
-                                                )}
-                                                {task.pauta_saida && (
-                                                    <div className="v3-detail-item" title="Horário de saída do Paço">
-                                                        <span>🚗</span>
-                                                        <span>Saída: {task.pauta_saida}</span>
-                                                    </div>
-                                                )}
+                                                <div className="v3-detail-item" title={task.pauta_endereco || 'Local não definido'}>
+                                                    <MapPin size={12} className="text-warning" />
+                                                    <span>{task.pauta_endereco || 'Local a definir'}</span>
+                                                </div>
+                                                <div className="v3-detail-item" title="Horário de saída do Paço">
+                                                    <span>🚗</span>
+                                                    <span>Saída: {task.pauta_saida || 'A definir'}</span>
+                                                </div>
                                             </div>
 
                                             <div className="v3-card-footer">
