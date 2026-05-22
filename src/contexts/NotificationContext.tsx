@@ -20,6 +20,7 @@ interface NotificationContextType {
     unreadCount: number;
     markAsRead: (id: string) => Promise<void>;
     markAllAsRead: () => Promise<void>;
+    clearOldNotifications: () => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -47,7 +48,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                 .order('created_at', { ascending: false })
                 .limit(50);
 
-            if (data && !error) setNotifications(data);
+            if (data && !error) {
+                setNotifications(prev => {
+                    const virtualNotifs = prev.filter(n => n.id.startsWith('profile-') || n.id.startsWith('bday-'));
+                    return [...virtualNotifs, ...data];
+                });
+            }
         };
 
         fetchExisting();
@@ -149,6 +155,35 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         };
 
         checkBirthdays();
+
+        // ========== PROFILE CHECK SYSTEM ==========
+        const checkProfile = () => {
+            if (!user.birth_date || !(user as any).cod_funcional) {
+                const missingStr = ![user.birth_date, (user as any).cod_funcional].every(Boolean) && !user.birth_date && !(user as any).cod_funcional 
+                    ? 'Data de Nascimento e Cód. Funcional' 
+                    : !user.birth_date ? 'Data de Nascimento' : 'Cód. Funcional';
+                
+                const profileNotif: Notification = {
+                    id: `profile-local`,
+                    user_id: user.id,
+                    title: '⚠️ Perfil Incompleto',
+                    message: `Complete seu cadastro preenchendo sua ${missingStr} para liberar o módulo de Recursos Humanos.`,
+                    read: false,
+                    created_at: new Date().toISOString(),
+                    module: 'system',
+                    action_url: '/perfil'
+                };
+                
+                setNotifications(prev => {
+                    if (prev.some(n => n.id === profileNotif.id)) return prev;
+                    return [profileNotif, ...prev];
+                });
+            } else {
+                setNotifications(prev => prev.filter(n => n.id !== 'profile-local'));
+            }
+        };
+
+        checkProfile();
     }, [user]);
 
     const showToast = (notif: Notification) => {
@@ -177,6 +212,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         await supabase.from('notifications').update({ read: true }).in('id', unreadIds);
     };
 
+    const clearOldNotifications = async () => {
+        // Only clear database ones that are read
+        setNotifications(prev => prev.filter(n => !n.read || n.module === 'system' || n.id.startsWith('profile-') || n.id.startsWith('bday-local-')));
+        if (user) {
+            await supabase.from('notifications').delete().eq('user_id', user.id).eq('read', true);
+        }
+    };
+
     const dismissAlert = async () => {
         if (alertModal) {
             await markAsRead(alertModal.id);
@@ -187,7 +230,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     const unreadCount = notifications.filter(n => !n.read).length;
 
     return (
-        <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead }}>
+        <NotificationContext.Provider value={{ notifications, unreadCount, markAsRead, markAllAsRead, clearOldNotifications }}>
             {children}
 
             {/* ========== BLOCKING ALERT MODAL ========== */}

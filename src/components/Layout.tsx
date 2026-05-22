@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
-import { LayoutDashboard, LogOut, Bell, Search, CalendarDays, CalendarClock, BarChart3, Check, X, Menu, AlignEndHorizontal, Zap } from 'lucide-react';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, LogOut, Bell, Search, CalendarDays, CalendarClock, BarChart3, Check, X, Menu, AlignEndHorizontal, Zap, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useData } from '../contexts/DataContext';
@@ -10,8 +10,9 @@ import './Layout.css';
 
 export default function Layout() {
     const { user, logout } = useAuth();
-    const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+    const { notifications, unreadCount, markAsRead, markAllAsRead, clearOldNotifications } = useNotifications();
     const { searchTerm, setSearchTerm, onlineUsers } = useData();
+    const navigate = useNavigate();
 
     const [isNotifOpen, setIsNotifOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -211,14 +212,24 @@ export default function Layout() {
                             }}>
                                 <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid hsl(var(--color-border))', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: 'hsl(var(--color-text))' }}>Notificações</h3>
-                                    {unreadCount > 0 && (
+                                    <div style={{ display: 'flex', gap: '12px' }}>
+                                        {unreadCount > 0 && (
+                                            <button
+                                                onClick={() => markAllAsRead()}
+                                                style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                                title="Marcar todas como lidas"
+                                            >
+                                                <Check size={14} /> Lidas
+                                            </button>
+                                        )}
                                         <button
-                                            onClick={() => markAllAsRead()}
-                                            style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                            onClick={() => clearOldNotifications()}
+                                            style={{ background: 'none', border: 'none', color: 'hsl(var(--color-text-muted))', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                            title="Apagar histório de antigas"
                                         >
-                                            <Check size={14} /> Marcar todas como lidas
+                                            <Trash2 size={14} /> Limpar
                                         </button>
-                                    )}
+                                    </div>
                                 </div>
                                 <div style={{ overflowY: 'auto', flex: 1 }}>
                                     {notifications.length === 0 ? (
@@ -231,6 +242,10 @@ export default function Layout() {
                                                 key={n.id}
                                                 onClick={() => {
                                                     if (!n.read) markAsRead(n.id);
+                                                    if (n.action_url) {
+                                                        navigate(n.action_url);
+                                                        setIsNotifOpen(false);
+                                                    }
                                                 }}
                                                 style={{
                                                     padding: '0.9rem 1.25rem',

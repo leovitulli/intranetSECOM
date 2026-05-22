@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, CalendarDays } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import TaskModal from '../components/TaskModal';
 import EventModal from '../components/EventModal';
@@ -171,21 +171,15 @@ export default function CalendarPage() {
     // Generate Calendar Grid
     const renderHeader = () => {
         return (
-            <div className="calendar-navigation-header" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#f8fafc', padding: '0.5rem 1rem', borderRadius: '12px' }}>
-                    <button 
-                        onClick={prevMonth} 
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', display: 'flex', alignItems: 'center' }}
-                    >
+            <div className="calendar-navigation-header">
+                <div className="nav-controls-pill">
+                    <button onClick={prevMonth} className="nav-btn-chevron">
                         <ChevronLeft size={20} />
                     </button>
-                    <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-primary)', minWidth: '150px', textAlign: 'center', textTransform: 'capitalize' }}>
+                    <div className="current-month-display">
                         {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
-                    </h2>
-                    <button 
-                        onClick={nextMonth} 
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', display: 'flex', alignItems: 'center' }}
-                    >
+                    </div>
+                    <button onClick={nextMonth} className="nav-btn-chevron">
                         <ChevronRight size={20} />
                     </button>
                 </div>
@@ -262,103 +256,53 @@ export default function CalendarPage() {
     };
 
     return (
-        <div className="page-container calendar-page">
-            <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: '1.5rem', marginBottom: '2.5rem' }}>
-                <div style={{ flexShrink: 0 }}>
-                    <h1 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800 }}>Calendário</h1>
-                    <p className="subtitle" style={{ margin: 0, opacity: 0.7 }}>Planejamento mensal de pautas e pautas extras.</p>
+        <div className="calendar-page">
+            <header className="calendar-header-premium">
+                <div className="header-title-box">
+                    <h1><CalendarDays size={22} /> Calendário</h1>
+                    <p>Planejamento mensal de pautas, feriados e lançamentos</p>
                 </div>
 
-                {/* Filtros Rápidos - Iguais ao Cronograma */}
-                <div className="calendar-filters" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center', flex: 1 }}>
-                    {[
-                        { id: 'all', label: '🗒️ Todos' },
-                        { id: 'inauguracao', label: '🏛️ Inauguração' },
-                        { id: 'video', label: '🎬 Vídeo' },
-                        { id: 'foto', label: '📸 Fotos' },
-                        { id: 'release', label: '📝 Release' },
-                        { id: 'post', label: '📱 Post' },
-                        { id: 'arte', label: '🎨 Arte Gráfica' },
-                        { id: 'sistema', label: '⚙️ Feriados' },
-                    ].map(f => {
-                        const isActive = activeFilter === f.id;
-                        
-                        const typeMap: Record<string, string> = {
-                            'foto': 'foto', 'video': 'video', 'release': 'release', 'inauguracao': 'inauguracao', 'arte': 'arte', 'post': 'post', 'sistema': 'sistema', 'all': 'todos'
-                        };
-                        const badgeClass = `badge-tag badge-${typeMap[f.id] || 'todos'}`;
-
-                        return (
+                <div className="calendar-actions-wrapper">
+                    <div className="calendar-filters-tabs">
+                        {[
+                            { id: 'all', label: 'Todos' },
+                            { id: 'inauguracao', label: 'Inauguração' },
+                            { id: 'video', label: 'Vídeo' },
+                            { id: 'foto', label: 'Fotos' },
+                            { id: 'release', label: 'Release' },
+                            { id: 'post', label: 'Post' },
+                            { id: 'arte', label: 'Arte' },
+                            { id: 'sistema', label: 'Feriados' },
+                        ].map(f => (
                             <button
                                 key={f.id}
-                                className={`${badgeClass} ${isActive ? 'active' : ''}`}
+                                className={`filter-tab-btn ${activeFilter === f.id ? 'active' : ''}`}
                                 onClick={() => setActiveFilter(f.id)}
-                                style={{ 
-                                    cursor: 'pointer', 
-                                    border: 'none',
-                                    outline: 'none',
-                                    opacity: isActive ? 1 : 0.45,
-                                    transform: isActive ? 'scale(1.06)' : 'scale(1)',
-                                    transition: 'all 0.2s ease',
-                                    fontWeight: isActive ? 800 : 500,
-                                    boxShadow: isActive ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
-                                    padding: '8px 16px',
-                                    fontSize: '0.78rem',
-                                    borderRadius: '10px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    background: 'white',
-                                    whiteSpace: 'nowrap'
-                                }}
                             >
                                 {f.label}
                             </button>
-                        );
-                    })}
-                    
-                    {/* Birthday Toggle */}
-                    <button
-                        className={`badge-tag badge-niver ${showBirthdays ? 'active' : ''}`}
-                        onClick={() => setShowBirthdays(!showBirthdays)}
-                        style={{ 
-                            cursor: 'pointer', 
-                            border: 'none',
-                            outline: 'none',
-                            opacity: showBirthdays ? 1 : 0.45,
-                            transform: showBirthdays ? 'scale(1.06)' : 'scale(1)',
-                            transition: 'all 0.2s ease',
-                            fontWeight: showBirthdays ? 800 : 500,
-                            boxShadow: showBirthdays ? '0 4px 12px rgba(0,0,0,0.1)' : 'none',
-                            padding: '8px 16px',
-                            fontSize: '0.78rem',
-                            borderRadius: '10px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            background: showBirthdays ? '#fef3c7' : 'white',
-                            color: showBirthdays ? '#92400e' : 'inherit',
-                            whiteSpace: 'nowrap'
-                        }}
-                    >
-                        🎂 Aniversários
-                    </button>
-                </div>
+                        ))}
+                        
+                        <button
+                            className={`filter-tab-btn niver ${showBirthdays ? 'active' : ''}`}
+                            onClick={() => setShowBirthdays(!showBirthdays)}
+                        >
+                            🎂 Nivers
+                        </button>
+                    </div>
 
-                {/* Botão de Adicionar - Premium (Como a nav do Cronograma) */}
-                <div className="week-navigation-premium" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', padding: '0.4rem', borderRadius: '14px', border: '1px solid var(--color-border)', boxShadow: '0 4px 15px rgba(0,0,0,0.04)', flexShrink: 0 }}>
                     <button 
-                        className="btn-today-premium"
+                        className="btn-add-premium"
                         onClick={() => setIsModalOpen(true)}
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.1rem', borderRadius: '10px', border: 'none', background: 'hsl(var(--color-primary))', color: '#ffffff', fontWeight: 750, fontSize: '0.8rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 12px hsla(var(--color-primary), 0.3)' }}
                     >
-                        <Plus size={18} />
-                        ADICIONAR DATA
+                        <Plus size={16} strokeWidth={3} />
+                        Nova Data
                     </button>
                 </div>
-            </div>
+            </header>
 
-        <div className="calendar-full-wrapper glass">
+            <div className="calendar-full-wrapper">
                 {renderHeader()}
                 {renderDaysOfWeek()}
                 {renderCells()}

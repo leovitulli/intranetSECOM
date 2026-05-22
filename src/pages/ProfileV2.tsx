@@ -34,6 +34,7 @@ export default function ProfileV2() {
     const [editEmail, setEditEmail] = useState('');
     const [editBio, setEditBio] = useState('');
     const [editBirthDate, setEditBirthDate] = useState('');
+    const [editCodFuncional, setEditCodFuncional] = useState('');
     const [editJobTitles, setEditJobTitles] = useState<string[]>([]);
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
@@ -61,6 +62,7 @@ export default function ProfileV2() {
             setEditEmail(user.email || '');
             setEditBio((user as any).bio || '');
             setEditBirthDate(user.birth_date || '');
+            setEditCodFuncional((user as any).cod_funcional || '');
             setEditJobTitles(user.job_titles || []);
             setPreviewAvatar(user.avatar || null);
         }
@@ -97,14 +99,9 @@ export default function ProfileV2() {
         
         return tasks
             .filter(t => {
-                const inTitle = normalizeText(t.title).includes(userName);
-                const inDesc = normalizeText(t.description).includes(userName);
-                const isCreator = normalizeText(t.creator).includes(userName);
-                const isAssignee = t.assignees?.some(a => normalizeText(a).includes(userName));
-                const isVideo = t.video_captacao_equipe?.some(e => normalizeText(e).includes(userName)) || 
-                               t.video_edicao_equipe?.some(e => normalizeText(e).includes(userName));
-                
-                return inTitle || inDesc || isCreator || isAssignee || isVideo;
+                // Busca ampla: converte a pauta inteira em texto e verifica se o nome do usuário aparece em qualquer campo, comentário, etc.
+                const fullTaskText = normalizeText(JSON.stringify(t));
+                return fullTaskText.includes(userName);
             })
             .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
             .slice(0, 4);
@@ -172,6 +169,7 @@ export default function ProfileV2() {
                     name: editName,
                     bio: editBio,
                     birth_date: editBirthDate || null,
+                    cod_funcional: editCodFuncional || null,
                     job_titles: editJobTitles,
                     avatar_url: finalAvatarUrl
                 })
@@ -377,8 +375,15 @@ export default function ProfileV2() {
                                                 onChange={e => setEditBirthDate(e.target.value)}
                                             />
                                         </div>
-                                        <div className="form-field-hub" style={{ visibility: 'hidden' }}>
-                                            {/* Espaçador */}
+                                        <div className="form-field-hub">
+                                            <label>CÓD. FUNCIONAL</label>
+                                            <input 
+                                                type="text" 
+                                                className="input-premium-hub"
+                                                placeholder="Ex: 84661"
+                                                value={editCodFuncional}
+                                                onChange={e => setEditCodFuncional(e.target.value)}
+                                            />
                                         </div>
                                     </div>
 
@@ -443,7 +448,7 @@ export default function ProfileV2() {
                                 </div>
                             ) : (
                                 <>
-                                    <h2 style={{ color: '#ffffff', fontSize: '2.5rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <h2 style={{ fontSize: '2.5rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '12px' }}>
                                         {user?.name}
                                         <span className="badge-online-lite">ONLINE</span>
                                     </h2>
@@ -456,9 +461,31 @@ export default function ProfileV2() {
                                             <span className="tag-premium-hub">{user?.role}</span>
                                         )}
                                     </div>
-                                    <div className="bio-hub-text" style={{ fontSize: '1.2rem', marginTop: '1.5rem', color: 'rgba(255,255,255,0.8)' }}>
+                                    <div className="bio-hub-text">
                                         {(user as any)?.bio || "Membro estratégico da equipe de comunicação da SECOM. Focado em resultados e excelência operacional."}
                                     </div>
+
+                                    {(!user?.birth_date || !(user as any)?.cod_funcional) && (
+                                        <div style={{ marginTop: '1.5rem', background: '#fffbeb', border: '1px solid #fef3c7', padding: '1rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <div style={{ background: '#f59e0b', color: 'white', padding: '6px', borderRadius: '50%', display: 'flex' }}>
+                                                <Shield size={16} />
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <h5 style={{ margin: 0, fontSize: '0.85rem', color: '#92400e', fontWeight: 800 }}>Ação Necessária: Complete seu Perfil</h5>
+                                                <p style={{ margin: 0, fontSize: '0.75rem', color: '#b45309', marginTop: '2px' }}>
+                                                    Para utilizar a gestão de RH, preencha sua {![user?.birth_date, (user as any)?.cod_funcional].every(Boolean) && !user?.birth_date && !(user as any)?.cod_funcional ? 'Data de Nascimento e Cód. Funcional' : !user?.birth_date ? 'Data de Nascimento' : 'Cód. Funcional'}.
+                                                </p>
+                                            </div>
+                                            <button 
+                                                onClick={() => setIsEditing(true)} 
+                                                style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s' }}
+                                                onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                                                onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                                            >
+                                                Completar
+                                            </button>
+                                        </div>
+                                    )}
                                 </>
                             )}
                         </div>
@@ -481,41 +508,41 @@ export default function ProfileV2() {
                 </div>
 
                 {/* ─── Celebrations Card ──────────────────── */}
-                <div className="bento-card card-tall card-celebration-gamer">
-                    <div className="celebration-header-neon">
-                         <h3 style={{ fontSize: '0.9rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                <div className="bento-card card-tall card-celebration-premium">
+                    <div className="celebration-header-clean">
+                         <h3 style={{ fontSize: '0.9rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#b45309', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                             <Trophy size={16} /> Mural de Aniversários
                         </h3>
                     </div>
 
                     {birthdays.today.length > 0 ? (
                         birthdays.today.map(b => (
-                            <div key={b.id} className="party-day-gamer">
+                            <div key={b.id} className="party-day-clean">
                                 <img src={b.avatar_url} alt={b.name} className="party-avatar" />
                                 <div>
-                                    <h4 style={{ fontSize: '1.1rem', fontWeight: 900 }}>{b.name}</h4>
-                                    <p style={{ fontSize: '0.75rem', color: '#4ade80', fontWeight: 700 }}>FELIZ ANIVERSÁRIO! 🎉</p>
+                                    <h4 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#9d174d' }}>{b.name}</h4>
+                                    <p style={{ fontSize: '0.75rem', color: '#be185d', fontWeight: 700 }}>FELIZ ANIVERSÁRIO! 🎉</p>
                                 </div>
-                                <div style={{ marginLeft: 'auto' }}><PartyPopper size={20} color="#fff" /></div>
+                                <div style={{ marginLeft: 'auto' }}><PartyPopper size={20} color="#db2777" /></div>
                             </div>
                         ))
                     ) : (
-                        <div style={{ padding: '1.5rem', textAlign: 'center', fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.02)', margin: '1rem', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.1)' }}>
-                            Nenhuma missão de aniversário hoje.
+                        <div style={{ padding: '1.5rem', textAlign: 'center', fontSize: '0.85rem', color: '#94a3b8', margin: '1rem', borderRadius: '16px', border: '1px dashed #cbd5e1' }}>
+                            Nenhuma celebração hoje.
                         </div>
                     )}
 
-                    <div style={{ padding: '0 1.25rem 0.5rem', fontSize: '0.65rem', fontWeight: 900, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Próximos Celebrantes:</div>
+                    <div style={{ padding: '0 1.25rem 0.5rem', fontSize: '0.7rem', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Próximos Celebrantes:</div>
                     <div style={{ flex: 1, overflowY: 'auto', padding: '0 0.5rem' }}>
                         {birthdays.month.slice(0, 8).map(b => (
-                            <div key={b.id} className="birthday-row-gamer">
-                                <div className="date-bubble-gamer">
+                            <div key={b.id} className="birthday-row-clean">
+                                <div className="date-bubble-clean">
                                     {new Date(b.birth_date + 'T12:00:00').getDate()}
                                 </div>
-                                <img src={b.avatar_url} alt={b.name} className="avatar-mini-gamer" />
+                                <img src={b.avatar_url} alt={b.name} className="avatar-mini-clean" />
                                 <div style={{ flex: 1, minWidth: 0 }}>
-                                    <h5 style={{ fontWeight: 700, fontSize: '0.85rem', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.name}</h5>
-                                    <span style={{ fontSize: '0.65rem', color: '#64748b', display: 'block' }}>{b.job_titles?.[0] || b.role}</span>
+                                    <h5 style={{ fontWeight: 700, fontSize: '0.9rem', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.name}</h5>
+                                    <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>{b.job_titles?.[0] || b.role}</span>
                                 </div>
                             </div>
                         ))}
@@ -533,8 +560,21 @@ export default function ProfileV2() {
                             <div key={t.id} className="item-row-premium" onClick={() => setSelectedTask(t)} style={{ cursor: 'pointer', background: '#f8fafc', border: '1px solid #f1f5f9' }}>
                                 <div className="item-content">
                                     <h4 style={{ fontSize: '0.95rem', color: '#1e293b', fontWeight: 700 }}>{t.title}</h4>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', flexWrap: 'wrap' }}>
                                         <span style={{ fontSize: '0.65rem', background: '#1e293b', color: 'white', padding: '2px 8px', borderRadius: '4px', fontWeight: 700 }}>{t.status.toUpperCase()}</span>
+                                        
+                                        {/* Prioridade Badge */}
+                                        <span style={{ 
+                                            fontSize: '0.65rem', 
+                                            background: t.priority === 'alta' ? '#fee2e2' : t.priority === 'media' ? '#ffedd5' : '#dcfce7', 
+                                            color: t.priority === 'alta' ? '#b91c1c' : t.priority === 'media' ? '#c2410c' : '#15803d', 
+                                            padding: '2px 8px', 
+                                            borderRadius: '4px', 
+                                            fontWeight: 700 
+                                        }}>
+                                            {t.priority ? t.priority.toUpperCase() : 'NORMAL'}
+                                        </span>
+                                        
                                         <span style={{ fontSize: '0.7rem', color: '#64748b' }}>📅 {t.dueDate ? new Date(t.dueDate).toLocaleDateString() : 'Sem prazo'}</span>
                                     </div>
                                 </div>

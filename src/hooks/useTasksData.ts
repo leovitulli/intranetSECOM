@@ -29,6 +29,31 @@ export function useTasksData() {
         }
     };
 
+    const notifyUsers = async (userIds: string[], title: string, message: string, module: string = 'task', actionUrl?: string) => {
+        try {
+            const { data: sessionData } = await supabase.auth.getUser();
+            const currentUser = sessionData?.user;
+            if (!currentUser) return;
+            
+            // Remove the creator to prevent self-notification
+            const targets = userIds.filter(id => id !== currentUser.id);
+            if (targets.length === 0) return;
+
+            const newNotifications = targets.map(id => ({
+                user_id: id,
+                title,
+                message,
+                module,
+                read: false,
+                action_url: actionUrl
+            }));
+
+            await supabase.from('notifications').insert(newNotifications);
+        } catch (error) {
+            console.error('Error sending notifications:', error);
+        }
+    };
+
     const formatDateForDb = (date: any) => {
         if (!date) return null;
         if (date instanceof Date) return date.toISOString();
@@ -114,6 +139,12 @@ export function useTasksData() {
                 const newTask = formatTaskFromDb(data);
                 newTask.assignees = taskData.assignees || [];
                 setTasks(prev => [newTask, ...prev]);
+
+                // Dispara notificações para a equipe da nova missão!
+                if (assigneeIds && assigneeIds.length > 0) {
+                    await notifyUsers(assigneeIds, '🎯 Nova Missão', `Você foi escalado para a pauta: ${taskData.title}`, 'task', `/dashboard?taskId=${data.id}`);
+                }
+
                 return { success: true };
             }
             return { success: false, error: { message: 'Dados não recebidos do banco.' } };
@@ -230,6 +261,28 @@ export function useTasksData() {
             // Atualiza localmente
             if (data) {
                 const formatted = formatTaskFromDb(data);
+                
+                // Lógica de notificação apenas para QUEM FOI ADICIONADO nesta edição
+                const oldTask = tasks.find(t => t.id === updatedTask.id);
+                if (oldTask) {
+                    const oldNames = oldTask.assignees || [];
+                    const newNames = updatedTask.assignees || [];
+                    const newlyAddedNames = newNames.filter(n => !oldNames.includes(n));
+                    
+                    if (newlyAddedNames.length > 0) {
+                        const { data: teamData } = await supabase.from('users').select('id, name');
+                        if (teamData) {
+                            const newIds = newlyAddedNames
+                                .map(name => teamData.find((u: any) => u.name === name)?.id)
+                                .filter(Boolean) as string[];
+                            
+                            if (newIds.length > 0) {
+                                await notifyUsers(newIds, '🎯 Nova Missão', `Você foi adicionado à pauta: ${updatedTask.title}`, 'task', `/dashboard?taskId=${updatedTask.id}`);
+                            }
+                        }
+                    }
+                }
+
                 setTasks(prev => prev.map(t => t.id === updatedTask.id ? formatted : t));
             }
         } catch (err) {

@@ -353,23 +353,11 @@ export default function ReportsPremium() {
             {/* Header Executivo Padronizado (Linkado ao Print 2) */}
             <header className="premium-header">
                 <div className="header-info">
-                    <div className="title-group">
-                        <h1><BarChart3 size={24} /> Visão Executiva</h1>
-                        <p>Monitoramento de diretoria: Produtividade e demandas ativas.</p>
-                    </div>
+                    <h1><BarChart3 size={22} /> Visão Executiva de Produtividade</h1>
+                    <p>Monitoramento de diretoria · Pautas, entregas e métricas de desempenho</p>
                 </div>
 
                 <div className="header-filters-row">
-                    {/* Filtro de Secretarias Oficial do Site (Replicando TaskModal) */}
-                    <div className="official-multi-select-wrapper">
-                        <label className="filter-standard-label">DEPARTAMENTO / SECRETARIA SOLICITANTE</label>
-                        <SecretariasMultiSelect 
-                            selected={selectedSecretarias}
-                            onChange={(v) => setSelectedSecretarias(v)}
-                            placeholder="Buscar secretarias..."
-                        />
-                    </div>
-
                     <div className="period-pill">
                         <button 
                             className={period === 'today' ? 'active' : ''} 
@@ -390,8 +378,17 @@ export default function ReportsPremium() {
                                 setShowDateSelector(!showDateSelector);
                             }}
                         >
-                            <CalendarDays size={18} /> Custom
+                            <CalendarDays size={16} /> Personalizado
                         </button>
+                    </div>
+
+                    <div className="official-multi-select-wrapper">
+                        <label className="filter-standard-label">SECRETARIA SOLICITANTE</label>
+                        <SecretariasMultiSelect 
+                            selected={selectedSecretarias}
+                            onChange={(v) => setSelectedSecretarias(v)}
+                            placeholder="Filtrar por secretaria..."
+                        />
                     </div>
                 </div>
             </header>
@@ -417,6 +414,14 @@ export default function ReportsPremium() {
                             />
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Barra de Filtro Ativo */}
+            {activeFilter && (
+                <div className="active-filter-bar-reports">
+                    <span>🔍 Filtrando por: <strong>{activeFilter.value === 'concluida' ? 'Concluídas' : activeFilter.value.toUpperCase()}</strong></span>
+                    <button className="clear-filter-btn" onClick={() => setActiveFilter(null)}>✕ Limpar Filtro</button>
                 </div>
             )}
 
@@ -526,15 +531,15 @@ export default function ReportsPremium() {
                     </div>
                 </div>
 
-                {/* 8. ENVOLVIDOS */}
+                {/* 8. TEMPO MÉDIO (LEAD TIME) */}
                 <div className="elite-card purple">
                     <div className="elite-icon-box purple">
-                        <Users size={32} />
+                        <Clock size={32} />
                     </div>
                     <div className="elite-card-content">
-                        <div className="elite-label">ENVOLVIDOS</div>
-                        <div className="elite-value">12</div>
-                        <div className="elite-desc">Pessoas na produção ativa</div>
+                        <div className="elite-label">TEMPO MÉDIO</div>
+                        <div className="elite-value">{stats.avgLeadTime}d</div>
+                        <div className="elite-desc">Dias da criação até conclusão</div>
                     </div>
                 </div>
             </div>
@@ -752,9 +757,10 @@ export default function ReportsPremium() {
                         <thead>
                             <tr>
                                 <th>PAUTA</th>
+                                <th>TIPO</th>
                                 <th>STATUS</th>
-                                <th>DATA CRIAÇÃO</th>
-                                <th>DATA FINALIZADA</th>
+                                <th>CRIAÇÃO</th>
+                                <th>CONCLUSÃO</th>
                                 <th>SECRETARIAS</th>
                             </tr>
                         </thead>
@@ -765,6 +771,13 @@ export default function ReportsPremium() {
                                         {task.title}
                                     </td>
                                     <td>
+                                        <div className="type-tags-cell">
+                                            {task.type.map(t => (
+                                                <span key={t} className={`type-tag-mini ${t}`}>{t}</span>
+                                            ))}
+                                        </div>
+                                    </td>
+                                    <td>
                                         <span className={`pro-badge status-${task.status}`}>
                                             {task.status.toUpperCase()}
                                         </span>
@@ -772,16 +785,19 @@ export default function ReportsPremium() {
                                     <td>{task.createdAt ? format(new Date(task.createdAt), 'dd/MM/yyyy') : '-'}</td>
                                     <td>
                                         {task.status === 'publicado' || task.status === 'cancelado' 
-                                            ? (task.dueDate ? format(new Date(task.dueDate), 'dd/MM/yyyy') : 'Concluído')
+                                            ? (task.archived_at ? format(new Date(task.archived_at), 'dd/MM/yyyy') : 'Concluído')
                                             : '-'
                                         }
                                     </td>
                                     <td>
                                         <div className="task-secretarias">
-                                            {task.inauguracao_secretarias?.map(sec => (
-                                                <span key={sec} className="sec-tag-mini">{sec}</span>
-                                            ))}
-                                            {(!task.inauguracao_secretarias || task.inauguracao_secretarias.length === 0) && '-'}
+                                            {(() => {
+                                                const secs = [...(task.secretarias || []), ...(task.inauguracao_secretarias || [])];
+                                                const unique = [...new Set(secs)];
+                                                return unique.length > 0 
+                                                    ? unique.map(sec => <span key={sec} className="sec-tag-mini">{sec}</span>)
+                                                    : '-';
+                                            })()}
                                         </div>
                                     </td>
                                 </tr>

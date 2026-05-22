@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
     Plus, MoreHorizontal, MessageSquare, Paperclip, Clock, Archive, RotateCcw, 
     Kanban as KanbanIcon, List as ListIcon, ChevronDown, ChevronRight, 
@@ -121,6 +122,7 @@ export default function DashboardV3() {
         tasks, team, loading, updateTaskStatus, updateTask, addTask, deleteTask,
         archivedTasks, unarchiveTask, archiveTask, searchTerm, secretarias 
     } = useData();
+    const [searchParams, setSearchParams] = useSearchParams();
 
     // ─── Estados da Interface v3.0 ──────────────────────────────────────────────
     const [activeTab, setActiveTab] = useState<'kanban' | 'table'>(() => {
@@ -177,6 +179,20 @@ export default function DashboardV3() {
     useEffect(() => {
         localStorage.setItem('v3_collapsed_groups', JSON.stringify(collapsedGroups));
     }, [collapsedGroups]);
+
+    // Open task from URL
+    useEffect(() => {
+        const taskId = searchParams.get('taskId');
+        if (taskId && tasks.length > 0) {
+            const foundTask = tasks.find(t => t.id === taskId) || archivedTasks.find(t => t.id === taskId);
+            if (foundTask) {
+                setSelectedTask(foundTask);
+                // Clean the URL silently
+                searchParams.delete('taskId');
+                setSearchParams(searchParams, { replace: true });
+            }
+        }
+    }, [searchParams, tasks, archivedTasks, setSearchParams]);
 
     // ─── Lógica de Filtros Combinados ──────────────────────────────────────────
     const filteredTasks = tasks.filter(task => {
