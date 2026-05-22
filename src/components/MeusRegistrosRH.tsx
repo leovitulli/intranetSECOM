@@ -152,7 +152,7 @@ export default function MeusRegistrosRH() {
     };
 
     return (
-        <div className="bento-card card-full" style={{ background: '#fff' }}>
+        <div className="bento-card card-wide" style={{ background: '#fff' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem', fontWeight: 800, color: '#1e293b' }}>
                     <FileText size={18} color="#059669" /> Meus Registros de RH
