@@ -283,7 +283,13 @@ export default function ReportsPremium() {
         const workloadBalanceCoeff = Math.max(10, Math.round((avgTasks / maxTasks) * 100));
 
         // 4. Forecast Runrate: Estimated tasks output in 30 days
-        const limitDays = period === 'all' ? 365 : parseInt(period) || 30;
+        let limitDays = 30;
+        if (period === 'today') limitDays = 1;
+        else if (period === 'week') limitDays = 7;
+        else if (period === 'month' || period === 'lastMonth') limitDays = 30;
+        else if (period === 'custom' && customStart && customEnd) {
+            limitDays = Math.max(1, differenceInDays(new Date(customEnd), new Date(customStart)));
+        }
         const publishedCount = filteredTasks.filter(t => t.status === 'publicado').length;
         const forecastRunrate = Math.round((publishedCount / Math.max(1, limitDays)) * 30);
 
@@ -733,7 +739,7 @@ export default function ReportsPremium() {
                                                     'Publicado': 'publicado',
                                                     'Inauguração': 'inauguracao'
                                                 };
-                                                const statusVal = statusMap[data.activeLabel] || data.activeLabel.toLowerCase();
+                                                const statusVal = statusMap[String(data.activeLabel)] || String(data.activeLabel).toLowerCase();
                                                 setActiveFilter(activeFilter?.value === statusVal ? null : { 
                                                     type: 'status', 
                                                     value: statusVal, 
@@ -1194,11 +1200,9 @@ export default function ReportsPremium() {
                 </div>
             )}
 
-            {/* TaskModal for viewing/editing tasks directly */}
             {selectedTask && (
                 <TaskModal 
                     task={selectedTask}
-                    isOpen={!!selectedTask}
                     onClose={() => setSelectedTask(null)}
                     onUpdateTask={() => {}}
                 />

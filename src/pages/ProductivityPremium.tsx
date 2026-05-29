@@ -56,7 +56,11 @@ interface RadarNoticia {
 }
 
 export default function ProductivityPremium() {
-    const { tasks, team, loading: dataLoading } = useData();
+    const { tasks, team, loading: dataLoading, updateTask } = useData();
+    const handleUpdateTask = (updatedTask: Task) => {
+        updateTask(updatedTask);
+        setSelectedTask(null);
+    };
     const [news, setNews] = useState<RadarNoticia[]>([]);
     const [loadingNews, setLoadingNews] = useState(true);
     const [selectedPeriod, setSelectedPeriod] = useState<'30' | '90' | '365' | 'all'>('365');
@@ -583,8 +587,8 @@ export default function ProductivityPremium() {
                                 {advancedStats.channelDiversificationIndex < 40 && (
                                     <li><strong>🎯 Otimização de Mix de Canal:</strong> Seu índice de multicanalidade está baixo ({advancedStats.channelDiversificationIndex}%). Sugere-se associar mais coberturas de fotos ou pequenos reels nas pautas de releases para elevar o engajamento no site.</li>
                                 )}
-                                {advancedStats.workloadBalanceCoeff < 70 && (
-                                    <li><strong>⚡ Correção de Sobrecarga:</strong> O índice de equilíbrio de workload está crítico ({advancedStats.workloadBalanceCoeff}%). Algumas fotos e textos estão acumulados com poucos assessores. Utilize a Matriz de Carga de Equipe para redistribuir.</li>
+                                {(advancedStats.workloadBalanceCoeff ?? 0) < 70 && (
+                                    <li><strong>⚡ Correção de Sobrecarga:</strong> O índice de equilíbrio de workload está crítico ({(advancedStats.workloadBalanceCoeff ?? 0)}%). Algumas fotos e textos estão acumulados com poucos assessores. Utilize a Matriz de Carga de Equipe para redistribuir.</li>
                                 )}
                                 {metrics.overdueCount > 0 && (
                                     <li><strong>⚠️ Protocolo de Aceleração:</strong> Há {metrics.overdueCount} pautas em atraso crítico. O gargalo principal de tempo de atrito encontra-se na fase de revisão e aprovação. Reduzir as rodadas de correção de texto aumentará a velocidade de publicação.</li>
@@ -644,7 +648,7 @@ export default function ProductivityPremium() {
                                                     'Aprovado': 'aprovado',
                                                     'Publicado': 'publicado'
                                                 };
-                                                const statusVal = statusMap[data.activeLabel] || data.activeLabel.toLowerCase();
+                                                const statusVal = statusMap[String(data.activeLabel)] || String(data.activeLabel).toLowerCase();
                                                 setActiveFilter({ 
                                                     type: 'status', 
                                                     value: statusVal, 
@@ -980,8 +984,8 @@ export default function ProductivityPremium() {
             {selectedTask && (
                 <TaskModal 
                     task={selectedTask}
-                    isOpen={!!selectedTask}
                     onClose={() => setSelectedTask(null)}
+                    onUpdateTask={handleUpdateTask}
                 />
             )}
         </div>

@@ -41,7 +41,7 @@ import {
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { useRadarNoticias, type FilterParams } from '../hooks/useRadarNoticias';
+import { useRadarNoticias, type FilterParams, type RadarNoticia } from '../hooks/useRadarNoticias';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from '../contexts/AuthContext';
@@ -111,7 +111,11 @@ export default function RadarNoticias() {
     const tableRef = useRef<HTMLDivElement>(null);
 
     // Strategic Tab specific states & references
-    const { tasks } = useData();
+    const { tasks, updateTask } = useData();
+    const handleUpdateTask = (updatedTask: Task) => {
+        updateTask(updatedTask);
+        setSelectedTaskModal(null);
+    };
     const [clippings, setClippings] = useState<ClippingItem[]>([]);
     const [selectedSecretaria, setSelectedSecretaria] = useState('');
     const [activeSubTab, setActiveSubTab] = useState<'eficiencia' | 'imprensa' | 'cadeia'>('cadeia');
@@ -635,12 +639,7 @@ export default function RadarNoticias() {
         };
     }, [data?.allNews, activeFilter, searchQuery]);
 
-    const getPeriodLabel = () => {
-        if (period === 'all') return 'Todo o histórico';
-        if (period === '2025') return 'Ano de 2025';
-        if (period === 'custom') return `${customStartDate ? format(new Date(customStartDate + 'T12:00:00'), 'dd/MM/yyyy') : '...'} a ${customEndDate ? format(new Date(customEndDate + 'T12:00:00'), 'dd/MM/yyyy') : '...'}`;
-        return `Últimos ${period.replace('d', '')} dias`;
-    };
+
 
     async function handleSync() {
         try {
@@ -1578,12 +1577,11 @@ export default function RadarNoticias() {
                 </>
             )}
 
-            {/* MODALS */}
             {selectedTaskModal && (
                 <TaskModal 
-                    isOpen={!!selectedTaskModal}
-                    onClose={() => setSelectedTaskModal(null)}
                     task={selectedTaskModal}
+                    onClose={() => setSelectedTaskModal(null)}
+                    onUpdateTask={handleUpdateTask}
                 />
             )}
 
