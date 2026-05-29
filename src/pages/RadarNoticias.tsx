@@ -108,7 +108,12 @@ export default function RadarNoticias() {
     const [fullSyncing, setFullSyncing] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [reportModalOpen, setReportModalOpen] = useState(false);
+    const [displayLimit, setDisplayLimit] = useState(150);
     const tableRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        setDisplayLimit(150);
+    }, [searchQuery, customStartDate, customEndDate, selectedCategory, selectedEntregaType, activeFilter]);
 
     // Strategic Tab specific states & references
     const { tasks, updateTask } = useData();
@@ -1533,7 +1538,8 @@ export default function RadarNoticias() {
                             {collapsedCards.details ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
                         </div>
                         {!collapsedCards.details && (
-                            <div className="table-responsive">
+                            <>
+                                <div className="table-responsive">
                                 <table className="radar-table">
                                     <thead>
                                         <tr>
@@ -1545,7 +1551,7 @@ export default function RadarNoticias() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {filteredAnalytics?.news.map(news => (
+                                        {filteredAnalytics?.news.slice(0, displayLimit).map(news => (
                                             <tr key={news.id}>
                                                 <td className="t-title">{news.title}</td>
                                                 <td>{news.category || '—'}</td>
@@ -1572,7 +1578,19 @@ export default function RadarNoticias() {
                                     </tbody>
                                 </table>
                             </div>
-                        )}
+                            {filteredAnalytics?.news && filteredAnalytics.news.length > displayLimit && (
+                                <div style={{ display: 'flex', justifyContent: 'center', padding: '1.5rem', background: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
+                                    <button 
+                                        className="btn-secondary-v3" 
+                                        onClick={() => setDisplayLimit(prev => prev + 150)}
+                                        style={{ padding: '0.65rem 1.75rem', fontWeight: 600, fontSize: '0.85rem' }}
+                                    >
+                                        Carregar Mais Notícias ({filteredAnalytics.news.length - displayLimit} restantes)
+                                    </button>
+                                </div>
+                            )}
+                        </>
+                    )}
                     </div>
                 </>
             )}

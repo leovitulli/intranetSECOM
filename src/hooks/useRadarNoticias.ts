@@ -71,9 +71,8 @@ export function useRadarNoticias(filters?: FilterParams) {
                 if (page.length < PAGE_SIZE) break;
                 from += PAGE_SIZE;
 
-                // Safety: stop after 2000 records if no dates are set to prevent browser freeze/network overload.
-                // If dates are filtered, allow up to 15,000 records.
-                const maxLimit = (filters?.startDate || filters?.endDate) ? 15000 : 2000;
+                // Safety: load up to 20,000 records to fetch all news while keeping a high safety limit.
+                const maxLimit = 20000;
                 if (from >= maxLimit) break;
             }
 
