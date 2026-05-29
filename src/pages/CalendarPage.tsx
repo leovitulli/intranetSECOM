@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Plus, X, CalendarDays } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import TaskModal from '../components/TaskModal';
@@ -61,7 +61,7 @@ export default function CalendarPage() {
         { id: 'h15', title: 'Natal (Feriado)', type: 'feriado', date: parseISO('2026-12-25') },
     ]);
 
-    const events = useMemo(() => {
+    const { eventsByDate } = useMemo(() => {
         const isAll = activeFilter === 'all';
 
         const mappedTasks: CalendarEvent[] = tasks
@@ -128,7 +128,24 @@ export default function CalendarPage() {
             })
             : [];
 
-        return [...mappedTasks, ...mappedAgenda, ...mappedSystem, ...mappedBirthdays];
+        const allEvents = [...mappedTasks, ...mappedAgenda, ...mappedSystem, ...mappedBirthdays];
+        
+        const byDate: Record<string, CalendarEvent[]> = {};
+        allEvents.forEach(e => {
+            if (e.date) {
+                try {
+                    const dateStr = format(e.date, 'yyyy-MM-dd');
+                    if (!byDate[dateStr]) {
+                        byDate[dateStr] = [];
+                    }
+                    byDate[dateStr].push(e);
+                } catch {
+                    // Prevenção de erro em datas inválidas
+                }
+            }
+        });
+
+        return { eventsByDate: byDate };
     }, [tasks, agendaEvents, comemorativas, activeFilter, showBirthdays, team, currentMonth]);
 
     // New Event Modal State
@@ -137,10 +154,10 @@ export default function CalendarPage() {
     const [newEventType, setNewEventType] = useState<'pauta' | 'feriado' | 'comemorativa'>('comemorativa');
     const [newEventDate, setNewEventDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
-    const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
-    const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
+    const nextMonth = useCallback(() => setCurrentMonth(prev => addMonths(prev, 1)), []);
+    const prevMonth = useCallback(() => setCurrentMonth(prev => subMonths(prev, 1)), []);
 
-    const handleAddEvent = (e: React.FormEvent) => {
+    const handleAddEvent = useCallback((e: React.FormEvent) => {
         e.preventDefault();
         if (!newEventTitle) return;
 
@@ -151,12 +168,12 @@ export default function CalendarPage() {
             date: parseISO(newEventDate) // use parseISO for robust form date parsing
         };
 
-        setComemorativas([...comemorativas, newEvent]);
+        setComemorativas(prev => [...prev, newEvent]);
         setIsModalOpen(false);
         setNewEventTitle('');
-    };
+    }, [newEventTitle, newEventType, newEventDate]);
 
-    const handleEventClick = (evt: CalendarEvent) => {
+    const handleEventClick = useCallback((evt: CalendarEvent) => {
         if (evt.id.startsWith('task-')) {
             const taskId = evt.id.replace('task-', '');
             const foundTask = tasks.find(t => t.id === taskId);
@@ -166,7 +183,7 @@ export default function CalendarPage() {
             const foundEvent = agendaEvents.find(e => e.id === eventId);
             if (foundEvent) setSelectedAgendaEvent(foundEvent);
         }
-    };
+    }, [tasks, agendaEvents]);
 
     // Generate Calendar Grid
     const renderHeader = () => {
@@ -217,8 +234,9 @@ export default function CalendarPage() {
                 formattedDate = format(day, 'd');
                 const cloneDay = day;
 
-                // Get events for this specific day
-                const dayEvents = events.filter(e => isSameDay(e.date, cloneDay));
+                // Get events for this specific day - O(1) direct key lookup
+                const dateKey = format(cloneDay, 'yyyy-MM-dd');
+                const dayEvents = eventsByDate[dateKey] || [];
 
                 days.push(
                     <div
@@ -256,15 +274,15 @@ export default function CalendarPage() {
     };
 
     return (
-        <div className="calendar-page">
-            <header className="calendar-header-premium">
-                <div className="header-title-box">
-                    <h1><CalendarDays size={22} /> Calendário</h1>
-                    <p>Planejamento mensal de pautas, feriados e lançamentos</p>
+        <div className="dashboard-container dashboard-v3-root calendar-page">
+            <header className="page-header dashboard-header-premium glass">
+                <div>
+                    <h1 className="title text-gradient">Calendário</h1>
+                    <p className="subtitle">Planejamento mensal de pautas, feriados e lançamentos</p>
                 </div>
 
-                <div className="calendar-actions-wrapper">
-                    <div className="calendar-filters-tabs">
+                <div className="header-actions-premium" style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <div className="v3-view-toggle glass">
                         {[
                             { id: 'all', label: 'Todos' },
                             { id: 'inauguracao', label: 'Inauguração' },
@@ -277,15 +295,14 @@ export default function CalendarPage() {
                         ].map(f => (
                             <button
                                 key={f.id}
-                                className={`filter-tab-btn ${activeFilter === f.id ? 'active' : ''}`}
+                                className={`toggle-btn ${activeFilter === f.id ? 'active' : ''}`}
                                 onClick={() => setActiveFilter(f.id)}
                             >
                                 {f.label}
                             </button>
                         ))}
-                        
                         <button
-                            className={`filter-tab-btn niver ${showBirthdays ? 'active' : ''}`}
+                            className={`toggle-btn niver ${showBirthdays ? 'active' : ''}`}
                             onClick={() => setShowBirthdays(!showBirthdays)}
                         >
                             🎂 Nivers
@@ -293,10 +310,10 @@ export default function CalendarPage() {
                     </div>
 
                     <button 
-                        className="btn-add-premium"
+                        className="btn-primary-v3"
                         onClick={() => setIsModalOpen(true)}
                     >
-                        <Plus size={16} strokeWidth={3} />
+                        <Plus size={16} />
                         Nova Data
                     </button>
                 </div>

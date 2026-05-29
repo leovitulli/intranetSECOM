@@ -5,6 +5,7 @@ import { useData } from '../contexts/DataContext';
 import { FileText, Plus, Upload, X, Check, Clock, AlertCircle, Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { normalizeText } from '../utils/searchUtils';
 
 export default function MeusRegistrosRH() {
     const { user } = useAuth();
@@ -22,6 +23,18 @@ export default function MeusRegistrosRH() {
     const [anexoFile, setAnexoFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [isGestorDropdownOpen, setIsGestorDropdownOpen] = useState(false);
+    const gestorDropdownRef = React.useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (gestorDropdownRef.current && !gestorDropdownRef.current.contains(event.target as Node)) {
+                setIsGestorDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const hasIncompleteProfile = !user?.birth_date || !(user as any)?.cod_funcional;
 
@@ -44,9 +57,71 @@ export default function MeusRegistrosRH() {
         fetchOcorrencias();
     }, [user]);
 
+    const quotas = React.useMemo(() => {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth(); // 0-11
+
+        let monthOccurrencesCount = 0;
+        let year115Count = 0;
+        let month115Count = 0;
+
+        ocorrencias.forEach(oc => {
+            if (!oc.data_ocorrencia) return;
+            const date = new Date(oc.data_ocorrencia + 'T12:00:00');
+            const ocYear = date.getFullYear();
+            const ocMonth = date.getMonth();
+
+            const isOcorrencia = oc.tipo?.toLowerCase() === 'ocorrência' || oc.tipo?.toLowerCase() === 'ocorrencia';
+            const is115 = oc.tipo === '115';
+
+            if (isOcorrencia && ocYear === currentYear && ocMonth === currentMonth) {
+                monthOccurrencesCount++;
+            }
+
+            if (is115 && ocYear === currentYear) {
+                year115Count++;
+                if (ocMonth === currentMonth) {
+                    month115Count++;
+                }
+            }
+        });
+
+        return {
+            occurrences: monthOccurrencesCount,
+            occurrencesLimit: 3,
+            occurrencesPercent: Math.min((monthOccurrencesCount / 3) * 100, 100),
+            records115: year115Count,
+            records115Limit: 8,
+            records115Percent: Math.min((year115Count / 8) * 100, 100),
+            month115: month115Count,
+        };
+    }, [ocorrencias]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) return;
+
+        // Validação estrita de cotas
+        const isOcorr = tipo?.toLowerCase() === 'ocorrência' || tipo?.toLowerCase() === 'ocorrencia';
+        const is115 = tipo === '115';
+
+        if (isOcorr && quotas.occurrences >= quotas.occurrencesLimit && !editingId) {
+            alert('❌ Erro: Limite máximo de 3 ocorrências por mês atingido.');
+            return;
+        }
+
+        if (is115 && !editingId) {
+            if (quotas.month115 >= 1) {
+                alert('❌ Erro: Limite máximo de 1 registro "115" por mês atingido.');
+                return;
+            }
+            if (quotas.records115 >= quotas.records115Limit) {
+                alert('❌ Erro: Limite máximo de 8 registros "115" por ano atingido.');
+                return;
+            }
+        }
+
         setIsSubmitting(true);
 
         try {
@@ -171,6 +246,12 @@ export default function MeusRegistrosRH() {
                                 setAnexoFile(null);
                             } else {
                                 setIsFormOpen(true);
+                                // Seleção inteligente de default dependendo do limite
+                                if (quotas.occurrences >= 3) {
+                                    setTipo('Atestado Médico');
+                                } else {
+                                    setTipo('Ocorrência');
+                                }
                             }
                         }}
                         style={{ 
@@ -184,6 +265,76 @@ export default function MeusRegistrosRH() {
                     </button>
                 )}
             </div>
+
+            {/* Widget de Cotas de Ocorrências e 115 */}
+            {!hasIncompleteProfile && (
+                <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: '1fr 1fr', 
+                    gap: '1rem', 
+                    background: '#f8fafc', 
+                    padding: '1rem', 
+                    borderRadius: '16px', 
+                    border: '1px solid #e2e8f0', 
+                    marginBottom: '1.25rem' 
+                }}>
+                    {/* Cota Ocorrências do Mês */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>
+                                Ocorrências no Mês (Máx 3)
+                            </span>
+                            <span style={{ 
+                                fontSize: '0.8rem', 
+                                fontWeight: 800, 
+                                color: quotas.occurrences >= quotas.occurrencesLimit ? '#ef4444' : quotas.occurrences === 2 ? '#f59e0b' : '#059669' 
+                            }}>
+                                {quotas.occurrences} de {quotas.occurrencesLimit}
+                            </span>
+                        </div>
+                        <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '99px', overflow: 'hidden' }}>
+                            <div style={{ 
+                                width: `${quotas.occurrencesPercent}%`, 
+                                height: '100%', 
+                                background: quotas.occurrences >= quotas.occurrencesLimit ? 'linear-gradient(90deg, #f87171, #ef4444)' : quotas.occurrences === 2 ? 'linear-gradient(90deg, #fbbf24, #f59e0b)' : 'linear-gradient(90deg, #34d399, #059669)',
+                                borderRadius: '99px',
+                                transition: 'width 0.4s ease-out'
+                            }} />
+                        </div>
+                        <span style={{ fontSize: '0.65rem', color: quotas.occurrences >= quotas.occurrencesLimit ? '#ef4444' : '#64748b', fontWeight: quotas.occurrences >= quotas.occurrencesLimit ? 700 : 500 }}>
+                            {quotas.occurrences >= quotas.occurrencesLimit ? '❌ Limite mensal atingido! Não é possível enviar novas ocorrências.' : `Restam ${quotas.occurrencesLimit - quotas.occurrences} ocorrências permitidas este mês.`}
+                        </span>
+                    </div>
+
+                    {/* Cota 115 do Ano */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>
+                                Registros "115" no Ano (Máx 8 / Limite 1 por mês)
+                            </span>
+                            <span style={{ 
+                                fontSize: '0.8rem', 
+                                fontWeight: 800, 
+                                color: quotas.month115 >= 1 || quotas.records115 >= quotas.records115Limit ? '#ef4444' : quotas.records115 >= 6 ? '#f59e0b' : '#0284c7' 
+                            }}>
+                                {quotas.records115} de {quotas.records115Limit}
+                            </span>
+                        </div>
+                        <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '99px', overflow: 'hidden' }}>
+                            <div style={{ 
+                                width: `${quotas.records115Percent}%`, 
+                                height: '100%', 
+                                background: quotas.month115 >= 1 || quotas.records115 >= quotas.records115Limit ? 'linear-gradient(90deg, #f87171, #ef4444)' : quotas.records115 >= 6 ? 'linear-gradient(90deg, #fbbf24, #f59e0b)' : 'linear-gradient(90deg, #38bdf8, #0284c7)',
+                                borderRadius: '99px',
+                                transition: 'width 0.4s ease-out'
+                            }} />
+                        </div>
+                        <span style={{ fontSize: '0.65rem', color: (quotas.month115 >= 1 || quotas.records115 >= quotas.records115Limit) ? '#ef4444' : '#64748b', fontWeight: (quotas.month115 >= 1 || quotas.records115 >= quotas.records115Limit) ? 700 : 500 }}>
+                            {quotas.month115 >= 1 ? '❌ Limite mensal atingido! Apenas 1 registro "115" por mês é permitido.' : quotas.records115 >= quotas.records115Limit ? '❌ Limite anual atingido! Máximo de 8 registros "115" por ano.' : `Disponível este mês (Cota: ${quotas.month115}/1 | Restam ${quotas.records115Limit - quotas.records115} no ano)`}
+                        </span>
+                    </div>
+                </div>
+            )}
 
             {hasIncompleteProfile ? (
                 <div style={{ background: '#fffbeb', padding: '1.5rem', borderRadius: '12px', border: '1px solid #fde68a', display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
@@ -202,14 +353,18 @@ export default function MeusRegistrosRH() {
                         <div>
                             <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '4px' }}>TIPO DE OCORRÊNCIA</label>
                             <select value={tipo} onChange={e => setTipo(e.target.value)} required style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem' }}>
-                                <option>Ocorrência</option>
-                                <option>Atestado Médico</option>
-                                <option>Serviço Externo</option>
-                                <option>115</option>
-                                <option>Folga de Plantão</option>
-                                <option>Home Office</option>
-                                <option>Férias</option>
-                                <option>Outros</option>
+                                <option disabled={quotas.occurrences >= 3 && !editingId} value="Ocorrência">
+                                    Ocorrência {quotas.occurrences >= 3 && !editingId ? '(Bloqueado: Limite 3/mês atingido)' : ''}
+                                </option>
+                                <option value="Atestado Médico">Atestado Médico</option>
+                                <option value="Serviço Externo">Serviço Externo</option>
+                                <option disabled={(quotas.month115 >= 1 || quotas.records115 >= 8) && !editingId} value="115">
+                                    115 {quotas.month115 >= 1 && !editingId ? '(Bloqueado: Limite 1/mês atingido)' : quotas.records115 >= 8 && !editingId ? '(Bloqueado: Limite 8/ano atingido)' : ''}
+                                </option>
+                                <option value="Folga de Plantão">Folga de Plantão</option>
+                                <option value="Home Office">Home Office</option>
+                                <option value="Férias">Férias</option>
+                                <option value="Outros">Outros</option>
                             </select>
                         </div>
                         <div>
@@ -235,12 +390,58 @@ export default function MeusRegistrosRH() {
                     </div>
                     <div>
                         <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '4px' }}>AUTORIZADO POR (NOME DO GESTOR)</label>
-                        <select value={autorizadoPor} onChange={e => setAutorizadoPor(e.target.value)} required style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', marginBottom: '1rem', background: '#fff' }}>
-                            <option value="">Selecione o gestor...</option>
-                            {team.map(member => (
-                                <option key={member.id} value={member.name}>{member.name}</option>
-                            ))}
-                        </select>
+                        <div style={{ position: 'relative', marginBottom: '1rem' }} ref={gestorDropdownRef}>
+                            <input 
+                                type="text"
+                                placeholder="Digite para buscar o gestor..."
+                                value={autorizadoPor}
+                                onChange={e => {
+                                    setAutorizadoPor(e.target.value);
+                                    setIsGestorDropdownOpen(true);
+                                }}
+                                onFocus={() => setIsGestorDropdownOpen(true)}
+                                required
+                                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', background: '#fff' }}
+                            />
+                            {isGestorDropdownOpen && (
+                                <div style={{
+                                    position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px', background: '#fff',
+                                    border: '1px solid #e2e8f0', borderRadius: '8px', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                                    maxHeight: '200px', overflowY: 'auto', zIndex: 50
+                                }}>
+                                    {team
+                                        .filter(member => normalizeText(member.name).includes(normalizeText(autorizadoPor)))
+                                        .sort((a, b) => a.name.localeCompare(b.name))
+                                        .map(member => (
+                                            <div 
+                                                key={member.id}
+                                                onClick={() => {
+                                                    setAutorizadoPor(member.name);
+                                                    setIsGestorDropdownOpen(false);
+                                                }}
+                                                style={{ padding: '0.75rem 1rem', cursor: 'pointer', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '10px' }}
+                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                            >
+                                                <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: member.color || '#3b82f6', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold' }}>
+                                                    {member.avatar_url ? (
+                                                        <img src={member.avatar_url} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                                                    ) : (
+                                                        member.name.charAt(0).toUpperCase()
+                                                    )}
+                                                </div>
+                                                <span style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 500 }}>{member.name}</span>
+                                            </div>
+                                        ))
+                                    }
+                                    {team.filter(member => normalizeText(member.name).includes(normalizeText(autorizadoPor))).length === 0 && (
+                                        <div style={{ padding: '1rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>
+                                            Nenhum colaborador encontrado.
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
 
                         <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '4px' }}>DESCRIÇÃO / JUSTIFICATIVA</label>
                         <textarea value={descricao} onChange={e => setDescricao(e.target.value)} required rows={3} style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.9rem', resize: 'vertical' }} />
@@ -250,7 +451,7 @@ export default function MeusRegistrosRH() {
                     </button>
                 </form>
             ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div className="scrollable-list">
                     {loading ? (
                         <div style={{ textAlign: 'center', color: '#94a3b8', padding: '2rem' }}>Carregando...</div>
                     ) : ocorrencias.length === 0 ? (

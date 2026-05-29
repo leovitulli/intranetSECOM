@@ -266,57 +266,72 @@ export default function SuggestionsV3() {
 
                         <form className="suggestion-v3-form" onSubmit={handleSubmit}>
                             <div className="form-group-v3">
-                                <label>Título / Assunto *</label>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    <Sparkles size={14} className="text-primary" />
+                                    Título da Sugestão / Assunto Principal *
+                                </label>
                                 <input
                                     type="text"
-                                    placeholder="Ex: Lançamento do Novo Programa de Saúde"
+                                    placeholder="Ex: Lançamento da Campanha de Vacinação Infantil 2026"
                                     value={title}
                                     onChange={e => setTitle(e.target.value)}
                                     required
                                 />
+                                <span className="field-help-text" style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                                    Defina um título claro e direto para facilitar a triagem pela equipe.
+                                </span>
                             </div>
 
                             <div className="form-row-v3">
                                 <div className="form-group-v3 flex-1">
-                                    <label>Secretaria *</label>
+                                    <label>Secretaria Solicitante *</label>
                                     <select
                                         value={department}
                                         onChange={e => setDepartment(e.target.value)}
                                         required
                                     >
-                                        <option value="">Selecione...</option>
+                                        <option value="">Selecione a secretaria...</option>
                                         {secretarias.map(sec => (
                                             <option key={sec.id} value={sec.nome}>{sec.nome}</option>
                                         ))}
                                     </select>
+                                    <span className="field-help-text" style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                                        Secretaria responsável pela pauta.
+                                    </span>
                                 </div>
                                 <div className="form-group-v3 flex-1">
-                                    <label>Solicitante (Opcional)</label>
+                                    <label>Nome do Solicitante (Opcional)</label>
                                     <input
                                         type="text"
-                                        placeholder="Seu nome completo"
+                                        placeholder="Ex: João da Silva - Assessor"
                                         value={author}
                                         onChange={e => setAuthor(e.target.value)}
                                     />
+                                    <span className="field-help-text" style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                                        Caso queira se identificar para dúvidas.
+                                    </span>
                                 </div>
                             </div>
 
                             <div className="form-group-v3">
-                                <label>Detalhes da Sugestão / Pauta *</label>
+                                <label>Detalhamento e Briefing da Proposta *</label>
                                 <textarea
                                     rows={4}
-                                    placeholder="Qual é a proposta? Onde e quando ocorrerá? Quem deve participar? Qual o principal objetivo de comunicação?"
+                                    placeholder="Descreva a pauta detalhadamente: o que motivou a ação? Qual o público-alvo? Onde e quando ocorrerá? Há autoridades convidadas?"
                                     value={description}
                                     onChange={e => setDescription(e.target.value)}
                                     required
                                 ></textarea>
+                                <span className="field-help-text" style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                                    Insira o máximo de informações possíveis para agilizar o processo de criação de pauta.
+                                </span>
                             </div>
 
                             {/* Dropzone Attachment */}
                             <div className="form-group-v3">
-                                <label>Anexar Materiais (Opcional)</label>
+                                <label>Anexar Materiais de Apoio (Opcional)</label>
                                 <p className="file-format-hint">
-                                    Arraste e solte fotos, vídeos, notas ou PDFs. Limite de {MAX_FILE_SIZE_MB}MB por arquivo.
+                                    Arraste e solte fotos de referência, PDFs com cronogramas ou arquivos de texto de até {MAX_FILE_SIZE_MB}MB.
                                 </p>
 
                                 <div 
@@ -328,7 +343,7 @@ export default function SuggestionsV3() {
                                 >
                                     <CloudUpload size={28} className="dropzone-icon" />
                                     <span>
-                                        {isDragging ? 'Pode soltar os arquivos aqui!' : 'Arraste arquivos aqui ou clique para buscar'}
+                                        {isDragging ? 'Pode soltar os arquivos aqui!' : 'Arraste arquivos aqui ou clique para buscar no computador'}
                                     </span>
                                     <input
                                         ref={fileInputRef}
@@ -375,16 +390,17 @@ export default function SuggestionsV3() {
 
                             <button 
                                 type="submit" 
-                                className="btn-primary submit-suggestion-btn" 
+                                className="btn-primary-v3 submit-suggestion-btn" 
                                 disabled={uploading}
+                                style={{ width: '100%', justifyContent: 'center', padding: '0.85rem' }}
                             >
                                 {uploading ? (
                                     <>
-                                        <span className="loading-spinner-v3" /> Enviando Sugestão...
+                                        <span className="loading-spinner-v3" /> Processando Envio...
                                     </>
                                 ) : (
                                     <>
-                                        <Send size={16} /> Enviar Pauta
+                                        <Send size={16} /> Submeter Proposta de Pauta Premium
                                     </>
                                 )}
                             </button>

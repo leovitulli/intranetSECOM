@@ -182,17 +182,28 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         return () => { channel.unsubscribe(); };
     }, [currentUser]);
 
+    const contextValue = React.useMemo(() => ({
+        tasks, archivedTasks, team, events, suggestions, jobFunctions, secretarias, onlineUsers, 
+        loading, searchTerm, setSearchTerm,
+        updateTaskStatus, updateTask, addTask, deleteTask, 
+        archiveTask, unarchiveTask, addSuggestion, deleteSuggestion,
+        addJobFunction, updateJobFunction, removeJobFunction,
+        addSecretaria, updateSecretaria, removeSecretaria,
+        addEvent, updateEvent, deleteEvent,
+        addTeamMember, updateTeamMember, deleteTeamMember, resetUserPassword
+    }), [
+        tasks, archivedTasks, team, events, suggestions, jobFunctions, secretarias, onlineUsers, 
+        loading, searchTerm, setSearchTerm,
+        updateTaskStatus, updateTask, addTask, deleteTask, 
+        archiveTask, unarchiveTask, addSuggestion, deleteSuggestion,
+        addJobFunction, updateJobFunction, removeJobFunction,
+        addSecretaria, updateSecretaria, removeSecretaria,
+        addEvent, updateEvent, deleteEvent,
+        addTeamMember, updateTeamMember, deleteTeamMember, resetUserPassword
+    ]);
+
     return (
-        <DataContext.Provider value={{
-            tasks, archivedTasks, team, events, suggestions, jobFunctions, secretarias, onlineUsers, 
-            loading, searchTerm, setSearchTerm,
-            updateTaskStatus, updateTask, addTask, deleteTask, 
-                archiveTask, unarchiveTask, addSuggestion, deleteSuggestion,
-            addJobFunction, updateJobFunction, removeJobFunction,
-            addSecretaria, updateSecretaria, removeSecretaria,
-            addEvent, updateEvent, deleteEvent,
-            addTeamMember, updateTeamMember, deleteTeamMember, resetUserPassword
-        }}>
+        <DataContext.Provider value={contextValue}>
             {children}
         </DataContext.Provider>
     );

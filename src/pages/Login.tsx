@@ -77,63 +77,69 @@ export default function Login() {
                         <p className="text-muted">Entre com suas credenciais departamentais</p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="login-form">
-                        {errorMsg && (
-                            <div className="error-message" style={{ color: 'var(--color-danger)', fontSize: '0.85rem', marginBottom: '1rem', padding: '0.5rem', backgroundColor: 'var(--color-danger-light, rgba(239,68,68,0.1))', borderRadius: '4px' }}>
-                                {errorMsg}
-                            </div>
-                        )}
-                        <div className="form-group">
-                            <label htmlFor="email">E-mail Corporativo</label>
-                            <input
-                                type="email"
-                                id="email"
-                                placeholder="nome@secom.gov.br"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </div>
+                     <form onSubmit={handleSubmit} className="login-form">
+                         {errorMsg && (
+                             <div className="error-message" style={{ color: 'var(--color-danger)', fontSize: '0.85rem', marginBottom: '1rem', padding: '0.5rem', backgroundColor: 'var(--color-danger-light, rgba(239,68,68,0.1))', borderRadius: 'var(--radius-md)' }}>
+                                 {errorMsg}
+                             </div>
+                         )}
+                         <div className="form-group">
+                             <label htmlFor="email">E-mail Corporativo</label>
+                             <input
+                                 type="email"
+                                 id="email"
+                                 placeholder="exemplo@prefeitura.sp.gov.br"
+                                 value={email}
+                                 onChange={(e) => setEmail(e.target.value)}
+                                 required
+                             />
+                             <span className="field-help-text" style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                                 Utilize seu e-mail institucional oficial.
+                             </span>
+                         </div>
 
-                        <div className="form-group">
-                            <label htmlFor="password">Senha</label>
-                            <div className="password-input-wrapper">
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    id="password"
-                                    placeholder="••••••••"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                />
-                                <button
-                                    type="button"
-                                    className="password-toggle-btn"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    tabIndex={-1}
-                                >
-                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                </button>
-                            </div>
-                        </div>
+                         <div className="form-group">
+                             <label htmlFor="password">Senha de Acesso</label>
+                             <div className="password-input-wrapper">
+                                 <input
+                                     type={showPassword ? "text" : "password"}
+                                     id="password"
+                                     placeholder="Digite sua senha cadastrada"
+                                     value={password}
+                                     onChange={(e) => setPassword(e.target.value)}
+                                     required
+                                 />
+                                 <button
+                                     type="button"
+                                     className="password-toggle-btn"
+                                     onClick={() => setShowPassword(!showPassword)}
+                                     tabIndex={-1}
+                                 >
+                                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                 </button>
+                             </div>
+                             <span className="field-help-text" style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                                 Mínimo de 6 caracteres.
+                             </span>
+                         </div>
 
-                        <div className="form-options">
-                            <label className="checkbox-container">
-                                <input type="checkbox" />
-                                <span className="checkmark"></span>
-                                Manter conectado
-                            </label>
-                            <a href="#" className="forgot-password">Esqueceu a senha?</a>
-                        </div>
+                         <div className="form-options">
+                             <label className="checkbox-container">
+                                 <input type="checkbox" />
+                                 <span className="checkmark"></span>
+                                 Lembrar meus dados
+                             </label>
+                             <a href="#" className="forgot-password">Redefinir senha</a>
+                         </div>
 
-                        <button type="submit" className="login-submit-btn" disabled={isLoading}>
-                            {isLoading ? <span className="loader"></span> : 'Entrar no Hub'}
-                        </button>
-                    </form>
+                         <button type="submit" className="btn-primary-v3" style={{ width: '100%', justifyContent: 'center', height: '48px', fontSize: '0.95rem' }} disabled={isLoading}>
+                             {isLoading ? <span className="loader">Entrando...</span> : 'Acessar Comunica Hub Premium'}
+                         </button>
+                     </form>
 
-                    <div className="login-footer">
-                        <p>Precisa de acesso? <a href="#">Solicite ao RH/TI</a></p>
-                    </div>
+                     <div className="login-footer">
+                         <p>Não possui cadastro? <a href="#">Solicitar ao TI/Comunicação</a></p>
+                     </div>
                 </div>
             </div>
         </div>

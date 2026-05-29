@@ -5,6 +5,7 @@ import { ptBR } from 'date-fns/locale';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { sanitizeText, sanitizeHTML } from '../utils/sanitize';
+import { normalizeText } from '../utils/searchUtils';
 import './NewsV3.css';
 
 interface NewsItem {
@@ -116,7 +117,7 @@ export default function NewsV3() {
 
     useEffect(() => { fetchNews(); }, [fetchNews]);
 
-    const handleCreate = async (e: React.FormEvent) => {
+    const handleCreate = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formTitle.trim() || !formBody.trim()) {
             setFormError('Título e conteúdo são obrigatórios.');
@@ -158,23 +159,23 @@ export default function NewsV3() {
         setShowModal(false);
         setFormTitle(''); setFormBody(''); setFormCategory('Avisos Gerais'); setFormPinned(false); setFormFile(null);
         fetchNews();
-    };
+    }, [formTitle, formBody, formCategory, formFile, formPinned, user, fetchNews]);
 
-    const handleDelete = async (id: string) => {
+    const handleDelete = useCallback((id: string) => {
         setConfirmDeleteId(id);
-    };
+    }, []);
 
-    const handleDeleteConfirmed = async () => {
+    const handleDeleteConfirmed = useCallback(async () => {
         if (!confirmDeleteId) return;
         await supabase.from('news').delete().eq('id', confirmDeleteId);
         setNews(prev => prev.filter(n => n.id !== confirmDeleteId));
         setConfirmDeleteId(null);
-    };
+    }, [confirmDeleteId]);
 
-    const handleTogglePin = async (item: NewsItem) => {
+    const handleTogglePin = useCallback(async (item: NewsItem) => {
         await supabase.from('news').update({ pinned: !item.pinned }).eq('id', item.id);
         fetchNews();
-    };
+    }, [fetchNews]);
 
     const filtered = useMemo(() => {
         let result = news;
@@ -184,13 +185,11 @@ export default function NewsV3() {
         }
         
         if (searchQuery) {
-            const normalize = (str: string) => 
-                str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-            const q = normalize(searchQuery);
+            const q = normalizeText(searchQuery);
             result = result.filter(n => 
-                normalize(n.title).includes(q) || 
-                normalize(n.body).includes(q) ||
-                normalize(n.author_name).includes(q)
+                normalizeText(n.title).includes(q) || 
+                normalizeText(n.body).includes(q) ||
+                normalizeText(n.author_name).includes(q)
             );
         }
         
@@ -198,22 +197,17 @@ export default function NewsV3() {
     }, [news, filterCategory, searchQuery]);
 
     return (
-        <div className="page-container news-v3-container">
+        <div className="dashboard-container dashboard-v3-root news-v3-container">
             {/* Header Panel */}
-            <div className="news-v3-header glass">
-                <div className="news-v3-title-box">
-                    <div className="glow-icon-box">
-                        <Sparkles size={22} className="text-primary pulse-sparkle" />
-                    </div>
-                    <div>
-                        <h1>Mural de Comunicação <span className="beta-tag">v3.0 Beta</span></h1>
-                        <p className="subtitle">Avisos importantes, diretrizes e informes internos para a equipe.</p>
-                    </div>
+            <header className="page-header dashboard-header-premium glass">
+                <div>
+                    <h1 className="title text-gradient">Mural de Comunicação</h1>
+                    <p className="subtitle">Avisos importantes, diretrizes e informes internos para a equipe.</p>
                 </div>
 
                 {/* Filters Area */}
-                <div className="news-v3-controls">
-                    <div className="search-v3-wrapper">
+                <div className="header-actions-premium" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    <div className="search-v3-wrapper" style={{ position: 'relative' }}>
                         <Search size={16} className="search-v3-icon" />
                         <input
                             type="text"
@@ -228,12 +222,12 @@ export default function NewsV3() {
                         )}
                     </div>
 
-                    <button className="btn-primary v3-new-btn" onClick={() => setShowModal(true)}>
+                    <button className="btn-primary-v3 v3-new-btn" onClick={() => setShowModal(true)}>
                         <Plus size={16} />
                         <span>Novo Informe</span>
                     </button>
                 </div>
-            </div>
+            </header>
 
             {/* Category Filter Tabs (Chips Style) */}
             <div className="news-v3-categories-scroll">

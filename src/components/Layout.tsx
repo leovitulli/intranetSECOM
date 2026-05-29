@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, LogOut, Bell, Search, CalendarDays, CalendarClock, BarChart3, Check, X, Menu, AlignEndHorizontal, Zap, Trash2, FolderOpen } from 'lucide-react';
+import { LayoutDashboard, LogOut, Bell, Search, CalendarDays, CalendarClock, BarChart3, Check, X, Menu, AlignEndHorizontal, Zap, Trash2, FolderOpen, Instagram, Activity } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useData } from '../contexts/DataContext';
@@ -68,7 +68,6 @@ export default function Layout() {
                         </div>
                         <div className="logo-text-group">
                             <h2>Comunica Hub</h2>
-                            <span className="logo-version">v3.0</span>
                         </div>
                     </div>
                 </div>
@@ -112,7 +111,7 @@ export default function Layout() {
                         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                     >
                         <div className="nav-icon-box"><BarChart3 size={20} /></div>
-                        <span>Produtividade</span>
+                        <span>Produtividade & Relatórios</span>
                     </NavLink>
 
                     <NavLink
@@ -120,7 +119,7 @@ export default function Layout() {
                         className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                     >
                         <div className="nav-icon-box"><Zap size={20} /></div>
-                        <span>Notícias SECOM</span>
+                        <span>Notícias & Painel Estratégico</span>
                     </NavLink>
 
                     {user && (user.role === 'desenvolvedor' || user.role === 'rh') && (
@@ -130,6 +129,16 @@ export default function Layout() {
                         >
                             <div className="nav-icon-box"><FolderOpen size={20} /></div>
                             <span>Recursos Humanos</span>
+                        </NavLink>
+                    )}
+
+                    {user && (user.role === 'desenvolvedor' || user.email === 'leovitulli@gmail.com') && (
+                        <NavLink
+                            to="/instagram-insights"
+                            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                        >
+                            <div className="nav-icon-box"><Instagram size={20} /></div>
+                            <span>Instagram</span>
                         </NavLink>
                     )}
 

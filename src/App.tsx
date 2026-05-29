@@ -22,6 +22,8 @@ const AgendaV3 = lazy(() => import('./pages/AgendaV3'));
 const NewsV3 = lazy(() => import('./pages/NewsV3'));
 const CronogramaV3 = lazy(() => import('./pages/CronogramaV3'));
 const RH = lazy(() => import('./pages/RH'));
+const ProductivityPremium = lazy(() => import('./pages/ProductivityPremium'));
+const StrategicDashboard = lazy(() => import('./pages/StrategicDashboard'));
 
 
 
@@ -53,7 +55,9 @@ function AppRoutes() {
               <Route path="radar-secom" element={<Radar />} />
               <Route path="radar-noticias" element={<RadarNoticias />} />
               {/* Página oculta (apenas para admin/desenvolvedor) */}
-              <Route path="instagram-insights" element={user && (user.role === 'admin' || user.role === 'desenvolvedor') ? <InstagramInsights /> : <Navigate to="/" />} />
+              <Route path="instagram-insights" element={user && (user.role === 'admin' || user.role === 'desenvolvedor' || user.email === 'leovitulli@gmail.com') ? <InstagramInsights /> : <Navigate to="/" />} />
+              <Route path="produtividade-premium" element={<Navigate to="/relatorios" replace />} />
+              <Route path="dashboard-estrategico" element={<Navigate to="/radar-noticias" replace />} />
               <Route path="dashboard-v3" element={user && (user.role === 'admin' || user.role === 'desenvolvedor') ? <DashboardV3 /> : <Navigate to="/" />} />
               <Route path="agenda-v3" element={user && (user.role === 'admin' || user.role === 'desenvolvedor') ? <AgendaV3 /> : <Navigate to="/" />} />
               <Route path="noticias-v3" element={user && (user.role === 'admin' || user.role === 'desenvolvedor') ? <NewsV3 /> : <Navigate to="/" />} />

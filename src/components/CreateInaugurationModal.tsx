@@ -233,14 +233,14 @@ export default function CreateInaugurationModal({ onClose, onCreate }: CreateIna
 
                     </div>
 
-                    <div className="form-actions">
-                        <button type="button" className="btn-secondary" onClick={onClose}>Cancelar</button>
+                    <div className="form-actions" style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', justifyContent: 'flex-end', borderTop: '1px solid var(--color-border)', paddingTop: '1.25rem' }}>
+                        <button type="button" className="btn-secondary-v3" onClick={onClose}>Cancelar</button>
                         <button
                             type="submit"
-                            className="btn-primary inaug-submit"
+                            className="btn-primary-v3 inaug-submit"
                             disabled={!nome.trim() || secretarias.length === 0 || !dataInauguracao}
                         >
-                            Criar Inauguração
+                            Criar Inauguração Premium
                         </button>
                     </div>
                 </form>

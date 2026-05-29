@@ -39,31 +39,26 @@ export default function CronogramaV3() {
     ];
 
     return (
-        <div className="page-container cronograma-v3-container">
+        <div className="dashboard-container dashboard-v3-root cronograma-v3-container">
             {/* Header Panel */}
-            <div className="cronograma-v3-header glass">
-                <div className="cronograma-v3-title-box">
-                    <div className="glow-icon-box">
-                        <Sparkles size={22} className="text-primary pulse-sparkle" />
-                    </div>
-                    <div>
-                        <h1>Cronograma Semanal <span className="beta-tag">v3.0 Beta</span></h1>
-                        <p className="subtitle">Planejamento e controle de publicações de mídias institucionais.</p>
-                    </div>
+            <div className="page-header dashboard-header-premium glass">
+                <div>
+                    <h1 className="title text-gradient">Cronograma Semanal</h1>
+                    <p className="subtitle">Planejamento e controle de publicações de mídias institucionais.</p>
                 </div>
 
                 {/* Week Navigation Controls */}
-                <div className="week-nav-v3 glass">
+                <div className="header-actions-premium" style={{ flexDirection: 'row', gap: '0.5rem' }}>
                     <button 
-                        className="week-nav-btn-v3" 
+                        className="btn-secondary-v3" 
                         onClick={() => setCurrentDate(prev => addDays(prev, -7))}
                         title="Semana Anterior"
                     >
-                        <ChevronLeft size={18} />
+                        <ChevronLeft size={16} />
                     </button>
                     
                     <button 
-                        className={`week-nav-today-v3 ${isCurrentWeek ? 'is-today' : ''}`}
+                        className={`btn-primary-v3 ${isCurrentWeek ? 'active' : ''}`}
                         onClick={() => setCurrentDate(new Date())}
                     >
                         <Calendar size={14} />
@@ -71,11 +66,11 @@ export default function CronogramaV3() {
                     </button>
 
                     <button 
-                        className="week-nav-btn-v3" 
+                        className="btn-secondary-v3" 
                         onClick={() => setCurrentDate(prev => addDays(prev, 7))}
                         title="Próxima Semana"
                     >
-                        <ChevronRight size={18} />
+                        <ChevronRight size={16} />
                     </button>
                 </div>
             </div>

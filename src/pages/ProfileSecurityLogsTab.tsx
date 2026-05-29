@@ -3,6 +3,7 @@ import { useSecurityLogs } from '../hooks/useSecurityLogs';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useMemo } from 'react';
+import { normalizeText } from '../utils/searchUtils';
 
 export default function ProfileSecurityLogsTab() {
     const { securityLogs, loading } = useSecurityLogs();
@@ -20,14 +21,11 @@ export default function ProfileSecurityLogsTab() {
     const filteredLogs = useMemo(() => {
         if (!searchUser) return securityLogs;
         
-        const normalize = (str: string) => 
-            str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-            
-        const query = normalize(searchUser);
+        const query = normalizeText(searchUser);
         
         return securityLogs.filter(log => 
-            normalize(log.user_name || "").includes(query) ||
-            normalize(log.details || "").includes(query)
+            normalizeText(log.user_name || "").includes(query) ||
+            normalizeText(log.details || "").includes(query)
         );
     }, [securityLogs, searchUser]);
 

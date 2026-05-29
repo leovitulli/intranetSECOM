@@ -7,6 +7,8 @@ import { format, addDays, startOfWeek, isSameWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocation } from 'react-router-dom';
+import { normalizeText } from '../utils/searchUtils';
 import TaskModal from '../components/TaskModal';
 import TaskTeamAvatars from '../components/TaskTeamAvatars';
 import type { Task } from '../types/kanban';
@@ -239,15 +241,15 @@ export default function AgendaV3() {
     const filterAndSearchTasks = (dayTasks: Task[]) => {
         return dayTasks.filter(task => {
             // Busca textual (título, descrição, local)
+            let matchesSearch = true;
             if (searchQuery) {
-                const query = searchQuery.toLowerCase();
-                const matchesText = 
-                    task.title.toLowerCase().includes(query) ||
-                    (task.description && task.description.toLowerCase().includes(query)) ||
-                    (task.pauta_endereco && task.pauta_endereco.toLowerCase().includes(query));
-                
-                if (!matchesText) return false;
+                const query = normalizeText(searchQuery);
+                const matchTitle = normalizeText(task.title).includes(query);
+                const matchDesc = task.description ? normalizeText(task.description).includes(query) : false;
+                const matchAddress = task.pauta_endereco ? normalizeText(task.pauta_endereco).includes(query) : false;
+                matchesSearch = matchTitle || matchDesc || matchAddress;
             }
+            if (!matchesSearch) return false;
 
             // Filtro por Membro
             if (selectedAssignee) {
@@ -315,32 +317,27 @@ export default function AgendaV3() {
     }, []);
 
     return (
-        <div className="page-container agenda-v3-page">
+        <div className="dashboard-container dashboard-v3-root agenda-v3-page">
             
             {/* Header Area */}
-            <div className="agenda-v3-header-panel glass">
-                <div className="agenda-v3-title-box">
-                    <div className="glow-icon-box">
-                        <Calendar size={24} className="text-primary pulse-sparkle" />
-                    </div>
-                    <div>
-                        <h1>Agenda da Equipe Externa <span className="beta-tag">v3.0 Beta</span></h1>
-                        <p className="subtitle">Planejamento visual de coberturas, eventos externos e deslocamentos.</p>
-                    </div>
+            <div className="page-header dashboard-header-premium glass">
+                <div>
+                    <h1 className="title text-gradient">Agenda Externa</h1>
+                    <p className="subtitle">Planejamento visual de coberturas, eventos externos e deslocamentos.</p>
                 </div>
 
                 {/* Week Navigation Controls */}
-                <div className="week-nav-panel">
+                <div className="header-actions-premium" style={{ flexDirection: 'row', gap: '0.5rem' }}>
                     <button 
-                        className="week-nav-arrow" 
+                        className="btn-secondary-v3" 
                         onClick={() => setCurrentDate(prev => addDays(prev, -7))}
                         title="Semana Anterior"
                     >
-                        <ChevronLeft size={18} />
+                        <ChevronLeft size={16} />
                     </button>
                     
                     <button 
-                        className={`week-nav-today-btn ${isCurrentWeek ? 'active' : ''}`}
+                        className={`btn-primary-v3 ${isCurrentWeek ? 'active' : ''}`}
                         onClick={() => setCurrentDate(new Date())}
                     >
                         <Clock size={14} />
@@ -348,11 +345,11 @@ export default function AgendaV3() {
                     </button>
 
                     <button 
-                        className="week-nav-arrow" 
+                        className="btn-secondary-v3" 
                         onClick={() => setCurrentDate(prev => addDays(prev, 7))}
                         title="Próxima Semana"
                     >
-                        <ChevronRight size={18} />
+                        <ChevronRight size={16} />
                     </button>
                 </div>
             </div>

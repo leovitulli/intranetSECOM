@@ -70,10 +70,33 @@
 .ig-period-tabs {
     display: flex;
     gap: 4px;
-    background: hsl(var(--color-bg-alt));
-    padding: 5px;
+    align-items: center;
+    gap: 0.5rem;
+    background: #f8fafc;
+    padding: 0.25rem;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+}
+
+.ig-settings-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    color: white;
+    border: none;
     border-radius: 12px;
-    border: 1.5px solid hsl(var(--color-border));
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.ig-settings-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
 }
 
 .ig-period-tab {
@@ -98,12 +121,70 @@
     box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08);
 }
 
+/* ── PREMIUM HEADER ─────────────────────────────────────────────────── */
+.ig-premium-header {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1.75rem !important;
+    padding: 2.25rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin-bottom: 2.25rem !important; /* Generous breathing room below the header card */
+}
+
+.ig-premium-header .header-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.ig-premium-header .header-filters-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 24px;
+    padding-top: 1.5rem;
+    border-top: 1.5px solid #f1f5f9;
+}
+
 /* ── KPIs ────────────────────────────────────────────────────────────── */
 .ig-kpis {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1.25rem;
+    margin-bottom: 2.5rem; /* Large breathing room before the main topics & comments grid */
+    width: 100%;
+}
+
+@media (max-width: 1300px) {
+    .ig-kpis {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .ig-premium-header .header-filters-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .ig-premium-header .header-filters-row .action-buttons-group {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 768px) {
+    .ig-kpis {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .ig-kpis {
+        grid-template-columns: 1fr;
+    }
 }
 
 .ig-kpi-card {
@@ -643,3 +724,19 @@
     .ig-period-tabs { flex-wrap: wrap; }
     .ig-kpis { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ── SPIN ANIMATION ──────────────────────────────────────────────────── */
+@keyframes spin-anim {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.spin-anim {
+    animation: spin-anim 1s linear infinite;
+}
+
+/* ── SENTIMENT TAG PENDING ───────────────────────────────────────────── */
+.ig-sentiment-tag.pending { background: #f1f5f9; color: #94a3b8; }
+
+/* ── FILTER CHIP PENDING ─────────────────────────────────────────────── */
+.ig-filter-chip.active.pending { background: #f1f5f9; color: #64748b; border-color: #cbd5e1; }

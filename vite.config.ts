@@ -19,8 +19,20 @@ export default defineConfig({
   },
   server: {
     host: true,
-    port: 5173,
+    port: 3002,
     strictPort: true,
+    proxy: {
+      '/api/google-news': {
+        target: 'https://news.google.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/google-news/, '/rss/search'),
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('proxy error', err);
+          });
+        }
+      }
+    }
   },
   build: {
     chunkSizeWarningLimit: 1000,

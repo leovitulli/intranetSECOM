@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { 
     Plus, MoreHorizontal, MessageSquare, Paperclip, Clock, Archive, RotateCcw, 
@@ -195,94 +195,96 @@ export default function DashboardV3() {
     }, [searchParams, tasks, archivedTasks, setSearchParams]);
 
     // ─── Lógica de Filtros Combinados ──────────────────────────────────────────
-    const filteredTasks = tasks.filter(task => {
-        // 1. Termo de Busca (Global da header)
-        if (searchTerm) {
-            const term = normalizeText(searchTerm);
-            const matchesText = 
-                normalizeText(task.title).includes(term) ||
-                normalizeText(task.description).includes(term) ||
-                task.secretarias?.some(s => normalizeText(s).includes(term)) ||
-                task.inauguracao_secretarias?.some(s => normalizeText(s).includes(term)) ||
-                task.assignees?.some(n => normalizeText(n).includes(term)) ||
-                (task.inauguracao_nome && normalizeText(task.inauguracao_nome).includes(term));
-            
-            if (!matchesText) return false;
-        }
+    const filteredTasks = useMemo(() => {
+        return tasks.filter(task => {
+            // 1. Termo de Busca (Global da header)
+            if (searchTerm) {
+                const term = normalizeText(searchTerm);
+                const matchesText = 
+                    normalizeText(task.title).includes(term) ||
+                    normalizeText(task.description).includes(term) ||
+                    task.secretarias?.some(s => normalizeText(s).includes(term)) ||
+                    task.inauguracao_secretarias?.some(s => normalizeText(s).includes(term)) ||
+                    task.assignees?.some(n => normalizeText(n).includes(term)) ||
+                    (task.inauguracao_nome && normalizeText(task.inauguracao_nome).includes(term));
+                
+                if (!matchesText) return false;
+            }
 
-        // 2. Filtro de Secretaria
-        if (selectedSec) {
-            const hasSec = task.secretarias?.includes(selectedSec) || task.inauguracao_secretarias?.includes(selectedSec);
-            if (!hasSec) return false;
-        }
+            // 2. Filtro de Secretaria
+            if (selectedSec) {
+                const hasSec = task.secretarias?.includes(selectedSec) || task.inauguracao_secretarias?.includes(selectedSec);
+                if (!hasSec) return false;
+            }
 
-        // 3. Filtro de Prioridade
-        if (selectedPriority && task.priority !== selectedPriority) {
-            return false;
-        }
+            // 3. Filtro de Prioridade
+            if (selectedPriority && task.priority !== selectedPriority) {
+                return false;
+            }
 
-        // 4. Filtro de Tipo de Demanda (Múltiplo)
-        if (selectedTypes.length > 0 && !task.type.some(t => selectedTypes.includes(t))) {
-            return false;
-        }
+            // 4. Filtro de Tipo de Demanda (Múltiplo)
+            if (selectedTypes.length > 0 && !task.type.some(t => selectedTypes.includes(t))) {
+                return false;
+            }
 
-        return true;
-    });
+            return true;
+        });
+    }, [tasks, searchTerm, selectedSec, selectedPriority, selectedTypes]);
 
     const activeFiltersCount = 
         (selectedSec ? 1 : 0) + 
         (selectedPriority ? 1 : 0) + 
         selectedTypes.length;
 
-    const clearFilters = () => {
+    const clearFilters = useCallback(() => {
         setSelectedSec('');
         setSelectedPriority('');
         setSelectedTypes([]);
-    };
+    }, []);
 
-    const toggleTypeFilter = (type: TaskType) => {
+    const toggleTypeFilter = useCallback((type: TaskType) => {
         setSelectedTypes(prev => 
             prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
         );
-    };
+    }, []);
 
     // ─── Drag & Drop Lógica ──────────────────────────────────────────────────
-    const handleDragStart = (e: React.DragEvent, taskId: string, taskStatus: TaskStatus) => {
+    const handleDragStart = useCallback((e: React.DragEvent, taskId: string, taskStatus: TaskStatus) => {
         setDraggedTaskId(taskId);
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('taskStatus', taskStatus);
         e.currentTarget.classList.add('dragging');
-    };
+    }, []);
 
-    const handleDragEnd = (e: React.DragEvent) => {
+    const handleDragEnd = useCallback((e: React.DragEvent) => {
         e.currentTarget.classList.remove('dragging');
         setDraggedTaskId(null);
-    };
+    }, []);
 
-    const handleDragOver = (e: React.DragEvent) => {
+    const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
-    };
+    }, []);
 
-    const handleDrop = async (e: React.DragEvent, targetColumnId: TaskStatus) => {
+    const handleDrop = useCallback(async (e: React.DragEvent, targetColumnId: TaskStatus) => {
         e.preventDefault();
         if (!draggedTaskId) return;
         await updateTaskStatus(draggedTaskId, targetColumnId);
-    };
+    }, [draggedTaskId, updateTaskStatus]);
 
     // ─── Handlers de Modais ───────────────────────────────────────────────────
-    const handleUpdateTask = async (updatedTask: Task) => {
+    const handleUpdateTask = useCallback(async (updatedTask: Task) => {
         await updateTask(updatedTask);
-        if (selectedTask?.id === updatedTask.id) setSelectedTask(updatedTask);
-    };
+        setSelectedTask(prev => prev?.id === updatedTask.id ? updatedTask : prev);
+    }, [updateTask]);
 
-    const handleCreateTask = async (newTask: Task, teamIds?: string[]): Promise<{ success: boolean; error?: any }> => {
+    const handleCreateTask = useCallback(async (newTask: Task, teamIds?: string[]): Promise<{ success: boolean; error?: any }> => {
         const result = await addTask(newTask, teamIds);
         if (result.success) {
             setIsCreateModalOpen(false);
         }
         return result;
-    };
+    }, [addTask]);
 
     const handleQuickAddSubmit = async (groupName: string, e: React.FormEvent) => {
         e.preventDefault();
@@ -491,79 +493,81 @@ export default function DashboardV3() {
     };
 
     // ─── Agrupamento de Tarefas para Visualização em Tabela ─────────────────────
-    const inaugTasks = filteredTasks.filter(isInaugCard);
-    
-    // Lista de Agrupamento Dinâmico
-    let groupNames: string[] = [];
-    const tasksByGroup: Record<string, Task[]> = {};
-
-    if (tableGroupBy === 'secretaria') {
-        groupNames = [
-            ...secretarias.map(s => s.nome),
-            'Demais Demandas'
-        ];
-        groupNames.forEach(name => { tasksByGroup[name] = []; });
+    const { inaugTasks, groupNames, tasksByGroup } = useMemo(() => {
+        const fTasks = filteredTasks;
+        const inaug = fTasks.filter(isInaugCard);
         
-        filteredTasks.filter(t => !t.archived).forEach(task => {
-            const taskSecs = task.secretarias || task.inauguracao_secretarias || [];
-            if (taskSecs.length === 0) {
-                tasksByGroup['Demais Demandas'].push(task);
-            } else {
-                taskSecs.forEach(sec => {
-                    if (tasksByGroup[sec]) {
-                        tasksByGroup[sec].push(task);
-                    } else {
-                        tasksByGroup[sec] = [task];
-                    }
-                });
-            }
-        });
+        let gNames: string[] = [];
+        const tByGroup: Record<string, Task[]> = {};
 
-        // Garantir que secretarias legadas não presentes na lista oficial apareçam
-        Object.keys(tasksByGroup).forEach(name => {
-            if (!groupNames.includes(name)) {
-                const idx = groupNames.indexOf('Demais Demandas');
-                if (idx !== -1) {
-                    groupNames.splice(idx, 0, name);
+        if (tableGroupBy === 'secretaria') {
+            gNames = [
+                ...secretarias.map(s => s.nome),
+                'Demais Demandas'
+            ];
+            gNames.forEach(name => { tByGroup[name] = []; });
+            
+            fTasks.filter(t => !t.archived).forEach(task => {
+                const taskSecs = task.secretarias || task.inauguracao_secretarias || [];
+                if (taskSecs.length === 0) {
+                    tByGroup['Demais Demandas'].push(task);
                 } else {
-                    groupNames.push(name);
+                    taskSecs.forEach(sec => {
+                        if (tByGroup[sec]) {
+                            tByGroup[sec].push(task);
+                        } else {
+                            tByGroup[sec] = [task];
+                        }
+                    });
                 }
-            }
-        });
-    } else {
-        // Agrupar por Data
-        const activeTasks = filteredTasks.filter(t => !t.archived);
-        const dateMap = new Map<string, Task[]>();
-        const uniqueDatesSet = new Set<string>();
+            });
 
-        activeTasks.forEach(task => {
-            const dateStr = getTaskResolvedDateString(task);
-            uniqueDatesSet.add(dateStr);
-            if (!dateMap.has(dateStr)) {
-                dateMap.set(dateStr, []);
-            }
-            dateMap.get(dateStr)!.push(task);
-        });
+            // Garantir que secretarias legadas não presentes na lista oficial apareçam
+            Object.keys(tByGroup).forEach(name => {
+                if (!gNames.includes(name)) {
+                    const idx = gNames.indexOf('Demais Demandas');
+                    if (idx !== -1) {
+                        gNames.splice(idx, 0, name);
+                    } else {
+                        gNames.push(name);
+                    }
+                }
+            });
+        } else {
+            // Agrupar por Data
+            const activeTasks = fTasks.filter(t => !t.archived);
+            const dateMap = new Map<string, Task[]>();
+            const uniqueDatesSet = new Set<string>();
 
-        const sortedDates = Array.from(uniqueDatesSet).sort((a, b) => {
-            if (a === 'Sem Prazo') return 1;
-            if (b === 'Sem Prazo') return -1;
-            return a.localeCompare(b);
-        });
+            activeTasks.forEach(task => {
+                const dateStr = getTaskResolvedDateString(task);
+                uniqueDatesSet.add(dateStr);
+                if (!dateMap.has(dateStr)) {
+                    dateMap.set(dateStr, []);
+                }
+                dateMap.get(dateStr)!.push(task);
+            });
 
-        groupNames = sortedDates;
-        groupNames.forEach(name => {
-            tasksByGroup[name] = dateMap.get(name) || [];
-        });
-    }
+            const sortedDates = Array.from(uniqueDatesSet).sort((a, b) => {
+                if (a === 'Sem Prazo') return 1;
+                if (b === 'Sem Prazo') return -1;
+                return a.localeCompare(b);
+            });
+
+            gNames = sortedDates;
+            gNames.forEach(name => {
+                tByGroup[name] = dateMap.get(name) || [];
+            });
+        }
+        return { inaugTasks: inaug, groupNames: gNames, tasksByGroup: tByGroup };
+    }, [filteredTasks, secretarias, tableGroupBy]);
 
     return (
         <div className="dashboard-container dashboard-v3-root">
             {/* Header Superior Premium */}
             <div className="page-header dashboard-header-premium glass">
                 <div>
-                    <div className="beta-badge-glow">v3.0 BETA</div>
-                    <h1 className="title text-gradient">Aura Gestão de Pautas</h1>
+                    <h1 className="title text-gradient">Gestão de Pautas</h1>
                     <p className="subtitle">Visão integrada e painel dinâmico da Comunicação</p>
                 </div>
                 <div className="header-actions-premium">

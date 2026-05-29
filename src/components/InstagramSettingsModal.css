@@ -1,0 +1,293 @@
+/* src/components/InstagramSettingsModal.css */
+.ig-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+    padding: 2rem;
+}
+
+.ig-modal-content {
+    background: #ffffff;
+    width: 100%;
+    max-width: 900px;
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 90vh;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.ig-modal-close {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    background: #f1f5f9;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ig-modal-close:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    transform: rotate(90deg);
+}
+
+.ig-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    padding: 2rem;
+    border-bottom: 1px solid #f1f5f9;
+    background: linear-gradient(to right, #f8fafc, #ffffff);
+}
+
+.ig-modal-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 8px 16px rgba(59, 130, 246, 0.25);
+}
+
+.ig-modal-header h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 0.25rem 0;
+}
+
+.ig-modal-header p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.ig-modal-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+/* Left Column: Form */
+.ig-modal-form-section h3,
+.ig-modal-guide-section h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ig-form-desc,
+.ig-guide-intro {
+    font-size: 0.9rem;
+    color: #64748b;
+    line-height: 1.5;
+    margin: 0 0 1.5rem 0;
+}
+
+.ig-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.ig-input-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ig-input-group input,
+.ig-input-group textarea {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    color: #0f172a;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.ig-input-group input:focus,
+.ig-input-group textarea:focus {
+    outline: none;
+    background: #ffffff;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.ig-btn-save {
+    width: 100%;
+    padding: 1rem;
+    background: #0f172a;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.ig-btn-save:hover:not(:disabled) {
+    background: #1e293b;
+    box-shadow: 0 8px 16px rgba(15, 23, 42, 0.15);
+    transform: translateY(-2px);
+}
+
+.ig-btn-save:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.ig-btn-save.success {
+    background: #10b981;
+}
+
+/* Right Column: Guide Accordion */
+.ig-modal-guide-section {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+}
+
+.ig-guide-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.ig-guide-step {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.ig-guide-step.active {
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
+}
+
+.ig-step-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.ig-step-num {
+    width: 24px;
+    height: 24px;
+    background: #e0e7ff;
+    color: #4f46e5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.ig-step-header .ig-chevron {
+    margin-left: auto;
+    color: #94a3b8;
+    transition: transform 0.3s ease;
+}
+
+.ig-guide-step.active .ig-chevron {
+    transform: rotate(90deg);
+}
+
+.ig-step-content {
+    max-height: 0;
+    overflow: hidden;
+    padding: 0 1rem;
+    transition: all 0.3s ease;
+    opacity: 0;
+}
+
+.ig-guide-step.active .ig-step-content {
+    max-height: 500px;
+    padding: 0 1rem 1rem 3rem;
+    opacity: 1;
+}
+
+.ig-step-content p {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.85rem;
+    color: #475569;
+    line-height: 1.6;
+}
+
+.ig-step-content code {
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: #ef4444;
+}
+
+@media (max-width: 768px) {
+    .ig-modal-body {
+        grid-template-columns: 1fr;
+    }
+}

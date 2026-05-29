@@ -98,35 +98,45 @@ export default function SendNotification() {
                     <h2>Compor Mensagem</h2>
 
                     <div className="form-group">
-                        <label>Título (aparece em negrito no sininho) *</label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <Bell size={16} className="text-primary" />
+                            Título da Notificação *
+                        </label>
                         <input
                             type="text"
-                            placeholder="Ex: Reunião às 14h!"
+                            placeholder="Ex: Pauta urgente de cobertura ou nova instrução..."
                             value={title}
                             onChange={e => setTitle(e.target.value)}
                             maxLength={80}
                             required
                         />
+                        <span className="field-help-text" style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                            O título aparece em destaque (negrito) nas notificações do usuário. Máximo 80 caracteres.
+                        </span>
                     </div>
 
                     <div className="form-group">
-                        <label>Mensagem *</label>
+                        <label>Conteúdo / Mensagem *</label>
                         <textarea
                             rows={4}
-                            placeholder="Descreva o aviso ou alerta..."
+                            placeholder="Descreva os detalhes importantes da notificação, como data, horário, local ou ação necessária..."
                             value={message}
                             onChange={e => setMessage(e.target.value)}
                             required
                         />
+                        <span className="field-help-text" style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                            Mantenha o texto objetivo e claro para que a equipe compreenda rapidamente.
+                        </span>
                     </div>
 
                     <div className="form-group">
                         <label>Destinatários</label>
-                        <div className="target-toggle">
+                        <div className="v3-view-toggle" style={{ width: '100%' }}>
                             <button
                                 type="button"
                                 className={`toggle-btn ${targetMode === 'all' ? 'active' : ''}`}
                                 onClick={() => setTargetMode('all')}
+                                style={{ flex: 1 }}
                             >
                                 <Users size={16} /> Toda a Equipe
                             </button>
@@ -134,6 +144,7 @@ export default function SendNotification() {
                                 type="button"
                                 className={`toggle-btn ${targetMode === 'select' ? 'active' : ''}`}
                                 onClick={() => setTargetMode('select')}
+                                style={{ flex: 1 }}
                             >
                                 <User size={16} /> Selecionar Pessoas
                             </button>
@@ -167,17 +178,17 @@ export default function SendNotification() {
                         </div>
                     )}
 
-                    <button type="submit" className="btn-primary" disabled={sending}>
+                    <button type="submit" className="btn-primary-v3" disabled={sending} style={{ width: '100%', justifyContent: 'center', marginTop: '1rem' }}>
                         <Send size={18} />
-                        {sending ? 'Enviando...' : 'Enviar Notificação'}
+                        {sending ? 'Enviando...' : 'Enviar Notificação Premium'}
                     </button>
                 </form>
 
                 {/* Preview */}
                 <div className="send-notif-preview glass">
-                    <h2>Preview em Tempo Real</h2>
+                    <h2>Visualização em Tempo Real (Preview)</h2>
                     <p style={{ fontSize: '0.875rem', color: 'hsl(var(--color-text-muted))', marginBottom: '1rem' }}>
-                        Veja como seu alerta será visualizado pela equipe:
+                        Veja abaixo como seu alerta será exibido para o smartphone e o painel dos destinatários:
                     </p>
                     
                     <div className="notif-preview-card">
@@ -190,8 +201,8 @@ export default function SendNotification() {
                         <div className="notif-preview-time">agora mesmo</div>
                     </div>
 
-                    <div style={{ marginTop: 'auto', padding: '1rem', background: 'hsl(var(--color-primary) / 0.05)', borderRadius: 'var(--radius-md)', fontSize: '0.8rem', color: 'hsl(var(--color-primary))', border: '1px dashed hsl(var(--color-primary) / 0.3)' }}>
-                        <strong>Dica:</strong> Mantenha o título curto e direto para maior impacto.
+                    <div style={{ marginTop: 'auto', padding: '1rem', background: 'hsl(var(--color-primary) / 0.05)', borderRadius: 'var(--radius-xl)', fontSize: '0.8rem', color: 'hsl(var(--color-primary))', border: '1px dashed hsl(var(--color-primary) / 0.3)' }}>
+                        <strong>Dica de UX:</strong> Tente ser o mais claro possível para que os destinatários compreendam o chamado imediatamente sem necessidade de confirmações adicionais.
                     </div>
                 </div>
             </div>

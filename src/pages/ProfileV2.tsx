@@ -2,7 +2,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { useNavigate } from 'react-router-dom';
 import { Newspaper, Clock, X, Users, Shield, Building2, PartyPopper, Trophy, Pencil, Check, Activity, Camera } from 'lucide-react';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { normalizeText } from '../utils/searchUtils';
 import TaskModal from '../components/TaskModal';
 import Profile from './Profile';
@@ -20,6 +20,7 @@ export default function ProfileV2() {
 
     // ─── States ──────────────────────────────────────────────────
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+    const [taskTab, setTaskTab] = useState<'ativas' | 'concluidas'>('ativas');
     const [modalConfig, setModalConfig] = useState<{ open: boolean; tab: 'equipe' | 'cargos' | 'secretarias' | 'auditoria' }>({
         open: false,
         tab: 'equipe'
@@ -69,43 +70,56 @@ export default function ProfileV2() {
         }
     }, [user]);
     
-    const handleJobTitleToggle = (title: string) => {
+    const handleJobTitleToggle = useCallback((title: string) => {
         setEditJobTitles(prev => {
             const next = prev.includes(title)
                 ? prev.filter(t => t !== title)
                 : [...prev, title];
             return [...next].sort((a, b) => a.localeCompare(b));
         });
-    };
+    }, []);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             const tempUrl = URL.createObjectURL(file);
             setCropperImageSrc(tempUrl);
         }
         e.target.value = ''; // Reset to allow re-selection
-    };
+    }, []);
 
-    const handleCropComplete = (croppedFile: File, previewUrl: string) => {
+    const handleCropComplete = useCallback((croppedFile: File, previewUrl: string) => {
         setAvatarFile(croppedFile);
         setPreviewAvatar(previewUrl);
         setCropperImageSrc(null);
-    };
+    }, []);
 
     // ─── Lógica de Pautas Reais ──────────────────────────────────
-    const myTasks = useMemo(() => {
-        if (!user || !tasks) return [];
-        const userName = normalizeText(user.name);
+    const myTasksMetrics = useMemo(() => {
+        if (!user || !tasks) return { active: [], completed: [], completedCount: 0 };
+        const userNameNormalized = normalizeText(user.name);
         
-        return tasks
-            .filter(t => {
-                // Busca ampla: converte a pauta inteira em texto e verifica se o nome do usuário aparece em qualquer campo, comentário, etc.
-                const fullTaskText = normalizeText(JSON.stringify(t));
-                return fullTaskText.includes(userName);
-            })
+        const allMyTasks = tasks.filter(t => {
+            return (
+                (t.creator && normalizeText(t.creator).includes(userNameNormalized)) ||
+                t.assignees?.some(a => normalizeText(a).includes(userNameNormalized))
+            );
+        });
+        
+        const completed = allMyTasks
+            .filter(t => t.status?.toLowerCase() === 'publicado' || t.status?.toLowerCase() === 'arquivado')
             .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
-            .slice(0, 4);
+            .slice(0, 10); // Mostra até 10 concluídas recentes
+
+        const active = allMyTasks
+            .filter(t => t.status?.toLowerCase() !== 'publicado' && t.status?.toLowerCase() !== 'arquivado')
+            .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()); // Mostra todas as ativas (com scroll)
+
+        return { 
+            active, 
+            completed, 
+            completedCount: allMyTasks.filter(t => t.status?.toLowerCase() === 'publicado' || t.status?.toLowerCase() === 'arquivado').length 
+        };
     }, [user, tasks]);
 
     // ─── Lógica de Aniversariantes do Mês ───────────────────
@@ -135,12 +149,12 @@ export default function ProfileV2() {
         return { today, month: monthList };
     }, [team]);
 
-    const handleUpdateTask = async (updatedTask: Task) => {
+    const handleUpdateTask = useCallback(async (updatedTask: Task) => {
         await updateTask(updatedTask);
-        if (selectedTask?.id === updatedTask.id) setSelectedTask(updatedTask);
-    };
+        setSelectedTask(prev => prev?.id === updatedTask.id ? updatedTask : prev);
+    }, [updateTask]);
 
-    const handleSaveProfile = async () => {
+    const handleSaveProfile = useCallback(async () => {
         if (!user) return;
         setIsSaving(true);
         setSaveToast(null);
@@ -224,14 +238,15 @@ export default function ProfileV2() {
         } finally {
             setIsSaving(false);
         }
-    };
+    }, [user, avatarFile, editName, editBio, editBirthDate, editCodFuncional, editJobTitles, editEmail, isAdmin, newPassword, confirmPassword, currentPassword]);
 
-    const openManagementModal = (tab: 'equipe' | 'cargos' | 'secretarias' | 'auditoria') => {
+    const openManagementModal = useCallback((tab: 'equipe' | 'cargos' | 'secretarias' | 'auditoria') => {
         setModalConfig({ open: true, tab });
-    };
+    }, []);
 
     return (
-        <div className="profile-v2-container">
+        <div className="dashboard-container dashboard-v3-root profile-v2-container">
+            
             {/* ─── Modal Premium: Gestão Administrativa ────────────────────── */}
 
             {modalConfig.open && (
@@ -293,8 +308,9 @@ export default function ProfileV2() {
             )}
 
             <div className="bento-grid">
-                {/* ─── Identity Hub (Click -> Edit Inline) ─────────────────────── */}
-                <div className={`bento-card bento-profile-main card-large ${isEditing ? 'editing-active' : ''}`}>
+                
+                {/* ─── Profile Main Hub ────────────────────────────────────── */}
+                <div className={`bento-card bento-profile-main card-full ${isEditing ? 'editing-active' : ''}`}>
                     {/* Botão de Edição Standard */}
                     <button 
                         className={`btn-edit-premium-small ${isEditing ? 'active' : ''}`} 
@@ -499,94 +515,90 @@ export default function ProfileV2() {
                         </div>
                         <div className="institutional-stat-item">
                             <span className="inst-stat-label">Pautas em Andamento</span>
-                            <span className="inst-stat-value">{tasks?.filter(t => t.status !== 'publicado' && t.status !== 'cancelado').length || 0}</span>
+                            <span className="inst-stat-value">{myTasksMetrics.active.length}</span>
                         </div>
                         <div className="institutional-stat-item">
                             <span className="inst-stat-label">Minhas Entregas</span>
-                            <span className="inst-stat-value">{tasks?.filter(t => t.status === 'publicado').length || 0}</span>
+                            <span className="inst-stat-value">{myTasksMetrics.completedCount}</span>
                         </div>
                     </div>
                 </div>
 
-                {/* ─── Celebrations Card ──────────────────── */}
-                <div className="bento-card card-tall card-celebration-premium">
-                    <div className="celebration-header-clean">
-                         <h3 style={{ fontSize: '0.9rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#b45309', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                            <Trophy size={16} /> Mural de Aniversários
-                        </h3>
-                    </div>
-
-                    {birthdays.today.length > 0 ? (
-                        birthdays.today.map(b => (
-                            <div key={b.id} className="party-day-clean">
-                                <img src={b.avatar_url} alt={b.name} className="party-avatar" />
-                                <div>
-                                    <h4 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#9d174d' }}>{b.name}</h4>
-                                    <p style={{ fontSize: '0.75rem', color: '#be185d', fontWeight: 700 }}>FELIZ ANIVERSÁRIO! 🎉</p>
-                                </div>
-                                <div style={{ marginLeft: 'auto' }}><PartyPopper size={20} color="#db2777" /></div>
-                            </div>
-                        ))
-                    ) : (
-                        <div style={{ padding: '1.5rem', textAlign: 'center', fontSize: '0.85rem', color: '#94a3b8', margin: '1rem', borderRadius: '16px', border: '1px dashed #cbd5e1' }}>
-                            Nenhuma celebração hoje.
-                        </div>
-                    )}
-
-                    <div style={{ padding: '0 1.25rem 0.5rem', fontSize: '0.7rem', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Próximos Celebrantes:</div>
-                    <div style={{ flex: 1, overflowY: 'auto', padding: '0 0.5rem' }}>
-                        {birthdays.month.slice(0, 8).map(b => (
-                            <div key={b.id} className="birthday-row-clean">
-                                <div className="date-bubble-clean">
-                                    {new Date(b.birth_date + 'T12:00:00').getDate()}
-                                </div>
-                                <img src={b.avatar_url} alt={b.name} className="avatar-mini-clean" />
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <h5 style={{ fontWeight: 700, fontSize: '0.9rem', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.name}</h5>
-                                    <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'block' }}>{b.job_titles?.[0] || b.role}</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* ─── Minhas Demandas ───────────────────────────────────── */}
-                <div className="bento-card card-large" style={{ background: '#fff' }}>
+                {/* ─── ROW 2: Missões em Campo & RH ──────────────────────── */}
+                <div className="bento-card card-wide" style={{ background: '#fff' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                         <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem', fontWeight: 800, color: '#1e293b' }}><Clock size={18} color="#3b82f6" /> Missões em Campo</h3>
-                        <span style={{ fontSize: '0.7rem', background: '#eff6ff', color: '#3b82f6', padding: '4px 12px', borderRadius: '99px', fontWeight: 800 }}>{myTasks.length} ATIVAS</span>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <span 
+                                onClick={() => setTaskTab('concluidas')}
+                                style={{ 
+                                    fontSize: '0.7rem', 
+                                    background: taskTab === 'concluidas' ? '#166534' : '#dcfce7', 
+                                    color: taskTab === 'concluidas' ? '#fff' : '#166534', 
+                                    padding: '4px 12px', 
+                                    borderRadius: '99px', 
+                                    fontWeight: 800,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                <Check size={10} style={{ display: 'inline', marginRight: '4px' }} />
+                                {myTasksMetrics.completedCount} CONCLUÍDAS
+                            </span>
+                            <span 
+                                onClick={() => setTaskTab('ativas')}
+                                style={{ 
+                                    fontSize: '0.7rem', 
+                                    background: taskTab === 'ativas' ? '#2563eb' : '#eff6ff', 
+                                    color: taskTab === 'ativas' ? '#fff' : '#3b82f6', 
+                                    padding: '4px 12px', 
+                                    borderRadius: '99px', 
+                                    fontWeight: 800,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                {myTasksMetrics.active.length} ATIVAS
+                            </span>
+                        </div>
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1rem' }}>
-                        {myTasks.map(t => (
-                            <div key={t.id} className="item-row-premium" onClick={() => setSelectedTask(t)} style={{ cursor: 'pointer', background: '#f8fafc', border: '1px solid #f1f5f9' }}>
-                                <div className="item-content">
-                                    <h4 style={{ fontSize: '0.95rem', color: '#1e293b', fontWeight: 700 }}>{t.title}</h4>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', flexWrap: 'wrap' }}>
-                                        <span style={{ fontSize: '0.65rem', background: '#1e293b', color: 'white', padding: '2px 8px', borderRadius: '4px', fontWeight: 700 }}>{t.status.toUpperCase()}</span>
-                                        
-                                        {/* Prioridade Badge */}
-                                        <span style={{ 
-                                            fontSize: '0.65rem', 
-                                            background: t.priority === 'alta' ? '#fee2e2' : t.priority === 'media' ? '#ffedd5' : '#dcfce7', 
-                                            color: t.priority === 'alta' ? '#b91c1c' : t.priority === 'media' ? '#c2410c' : '#15803d', 
-                                            padding: '2px 8px', 
-                                            borderRadius: '4px', 
-                                            fontWeight: 700 
-                                        }}>
-                                            {t.priority ? t.priority.toUpperCase() : 'NORMAL'}
-                                        </span>
-                                        
-                                        <span style={{ fontSize: '0.7rem', color: '#64748b' }}>📅 {t.dueDate ? new Date(t.dueDate).toLocaleDateString() : 'Sem prazo'}</span>
+                    {(taskTab === 'ativas' ? myTasksMetrics.active : myTasksMetrics.completed).length > 0 ? (
+                        <div className="scrollable-grid">
+                            {(taskTab === 'ativas' ? myTasksMetrics.active : myTasksMetrics.completed).map(t => (
+                                <div key={t.id} className="item-row-premium" onClick={() => setSelectedTask(t)} style={{ cursor: 'pointer', background: '#f8fafc', border: '1px solid #f1f5f9' }}>
+                                    <div className="item-content">
+                                        <h4 style={{ fontSize: '0.95rem', color: '#1e293b', fontWeight: 700 }}>{t.title}</h4>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', flexWrap: 'wrap' }}>
+                                            <span style={{ fontSize: '0.65rem', background: '#1e293b', color: 'white', padding: '2px 8px', borderRadius: '4px', fontWeight: 700 }}>{t.status.toUpperCase()}</span>
+                                            
+                                            <span style={{ 
+                                                fontSize: '0.65rem', 
+                                                background: t.priority === 'alta' ? '#fee2e2' : t.priority === 'media' ? '#ffedd5' : '#dcfce7', 
+                                                color: t.priority === 'alta' ? '#b91c1c' : t.priority === 'media' ? '#c2410c' : '#15803d', 
+                                                padding: '2px 8px', 
+                                                borderRadius: '4px', 
+                                                fontWeight: 700 
+                                            }}>
+                                                {t.priority ? t.priority.toUpperCase() : 'NORMAL'}
+                                            </span>
+                                            
+                                            <span style={{ fontSize: '0.7rem', color: '#64748b' }}>📅 {t.dueDate ? new Date(t.dueDate).toLocaleDateString() : 'Sem prazo'}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.9rem', border: '1px dashed #cbd5e1', borderRadius: '16px' }}>
+                            Nenhuma missão {taskTab === 'ativas' ? 'ativa' : 'concluída'} no momento.
+                        </div>
+                    )}
                 </div>
 
                 {/* ─── Recursos Humanos (Colaborador) ────────────────────── */}
                 <MeusRegistrosRH />
 
+                {/* ─── ROW 3: Secundários (Admin, Aniversários, Mural) ───── */}
                 {/* ─── Sistema Administrativo ────────────────────────────── */}
                 {isAdmin && (
                     <div className="bento-card">
@@ -602,13 +614,53 @@ export default function ProfileV2() {
                     </div>
                 )}
 
+                {/* ─── Celebrações (Aniversários) ────────────────────────── */}
+                <div className="bento-card card-celebration-premium">
+                    <div className="celebration-header-clean">
+                         <h3 style={{ fontSize: '0.9rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#b45309', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                            <Trophy size={16} /> Aniversários
+                        </h3>
+                    </div>
+
+                    {birthdays.today.length > 0 ? (
+                        birthdays.today.map(b => (
+                            <div key={b.id} className="party-day-clean">
+                                <img src={b.avatar_url} alt={b.name} className="party-avatar" />
+                                <div>
+                                    <h4 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#9d174d' }}>{b.name}</h4>
+                                    <p style={{ fontSize: '0.75rem', color: '#be185d', fontWeight: 700 }}>FELIZ ANIVERSÁRIO! 🎉</p>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div style={{ padding: '1.5rem', textAlign: 'center', fontSize: '0.85rem', color: '#94a3b8', margin: '1rem', borderRadius: '16px', border: '1px dashed #cbd5e1' }}>
+                            Nenhuma celebração hoje.
+                        </div>
+                    )}
+
+                    <div style={{ padding: '0 1.25rem 0.5rem', fontSize: '0.7rem', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Próximos Celebrantes:</div>
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '0 0.5rem', maxHeight: '180px' }}>
+                        {birthdays.month.slice(0, 8).map(b => (
+                            <div key={b.id} className="birthday-row-clean" style={{ padding: '0.5rem 1rem' }}>
+                                <div className="date-bubble-clean" style={{ minWidth: '36px', height: '36px', fontSize: '0.9rem' }}>
+                                    {new Date(b.birth_date + 'T12:00:00').getDate()}
+                                </div>
+                                <img src={b.avatar_url} alt={b.name} className="avatar-mini-clean" style={{ width: '36px', height: '36px' }} />
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <h5 style={{ fontWeight: 700, fontSize: '0.85rem', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.name}</h5>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
                 {/* ─── Mural Hub ─────────────────────────────────────────── */}
                 <div className="bento-card">
                     <div style={{ marginBottom: '1.25rem' }}>
                         <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}><Newspaper size={18} color="#7c3aed" /> Mural Recente</h3>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                        {newsItems.slice(0, 2).map(n => (
+                        {newsItems.slice(0, 3).map(n => (
                             <div key={n.id} className="item-row-premium" onClick={() => navigate('/noticias')} style={{ cursor: 'pointer', padding: '10px 15px', background: '#f8fafc', border: '1px solid #f1f5f9' }}>
                                 <h4 style={{ fontSize: '0.85rem', color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.title}</h4>
                                 <span style={{ fontSize: '0.6rem', color: '#94a3b8' }}>{new Date(n.created_at).toLocaleDateString()}</span>

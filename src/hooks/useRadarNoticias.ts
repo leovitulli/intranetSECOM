@@ -71,8 +71,10 @@ export function useRadarNoticias(filters?: FilterParams) {
                 if (page.length < PAGE_SIZE) break;
                 from += PAGE_SIZE;
 
-                // Safety: stop after 20 pages (20k records max)
-                if (from >= 20000) break;
+                // Safety: stop after 2000 records if no dates are set to prevent browser freeze/network overload.
+                // If dates are filtered, allow up to 15,000 records.
+                const maxLimit = (filters?.startDate || filters?.endDate) ? 15000 : 2000;
+                if (from >= maxLimit) break;
             }
 
             const { count: totalCount } = await supabase
