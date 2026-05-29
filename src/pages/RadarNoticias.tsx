@@ -421,10 +421,11 @@ export default function RadarNoticias() {
         if (plannedReleases.length === 0 || filteredNews.length === 0) return { matched: [], pending: [] };
         const matched: Array<{ task: Task; article: RadarNoticia; score: number }> = [];
         const pending: Task[] = [];
+        const recentNews = filteredNews.slice(0, 1000);
         plannedReleases.forEach(task => {
             let bestMatch: RadarNoticia | null = null;
             let highestScore = 0;
-            filteredNews.forEach(art => {
+            recentNews.forEach(art => {
                 const score = calculateCorrelationScore(task.title, art.title);
                 if (score > highestScore) {
                     highestScore = score;
@@ -443,7 +444,8 @@ export default function RadarNoticias() {
 
     const pressCorrelation = useMemo(() => {
         const matched: Array<{ portalTitle: string; clipping: ClippingItem; score: number }> = [];
-        filteredNews.forEach(art => {
+        const recentNews = filteredNews.slice(0, 1000);
+        recentNews.forEach(art => {
             filteredClippings.forEach(clip => {
                 const score = calculateCorrelationScore(art.title, clip.title);
                 if (score >= 33) {
